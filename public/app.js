@@ -97,7 +97,7 @@ function cellsFor(did) {
 }
 const allCells = () => ['d1','d2','d3','d4','d5','d6','d7','d8'].reduce((a, d) => a.concat(cellsFor(d)), []);
 function cellById(id) { return cellsFor(id.split('.')[0]).find(c => c.id === id); }
-function cellLabel(id) { if (/^M\d+$/.test(id)) { const m = C.measures.find(x => x.ref === id); return 'Schedule · ' + id + (m ? ' ' + m.measure : ''); } const c = cellById(id); if (!c) return id; const d = D(c.did); return `D${d.n} · ${c.rowLabel}${c.colLabel && c.kind !== 'number' || c.did === 'd7' ? ' · ' + c.colLabel : ''}`; }
+function cellLabel(id) { if (/^M\d+$/.test(id)) { const m = C.measures.find(x => x.ref === id); return 'Schedule · ' + id + (m ? ' ' + m.measure : ''); } const c = cellById(id); if (!c) return id; const d = D(c.did); return `Decision ${d.n} · ${c.rowLabel}${c.colLabel && c.kind !== 'number' || c.did === 'd7' ? ' · ' + c.colLabel : ''}`; }
 const P = id => S.decisions[id.split('.')[0]].cells[id] || null;
 function getPos(id) { const did = id.split('.')[0]; const cells = S.decisions[did].cells; if (!cells[id]) cells[id] = blankPos(); return cells[id]; }
 const val = id => { const p = P(id); return p && p.status === 'set' ? p.value : null; };
@@ -290,7 +290,7 @@ function docband() {
   const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
   const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#setup">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
-  return `<div class="docband"><div class="docband-in">${priv}<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''} · ` : ''}${esc(statusMark())}</span></div></div>`;
+  return `<div class="docband"><div class="docband-in">${priv}<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''} · ` : ''}${esc(S.calibration.status === 'default' ? 'Uncalibrated: working appetite not yet agreed' : statusMark())}</span></div></div>`;
 }
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
@@ -467,25 +467,25 @@ function screenSetup() {
   return `${opening('Admin · set-up', 'Set up the engagement', 'Who takes part, which functions are in scope, and what the insurer has already decided.')}
   ${ro ? `<p class="err">${esc(blockReason('setup'))} ${whyLink()}</p>` : ''}
   <fieldset ${ro ? 'disabled' : ''} style="border:0;padding:0;margin:0" class="stack">
-  <section class="card"><h2 class="sh">1 · Engagement</h2><div class="fgrid">
+  <section class="card"><h2 class="sh">1 · Engagement details</h2><p class="small soft" style="margin:4px 0 14px">Who the engagement is for, when the two sessions are held, and the privilege marking counsel directs.</p><div class="fgrid">
     ${fld('Insurer', 'engagement.insurer', e.insurer)}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
   </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
-  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
+  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People taking part</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
     <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the insurer risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
     ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
-  <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')}</h2>
+  <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')} in scope</h2><p class="small soft" style="margin:4px 0 14px">The business functions the appetite covers (decision 1 sets a ceiling for each), and the critical operations whose approved tolerance levels decision 2 uses.</p>
     <div class="grid2"><div><div class="mini" style="margin-bottom:6px">Functions (the framework’s starting list, which can be edited)</div>
       <div class="stack" style="gap:6px">${S.functions.map((f, i) => `<div class="row" style="flex-wrap:nowrap"><input class="in" id="fn-${i}" data-path="functions.${i}.name" value="${esc(f.name)}" aria-label="Function ${i + 1}"><button class="btn sm ghost" data-act="rmFn" data-i="${i}" aria-label="Remove ${esc(f.name)}">✕</button></div>`).join('')}</div>
       <div class="row" style="margin-top:10px"><button class="btn sm" data-act="addFn">Add function</button><label class="cb"><input type="checkbox" data-path="functionsConfirmed" ${S.functionsConfirmed ? 'checked' : ''}> Function list confirmed</label></div></div>
     <div><div class="mini" style="margin-bottom:6px">Critical operations, from input I4, with their approved ${T('tolerance', 'tolerance levels')}</div>
       <div class="stack" style="gap:10px">${S.criticalOperations.map((o, i) => `<div class="panel2" style="padding:12px"><div class="fgrid">${fld('Operation', `criticalOperations.${i}.name`, o.name)}${fld('Tolerance', `criticalOperations.${i}.tolerance`, o.tolerance)}${fld('Source document', `criticalOperations.${i}.source`, o.source)}</div><div class="row" style="justify-content:flex-end"><button class="btn sm ghost" data-act="rmOp" data-i="${i}">Remove</button></div></div>`).join('') || '<p class="small soft">None recorded.</p>'}</div>
       <button class="btn sm" style="margin-top:10px" data-act="addOp">Add critical operation</button></div></div></section>
-  <section class="card"><h2 class="sh">4 · Inputs I1 to I11</h2><p class="small soft">Requested through counsel before session 1. The starting positions on later screens use the inputs marked as received.</p>
+  <section class="card"><h2 class="sh">4 · Documents from the insurer</h2><p class="small soft">Inputs I1 to I11, requested through counsel before session 1. The starting positions on the decision screens use the documents marked as received.</p>
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
-    <div style="margin-top:14px;max-width:360px">${fld('I10 · notification procedure, hours the insurer can absorb', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9' })}</div></section>
+    <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the insurer’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
   </fieldset>
-  <section class="card" style="margin-top:18px"><h2 class="sh">Exit gate</h2><div class="stack" style="gap:6px">${g.items.map(i => gate(i[1], i[0])).join('')}</div></section>
+  <section class="card" style="margin-top:18px"><h2 class="sh">Set-up checklist</h2><p class="small soft" style="margin:4px 0 14px">Set-up is complete when each item below is done.</p><div class="stack" style="gap:6px">${g.items.map(i => gate(i[1], i[0])).join('')}</div></section>
   ${stepbar(gate(g.ok, g.ok ? 'Set-up complete' : 'Set-up incomplete'))}`;
 }
 
@@ -495,11 +495,11 @@ function screenOverview(ck) {
   const cards = C.decisions.map(d => { const st = decisionStatus(d.id, ck); return `<button class="dcard" data-act="go" data-to="${d.id}">
     <div class="row between"><span class="dnum">${d.n}</span>${badge(st.label, st.cls)}</div>
     <div class="dname">${esc(d.name)}</div><div class="small soft" style="flex:1">${esc(d.question)}</div>
-    <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns}/${st.total}${st.qc ? ' · ' + st.qc + ' QC open' : ''}</span></div></button>`; }).join('');
+    <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns} of ${st.total} recorded${st.qc ? ' · ' + st.qc + ' open question' + (st.qc === 1 ? '' : 's') : ''}</span></div></button>`; }).join('');
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
   const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#setup">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
   return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}${setupNote}
-  <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>
+  <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(S.calibration.status === 'default' ? 'The working appetite has not yet been agreed' : statusMark())}</span></div>
     <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
   <h2 class="sh">Session 2 · decisions 4 to 8</h2><div class="dgrid">${cards.split('</button>').slice(3, 8).join('</button>')}</button></div>
@@ -523,8 +523,8 @@ function cellMarks(c, off) {
   (off[c.id] || []).filter(x => /^K[23]:/.test(x)).forEach(x => h += `<span class="flag">${esc(x)}</span>`);
   if (p && p.status === 'set' && !proposerOk(c.did, p)) h += `<span class="mini" style="color:var(--red)">choose a proposer</span>`;
   if (p && p.status === 'notSet') h += `<span class="mini" style="color:var(--ochre)">not set · ${esc(pname(p.notSetOwner))} · ${esc(p.notSetDue)}</span>`;
-  if (p && p.condition) h += `<span class="mini">cond: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
-  if ((off[c.id] || []).some(x => !/^K[23]:/.test(x))) h += `<span class="mini" style="color:var(--red)">${esc((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]).join(' · '))}</span>`;
+  if (p && p.condition) h += `<span class="mini">Condition: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
+  if ((off[c.id] || []).some(x => !/^K[23]:/.test(x))) h += `<span class="mini" style="color:var(--red)">${esc((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]).join(', ')).replace(/^/, 'Fails check ')}</span>`;
   if (bp() === 'phone') h += `<button class="lnk mono" data-act="details" data-cell="${esc(c.id)}" style="min-height:28px">details</button>`;
   else { const o = UI.open === c.id; h += `<button class="detbtn" data-act="toggleDet" data-cell="${esc(c.id)}" aria-expanded="${o}" ${o ? 'aria-controls="details"' : ''} title="${o ? 'Close the details for this position' : 'Proposer, owner, condition, dissent, not set'}">${o ? 'Close' : 'Details'}</button>`; }
   return h;
@@ -549,8 +549,8 @@ function decisionBody(did, off) {
     d.levels.forEach(l => {
       const sc = C.scales.consequence.find(x => x.code === l.code);
       if (l.code === 'C1') rows.push({ head: `<span class="mono">C1</span> immaterial`, label: 'C1', items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, { html: '<span class="soft">Whatever falls below C2</span>' }, { html: 'n/a' }] });
-      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(o.name)}`, sub: 'approved tolerance: ' + esc(o.tolerance || '—'), label: 'C5 ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
-      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(sc.name)}`, label: l.code, sub: S.current.d2[l.code] ? 'existing: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
+      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: 'C5 ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
+      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(sc.name)}`, label: l.code, sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
     });
     return recArea(did, 'g2', [T('consequence', 'Level'), 'Generic definition', 'What the insurer sets', 'Insurer\u2019s setting', 'Usual source'], rows, off);
   }
@@ -558,14 +558,14 @@ function decisionBody(did, off) {
     AT.map(a => ({ head: `<span class="mono">${a}</span> ${esc(scaleName(a))}`, label: a, items: CO.map(c => by(`d3.${a}.${c}`)) })), off);
   if (did === 'd4') {
     const d = D('d4');
-    return `<h3 class="sh">${T('gapPriority', 'Gap priority')} · gap size × consequence</h3>${recArea(did, 'g4', [T('gap', 'Gap'), ...d.bands.map(b => esc(b.name))], d.gaps.map(g => ({ head: esc(g.name), label: g.name, items: d.bands.map(b => by(`d4.${g.id}.${b.id}`)) })), off)}
+    return `<h3 class="sh">${T('gapPriority', 'Priority')} for each shortfall, by size of shortfall and consequence</h3>${recArea(did, 'g4', [T('gap', 'Size of shortfall'), ...d.bands.map(b => esc(b.name))], d.gaps.map(g => ({ head: esc(g.name), label: g.name, items: d.bands.map(b => by(`d4.${g.id}.${b.id}`)) })), off)}
     <h3 class="sh" style="margin-top:22px">Time limit and ${T('interim', 'interim position')}</h3>${recArea(did, 'g4b', ['Priority', 'Time limit', 'Interim position while the gap stands'], d.priorities.map(p => ({ head: `<span class="mono">${p.id}</span>`, label: p.id, items: [by(`d4.time.${p.id}`), by(`d4.interim.${p.id}`)] })), off)}`;
   }
   if (did === 'd5') return recArea(did, 'g5', ['Consequence of the arrangement', T('notKnown', 'Not-known') + ' facts allowed per entry', T('f4', 'F4 finding') + ' allowed to stand', 'Minimum ' + T('confidence', 'confidence') + ' in the obtainable rung'],
     D('d5').bands.map(b => ({ head: esc(b.name), label: b.name, items: ['notKnown', 'f4', 'conf'].map(f => { const c = by(`d5.${b.id}.${f}`); c.hint = D('d5').blankHints[b.id + '.' + f] || ''; return c; }) })), off);
   if (did === 'd6') {
     const js = S.decisions.d6.jurisdictions, ed = canEdit('d6');
-    const rows = js.map((j, i) => ({ head: ed ? `<input class="in" id="jn-${i}" data-path="decisions.d6.jurisdictions.${i}.name" value="${esc(j.name)}" aria-label="Jurisdiction name" style="min-width:140px">` : esc(j.name), label: j.name, sub: (j.start ? 'starting: ' + esc(j.start) : '') + (ed ? ` · <button class="lnk mono" data-act="rmJur" data-i="${i}">remove</button>` : ''), items: [by(`d6.j.${j.id}.established`), by(`d6.j.${j.id}.runs`)] }));
+    const rows = js.map((j, i) => ({ head: ed ? `<input class="in" id="jn-${i}" data-path="decisions.d6.jurisdictions.${i}.name" value="${esc(j.name)}" aria-label="Jurisdiction name" style="min-width:140px">` : esc(j.name), label: j.name, sub: (j.start ? 'Starting position: ' + esc(j.start) : '') + (ed ? ` · <button class="lnk mono" data-act="rmJur" data-i="${i}">remove</button>` : ''), items: [by(`d6.j.${j.id}.established`), by(`d6.j.${j.id}.runs`)] }));
     const conc = by('d6.concentration');
     return `${rows.length ? recArea(did, 'g6', ['Jurisdiction', 'Where the provider is established', 'Where the AI runs'], rows, off) : '<p class="soft">No jurisdictions yet. Add each one that appears in the register.</p>'}
     ${ed ? `<div class="row" style="margin-top:10px"><input class="in" id="newJur" placeholder="Jurisdiction" style="max-width:220px" aria-label="New jurisdiction"><select class="in" id="newJurStart" style="max-width:200px" aria-label="Starting marking from offshoring position"><option value="">No starting marking</option>${MARK.map(m => `<option>${m}</option>`).join('')}</select><button class="btn sm" data-act="addJur">Add jurisdiction</button></div>` : ''}
@@ -670,17 +670,17 @@ function screenDecision(did, ck) {
   const body = decisionBody(did, off);
   const details = UI.sel && UI.sel.startsWith(did + '.') ? UI.sel : null;
   const gateTxt = st.gate ? 'Every cell set or recorded as not set' : `${st.un} of ${st.total} cells blank`;
-  return `${opening(`Decision ${d.n} · session ${d.session} · ${d.param}`, esc(d.name), esc(d.question))}
+  return `${opening(`Decision ${d.n} · session ${d.session} · calibration parameter ${d.param}`, esc(d.name), esc(d.question))}
   <div class="row" style="margin:-14px 0 22px">${badge(st.label, st.cls)}<span class="mini">Answered as: ${esc(d.answeredAs)}</span></div>
   <div class="stack">
     <section class="measure"><h2 class="sh">Purpose</h2><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(d.recorded)}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(d.note)}</p>` : ''}
       ${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
     ${startPanel(d)}
-    <section><h2 class="sh">Recording area</h2>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
+    <section><h2 class="sh">The insurer’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the insurer proposes in each cell. <strong>Details</strong> holds the proposer, owner, any condition or dissent, or records a position as not set.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
-    ${d.prompts.length ? `<details class="pr"><summary>Prompts for the session · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
+    ${d.prompts.length ? `<details class="pr"><summary>Questions to open the discussion · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
     <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">recorded for counsel, not decided in the session</span></div>
       ${qcs.length ? `<div class="stack" style="gap:8px;margin-top:12px">${qcs.map(q => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono">${esc(q.ref)}</span><span style="flex:1">${esc(q.question)}${q.cell ? `<br><button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : ''}${q.response ? `<div class="small soft">Response: ${esc(q.response)}</div>` : ''}</span>${badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</div>`).join('')}</div>` : '<p class="small soft" style="margin-top:8px">None logged.</p>'}
       ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Any question about what the insurer is legally obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
@@ -692,7 +692,7 @@ function screenDecision(did, ck) {
 /* ---------- S11 checks ---------- */
 function screenChecks(ck) {
   const bl = blocking(ck).length;
-  return `${opening('Consistency checks', 'Checks K1 to K10', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
+  return `${opening('Checks K1 to K10', 'Consistency checks', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
   <p class="small soft measure">The checks run after every change. A failed ${T('check', 'check')} is referred to the CRO; Triodian does not resolve it.</p>
   <div class="stack" style="gap:12px">${ck.map(k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
     <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.state === 'pass' ? 'b-green' : k.state === 'fail' ? 'b-red' : k.state === 'warn' ? 'b-ochre' : 'b-grey')}</div>
@@ -822,7 +822,7 @@ function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
   const tabs = [['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
   const who = me(), agreeWhy = !who || who.role !== 'cro' ? (practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') : bl ? `${bl} blocking ${bl === 1 ? 'check' : 'checks'} failing` : '', xb = tab === 'calibration' && exportBlocked();
-  return `${opening('Outputs', 'Outputs', 'The statement for board approval, the schedule, the session record and the calibration set.')}
+  return `${opening('Outputs', 'Statement, schedule and calibration set', 'The statement for board approval, the schedule, the session record and the calibration set.')}
   <section class="card" style="margin-bottom:20px"><div class="row between"><div class="row"><h2 class="sh" style="margin:0">${T('calibration', 'Calibration status')}</h2>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>${c.minuteRef ? `<span class="mono soft">minute ${esc(c.minuteRef)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">For the CRO only. Checks K1 to K9 must pass first. ${c.status === 'default' ? 'Version becomes 1.' : 'Any later change to a position raises the version number.'}</p>
       <button class="btn primary sm" data-act="agree" ${agreeWhy || c.status !== 'default' ? 'disabled' : ''}>Agree working appetite</button> ${agreeWhy && c.status === 'default' ? `<span class="small" style="color:var(--red)">${esc(agreeWhy)}</span>` : c.status !== 'default' ? `<span class="small soft">Agreed ${esc(c.agreedOn)} by ${esc(c.agreedBy)}</span>` : ''}</div>
