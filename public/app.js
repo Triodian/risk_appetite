@@ -38,6 +38,7 @@ const domId = id => 'c_' + id.replace(/[^a-zA-Z0-9]/g, '_');
 const scaleName = (code) => { const all = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence); const s = all.find(x => x.code === code); return s ? s.name : ''; };
 const scaleLabel = code => { const s = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence).find(x => x.code === code); return s ? (s.label || s.name) : ''; };
 const scaleOpt = code => scaleLabel(code) ? code + ' ' + scaleLabel(code) : code;
+const withLabels = str => String(str).replace(/\b([ACE][0-6])\b(?! [A-Z][a-z])/g, (m, c) => scaleOpt(c));
 const scaleTip = code => scaleName(code) ? `${code} ${scaleName(code)}: ${scaleDef(code)}` : '';
 const scaleOption = (o, sel) => `<option value="${esc(o)}" ${sel ? 'selected' : ''} title="${esc(scaleTip(o))}">${esc(scaleOpt(o))}</option>`;
 const T = (id, text) => C.glossary[id] ? `<button type="button" class="term" data-term="${id}" aria-expanded="false" aria-controls="poproot">${text || esc(C.glossary[id].term)}</button>` : (text || '');
@@ -74,19 +75,19 @@ function cellsFor(did) {
   if (did === 'd2') {
     D('d2').levels.forEach(l => {
       if (l.code === 'C1') return;
-      if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => add(`d2.op.${o.id}`, { row: 'C5.' + o.id, col: 'setting', rowLabel: 'C5 · ' + (o.name || 'critical operation'), colLabel: 'Insurer\u2019s setting', kind: 'text' }));
+      if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => add(`d2.op.${o.id}`, { row: 'C5.' + o.id, col: 'setting', rowLabel: scaleOpt('C5') + ' · ' + (o.name || 'critical operation'), colLabel: 'Insurer\u2019s setting', kind: 'text' }));
       else add(`d2.${l.code}`, { row: l.code, col: 'setting', rowLabel: l.code + ', ' + scaleLabel(l.code), colLabel: 'Insurer\u2019s setting', kind: 'text' });
     });
   }
   if (did === 'd3') AT.forEach(a => CO.forEach(c => add(`d3.${a}.${c}`, { row: a, col: c, rowLabel: a + ', ' + scaleLabel(a), colLabel: scaleOpt(c), kind: 'select', options: EV })));
   if (did === 'd4') {
-    D('d4').gaps.forEach(g => D('d4').bands.forEach(b => add(`d4.${g.id}.${b.id}`, { row: g.id, col: b.id, rowLabel: g.name, colLabel: b.name, kind: 'select', options: PRI, group: 'matrix' })));
+    D('d4').gaps.forEach(g => D('d4').bands.forEach(b => add(`d4.${g.id}.${b.id}`, { row: g.id, col: b.id, rowLabel: g.name, colLabel: withLabels(b.name), kind: 'select', options: PRI, group: 'matrix' })));
     D('d4').priorities.forEach(p => { add(`d4.time.${p.id}`, { row: p.id, col: 'time', rowLabel: p.id, colLabel: 'Time limit', kind: 'text', group: 'time' }); add(`d4.interim.${p.id}`, { row: p.id, col: 'interim', rowLabel: p.id, colLabel: 'Interim position', kind: 'text', group: 'time' }); });
   }
   if (did === 'd5') D('d5').bands.forEach(b => {
-    add(`d5.${b.id}.notKnown`, { row: b.id, col: 'notKnown', rowLabel: b.name, colLabel: 'Not-known facts allowed per entry', kind: 'text', group: 'p6' });
-    add(`d5.${b.id}.f4`, { row: b.id, col: 'f4', rowLabel: b.name, colLabel: 'F4 finding allowed to stand', kind: 'text', group: 'p6' });
-    add(`d5.${b.id}.conf`, { row: b.id, col: 'conf', rowLabel: b.name, colLabel: 'Minimum confidence', kind: 'select', options: CONF, group: 'p7' });
+    add(`d5.${b.id}.notKnown`, { row: b.id, col: 'notKnown', rowLabel: withLabels(b.name), colLabel: 'Not-known facts allowed per entry', kind: 'text', group: 'p6' });
+    add(`d5.${b.id}.f4`, { row: b.id, col: 'f4', rowLabel: withLabels(b.name), colLabel: 'F4 finding allowed to stand', kind: 'text', group: 'p6' });
+    add(`d5.${b.id}.conf`, { row: b.id, col: 'conf', rowLabel: withLabels(b.name), colLabel: 'Minimum confidence', kind: 'select', options: CONF, group: 'p7' });
   });
   if (did === 'd6') {
     S.decisions.d6.jurisdictions.forEach(j => { add(`d6.j.${j.id}.established`, { row: j.id, col: 'established', rowLabel: j.name || 'Jurisdiction', colLabel: 'Provider established', kind: 'select', options: MARK, group: 'p8' }); add(`d6.j.${j.id}.runs`, { row: j.id, col: 'runs', rowLabel: j.name || 'Jurisdiction', colLabel: 'AI runs', kind: 'select', options: MARK, group: 'p8' }); });
@@ -237,6 +238,7 @@ function runChecks() {
     if (!exp) { k10.state = 'cannot'; k10.result = `Cannot run. No expectation recorded for the most common pair, ${pair.tier} × ${pair.consequence}.`; }
     else if (rk(EV, exp) > rk(EV, max)) { k10.state = 'warn'; k10.result = `The expectation for ${pair.tier} × ${pair.consequence} is ${exp}. The highest rung obtained today is ${max}. Most arrangements will show a gap from day one.`; k10.off.push({ id: `d3.${pair.tier}.${pair.consequence}`, why: 'above anything obtained today' }); }
     else { k10.result = `${exp} for ${pair.tier} × ${pair.consequence} is within what is obtained today (highest ${max}).`; } }
+  k10.result = withLabels(k10.result);
   Object.values(R).forEach(r => { if (r.id !== 'K10') r.result = r.state === 'pass' ? 'Passed.' : `${r.off.length} ${r.off.length === 1 ? 'item' : 'items'} failing.`; });
   return Object.values(R);
 }
@@ -557,9 +559,9 @@ function decisionBody(did, off) {
     const d = D('d2'), rows = [];
     d.levels.forEach(l => {
       const sc = C.scales.consequence.find(x => x.code === l.code);
-      if (l.code === 'C1') rows.push({ head: `<span class="mono">C1</span> ${esc(scaleLabel('C1'))}`, label: 'C1', items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, { html: '<span class="soft">Whatever falls below C2</span>' }, { html: 'n/a' }] });
-      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: 'C5 ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
-      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: l.code, sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(l.sets) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
+      if (l.code === 'C1') rows.push({ head: `<span class="mono">C1</span> ${esc(scaleLabel('C1'))}`, label: 'C1', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, { html: `<span class="soft">Whatever falls below ${esc(scaleOpt('C2'))}</span>` }, { html: 'n/a' }] });
+      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(scaleLabel('C5'))}: ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: 'C5 ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
+      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: l.code, sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
     });
     return recArea(did, 'g2', [T('consequence', 'Level'), 'Generic definition', 'What the insurer sets', 'Insurer\u2019s setting', 'Usual source'], rows, off);
   }
@@ -567,11 +569,11 @@ function decisionBody(did, off) {
     AT.map(a => ({ head: `<span class="mono" title="${esc(scaleTip(a))}">${a}</span> ${esc(scaleLabel(a))}`, label: a, items: CO.map(c => by(`d3.${a}.${c}`)) })), off);
   if (did === 'd4') {
     const d = D('d4');
-    return `<h3 class="sh">${T('gapPriority', 'Priority')} for each shortfall, by size of shortfall and consequence</h3>${recArea(did, 'g4', [T('gap', 'Size of shortfall'), ...d.bands.map(b => esc(b.name))], d.gaps.map(g => ({ head: esc(g.name), label: g.name, items: d.bands.map(b => by(`d4.${g.id}.${b.id}`)) })), off)}
+    return `<h3 class="sh">${T('gapPriority', 'Priority')} for each shortfall, by size of shortfall and consequence</h3>${recArea(did, 'g4', [T('gap', 'Size of shortfall'), ...d.bands.map(b => esc(withLabels(b.name)))], d.gaps.map(g => ({ head: esc(g.name), label: g.name, items: d.bands.map(b => by(`d4.${g.id}.${b.id}`)) })), off)}
     <h3 class="sh" style="margin-top:22px">Time limit and ${T('interim', 'interim position')}</h3>${recArea(did, 'g4b', ['Priority', 'Time limit', 'Interim position while the gap stands'], d.priorities.map(p => ({ head: `<span class="mono">${p.id}</span>`, label: p.id, items: [by(`d4.time.${p.id}`), by(`d4.interim.${p.id}`)] })), off)}`;
   }
   if (did === 'd5') return recArea(did, 'g5', ['Consequence of the arrangement', T('notKnown', 'Not-known') + ' facts allowed per entry', T('f4', 'F4 finding') + ' allowed to stand', 'Minimum ' + T('confidence', 'confidence') + ' in the obtainable rung'],
-    D('d5').bands.map(b => ({ head: esc(b.name), label: b.name, items: ['notKnown', 'f4', 'conf'].map(f => { const c = by(`d5.${b.id}.${f}`); c.hint = D('d5').blankHints[b.id + '.' + f] || ''; return c; }) })), off);
+    D('d5').bands.map(b => ({ head: esc(withLabels(b.name)), label: withLabels(b.name), items: ['notKnown', 'f4', 'conf'].map(f => { const c = by(`d5.${b.id}.${f}`); c.hint = D('d5').blankHints[b.id + '.' + f] || ''; return c; }) })), off);
   if (did === 'd6') {
     const js = S.decisions.d6.jurisdictions, ed = canEdit('d6');
     const rows = js.map((j, i) => ({ head: ed ? `<input class="in" id="jn-${i}" data-path="decisions.d6.jurisdictions.${i}.name" value="${esc(j.name)}" aria-label="Jurisdiction name" style="min-width:140px">` : esc(j.name), label: j.name, sub: (j.start ? 'Starting position: ' + esc(j.start) : '') + (ed ? ` · <button class="lnk mono" data-act="rmJur" data-i="${i}">remove</button>` : ''), items: [by(`d6.j.${j.id}.established`), by(`d6.j.${j.id}.runs`)] }));
@@ -615,11 +617,11 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
-      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? 'Loaded ' + esc(S.current.register.on) + ': ' + esc(S.current.register.entries) + ' entries · most common pair ' + esc(S.current.register.pair || '—') + ' · highest rung received ' + esc(S.current.register.maxReceived || 'none') : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + S.current.register.on + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
-  if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${c} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld('Existing C5 position (no critical operations recorded in set-up)', 'current.d2.C5', S.current.d2.C5 || '')}`;
+  if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${scaleLabel(c)} ${c} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld(`Existing ${scaleLabel('C5')} C5 position (no critical operations recorded in set-up)`, 'current.d2.C5', S.current.d2.C5 || '')}`;
   if (d.id === 'd6') extra = `<div style="margin-top:12px">${fld('Existing offshoring position (I6)', 'current.offshoring', S.current.offshoring, { area: true })}</div>`;
   return `<section class="panel2"><div class="row between"><h2 class="sh" style="margin:0">${T('starting', 'Starting position')}</h2><div class="row">${inputs}</div></div>
     <p class="small" style="margin-top:10px">${esc(d.starting)}</p>${extra}
@@ -647,7 +649,7 @@ function detailsHtml(id, inline) {
            <label class="f"><span>Recording on behalf of</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`}
       ${!elig.length ? `<div class="small" style="color:var(--ochre)">No one in set-up can propose on this decision. An administrator needs to add a person with the role ${esc(propRoles)}.</div>` : ''}
       <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>`;
-  const what = `${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
+  const what = `${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 Moves money, up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
         <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Can be checked against documents</label>` : ''}
       ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (if it differs from the existing threshold)' : ' (if higher than for own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
       <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>`;
