@@ -22,13 +22,16 @@ returns the signed-in email, and a storage adapter with the same methods as `lib
 - **Authentication** (proving who someone is) is done by the identity provider: Cloudflare Access today.
 - **Authorisation** (what they may do) is done by the app, from the `users` table managed in `/admin`:
   - Only active users can use the app at all. Others are refused and listed under "Waiting for access".
-  - **Administrator** is a separate flag. Admins manage users; it does not by itself allow editing the engagement.
+  - **Administrator** is a separate flag. Admins manage users and do the engagement set-up (in `/admin`).
+    Being an admin does not by itself allow changing decisions; that needs an engagement role.
   - **Engagement role** (Counsel, Triodian, CRO, Insurer risk, Independent reviewer, Board record) decides
     what can be changed. Rules are in `lib/core/roles.js` and match the build specification.
 - Every save is checked on the server (`lib/core/rbac.js`): the stored engagement is compared with the one
   sent, and any change outside the user's role is refused. History is append-only and new entries are signed
   by the server with the user's name and role. Refusals are written to the audit log.
 - At least one active administrator must always exist; admins cannot remove their own admin access.
+- People change their own name, organisation and email on `/profile`. A new email only takes effect when the
+  person signs in with it (so the identity provider has verified it); until then the old address keeps working.
 
 ## Moving to AWS or Azure (one organisation)
 

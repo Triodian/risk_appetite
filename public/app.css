@@ -212,3 +212,37 @@ table.ppl th.fn{overflow-wrap:anywhere;hyphens:auto;min-width:92px}
 table.ppl th.fn{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;overflow-wrap:normal;hyphens:manual;min-width:76px}
 table.ppl th.who{min-width:170px}
 table.ppl tbody th.who{border-bottom:1px solid var(--rule-soft);padding:9px 12px}
+/* profile icon */
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--aubergine);color:#fff;font:600 13px/1 var(--sans);letter-spacing:.02em;flex-shrink:0}
+.avatar-link{display:inline-flex;border-radius:50%;text-decoration:none;outline-offset:3px}
+.avatar-link:hover .avatar,.avatar-link[aria-current="page"] .avatar{box-shadow:0 0 0 3px var(--aubergine-bg)}
+.drawer .item .avatar{width:30px;height:30px;font-size:12px;margin-right:10px}
+/* practice bar with role picker */
+.examplebar{display:flex;align-items:center;justify-content:center;gap:8px 16px;flex-wrap:wrap}
+.examplebar .pchip{text-transform:none;letter-spacing:0;padding:3px 8px}
+.examplebar .pchip select{max-width:240px}
+/* Admin and profile areas */
+.area-main{padding:34px 0 60px}
+.area-tabs{display:flex!important}
+.hdr-back{font-size:13px;color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+.hdr-back:hover{color:var(--ink)}
+.adm-sec{margin-top:30px}
+.adm-sec h2{font:600 22px/1.2 var(--serif);margin:0}
+.adm-users td{vertical-align:middle}
+.adm-users tr.off td{color:var(--ink-faint)}
+.adm-users tr.off td strong{font-weight:500}
+.em,.adm-users .em{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.adm-edit td{background:var(--parchment-2)}
+.adm-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 14px;align-items:end}
+.adm-form .acts2{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;grid-column:1/-1}
+.perm td.y{color:var(--green);font-weight:700;text-align:center}
+.perm td.n{color:var(--rule);text-align:center}
+.perm th.r{text-align:center}
+.perm td.adminonly{text-align:center;color:var(--aubergine);font-weight:600;font-size:13px}
+.adm-log td{font-size:13px}
+.adm-log td.when{white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.adm-msg{max-width:620px;margin:40px auto}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:0}
+dl.kv dt{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase;padding-top:2px}
+dl.kv dd{margin:0}
+@media (max-width:639px){.adm-hide-sm{display:none}.hdr-back{display:none}.area-main{padding:24px 0 60px}.area-main .wrap{padding-left:16px;padding-right:16px}.area-tabs{margin-left:0;overflow-x:auto}}

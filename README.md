@@ -4,8 +4,10 @@ Single-engagement web app: each deployment holds one engagement for one organisa
 It runs as a Cloudflare Worker: the files in `public/` are served as static assets, and `src/worker.js` handles `/api/*`.
 See `docs/architecture.md` for the layers and the path to AWS or Azure.
 
-- `public/` – the app (`index.html`, `app.js`, `content.js`, `app.css`)
-- `public/admin/` – the admin page at `/admin`: users, roles, access requests, activity
+- `public/` – the app (`index.html`, `app.js`, `content.js`, `app.css`). One script serves three areas:
+  - `/` – the engagement (decisions, checks, challenge, outputs) and practice mode
+  - `/admin/` – set-up, users and roles, activity (administrators only)
+  - `/profile/` – your name, organisation and email address
 - `src/worker.js` – Cloudflare entry point
 - `lib/core/` – cloud-neutral API (`api.js`), role rules (`roles.js`) and the server-side save check (`rbac.js`)
 - `lib/identity/cloudflare-access.js` – verifies the Cloudflare Access sign-in
@@ -33,4 +35,5 @@ npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@
 1. Hosting: GitHub → Cloudflare Worker, protected by Cloudflare Access ✓
 2. Database: Cloudflare D1 ✓
 3. Single engagement, admin at /admin with users and role-based access, enforced on the server ✓
-4. Next: UI refinements; enterprise items in `docs/architecture.md`
+4. Set-up moved to Admin; profile page with self-service email change ✓
+5. Next: UI refinements; enterprise items in `docs/architecture.md`

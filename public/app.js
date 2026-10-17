@@ -9,7 +9,10 @@ let S = null;            // engagement
 const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
 const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
-const SEQ = ['setup','overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
+/* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
+const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
+const ADMIN_SCREENS = ['setup', 'users', 'activity'];
+const SEQ = ['overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
 
 /* ---------- helpers ---------- */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -121,6 +124,7 @@ const eligible = did => activePeople().filter(p => proposerRoles(did).includes(p
 /* One gate for every editable control. target: a decision id, 'setup', 'measures', 'overall', 'challengeResponse', 'qcResponse' or 'approval'. */
 function can(target, role) {
   role = role || UI.role;
+  if (target === 'setup' && SRV.user && !practice()) return !!SRV.user.isAdmin;
   if (role === 'none') return false;
   if (target === 'approval') return role === 'board';
   if (role === 'board') return false;
@@ -131,6 +135,7 @@ function can(target, role) {
   return true;
 }
 function blockReason(target) {
+  if (target === 'setup' && SRV.user && !practice()) return 'Set-up is done by administrators.';
   if (UI.role === 'none') return 'You have no engagement role, so you can read the engagement but not change it. An administrator can give you a role.';
   if (target === 'approval') return 'Only the board record role records approval.';
   if (UI.role === 'board') return 'The board record role records approval only. It does not edit anything else.';
@@ -281,7 +286,7 @@ function roleSelect(id) { const cur = UI.personId ? 'p:' + UI.personId : 'r:' + 
 const stepOf = s => s === 'overview' || /^d\d$/.test(s) ? 'decisions' : s;
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
-  const steps = [['setup','Set-up'],['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
+  const steps = [['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
   return `<header class="hdr"><div class="hdr-in">
     <button class="brand" data-act="go" data-to="overview" aria-label="Triodian · go to decisions overview">${MARKSVG()}${b !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</button>
     ${b !== 'phone' ? '<span class="vrule" aria-hidden="true"></span>' : ''}
@@ -292,30 +297,31 @@ function header(ck) {
       ${saveChip()}
       ${b !== 'phone' ? `<button class="checkcount ${fails ? 'b-red' : 'b-green'}" data-act="go" data-to="checks">${b === 'phone' ? (fails ? fails + ' failing' : 'K ✓') : (fails ? fails + (fails === 1 ? ' check failing' : ' checks failing') : 'checks pass')}</button>` : ''}
       ${b === 'desk' ? `<button class="iconbtn" data-act="present" aria-pressed="${UI.present}" title="Present mode (P)" aria-label="Present mode">⊡</button>` : ''}
-      ${b !== 'phone' ? (practice() || !SRV.user ? `<label class="chip"><span aria-hidden="true">⌾</span>${roleSelect('role-hdr')}</label>` : `<span class="chip" title="Signed in as ${esc(SRV.user.email)}"><span aria-hidden="true">⌾</span>${esc(SRV.user.name || SRV.user.email)} · ${esc(ROLE_NAME[myRole()])}</span>`) : ''}
+      ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
     </div></div></header>
-    ${S.engagement.example ? '<div class="examplebar">Practice mode · worked example · fictional insurer · nothing is saved · <button class="lnk" data-act="leavePractice" style="color:inherit;text-decoration:underline">leave practice</button></div>' : ''}`;
+    ${S.engagement.example ? `<div class="examplebar"><span>Practice mode · worked example · nothing is saved</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label><button class="lnk" data-act="leavePractice" style="color:inherit;text-decoration:underline">Leave practice</button></div>` : ''}`;
 }
 function drawer() {
   if (!UI.drawer) return '';
   const it = (to, label, extra) => `<button class="item" data-act="go" data-to="${to}" ${UI.screen === to ? 'aria-current="page"' : ''}>${label}${extra || ''}</button>`;
   return `<div class="drawer-bg" data-act="drawer"></div><aside class="drawer" role="dialog" aria-label="Menu">
     <div class="row between"><strong>Menu</strong><button class="iconbtn" data-act="drawer" aria-label="Close menu">✕</button></div>
-    <div class="grp">Steps</div>${it('setup','Set-up')}${it('overview','Decisions overview')}
+    <div class="grp">Steps</div>${it('overview','Decisions overview')}
     ${C.decisions.map(d => it(d.id, `<span class="mono soft" style="width:22px">${d.n}</span>${esc(d.name)}`)).join('')}
     ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}${it('reference','Reference')}
-    ${practice() || !SRV.user ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : `<div class="grp">Signed in</div><p class="small" style="padding:4px 10px">${esc(SRV.user.name || SRV.user.email)}<br><span class="soft">${esc(SRV.user.email)} · ${esc(ROLE_NAME[myRole()])}</span></p>`}
+    ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
+    ${SRV.user ? `<div class="grp">Signed in</div><a class="item" href="/profile/" style="text-decoration:none">${avatarBadge()}<span>${esc(SRV.user.name || SRV.user.email)}<br><span class="small soft">${esc(ROLE_NAME[myRole()])} · your profile</span></span></a>` : ''}
     <div class="grp">Engagement</div>
     <button class="item" data-act="save">Download a copy (.json)</button>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="example">Practise with the worked example</button>'}
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
-    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/" style="text-decoration:none">Admin · users and access</a>' : ''}
+    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#setup" style="text-decoration:none">Admin · set-up and users</a>' : ''}
     <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
     ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
-    <a class="item" href="AI Use Assessment.html" style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">UA</span><span>AI Use Assessment<br><span class="small soft">Reads the calibration set</span></span></a>
+    <a class="item" href="AI Use Assessment.html" hidden style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">UA</span><span>AI Use Assessment<br><span class="small soft">Reads the calibration set</span></span></a>
   </aside>`;
 }
 function footer() {
@@ -327,19 +333,18 @@ function footer() {
 }
 function entry() {
   const n = i => `<span class="mono" style="color:var(--aubergine)">${String(i).padStart(2, '0')}</span>`;
-  const u = SRV.user, setupRoles = ['counsel', 'triodian', 'cro', 'risk'];
+  const u = SRV.user;
   let i = 0, acts = '', note = '';
   const practiceBtn = () => `<button class="act" data-act="example">${n(++i)}<span><strong>Practise with the worked example</strong><br><span class="small soft">Corvane General, a fictional insurer. Switch roles freely. Nothing is saved.</span></span></button>`;
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still practise with the worked example.`; acts = practiceBtn(); }
   else if (!SRV.exists) {
-    if (setupRoles.includes(myRole())) acts = `<button class="act" data-act="new">${n(++i)}<span><strong>Start the engagement</strong><br><span class="small soft">Begin at set-up with the framework's function list.</span></span></button>
-      <button class="act" data-act="open">${n(++i)}<span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app.</span></span></button>`;
-    else note = 'The engagement has not been started yet. Counsel, Triodian, the CRO or the insurer risk function can start it.';
+    if (u && u.isAdmin) acts = `<a class="act" href="/admin/#setup" style="text-decoration:none">${n(++i)}<span><strong>Set up the engagement</strong><br><span class="small soft">In Admin: engagement details, people, functions and inputs.</span></span></a>`;
+    else note = 'The engagement has not been set up yet. An administrator sets it up.';
     acts += practiceBtn();
   } else note = 'Opening the engagement…';
-  const who = u ? `Signed in as ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}${u.isAdmin ? ' · <a href="/admin/">Admin</a>' : ''}.` : '';
+  const who = u ? `Signed in as ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}${u.isAdmin ? ' · <a href="/admin/#setup">Admin</a>' : ''} · <a href="/profile/">Profile</a>.` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600">AI Risk Appetite</span></div>
     <div class="eyebrow">From general appetite to AI appetite</div>
@@ -385,16 +390,16 @@ function screenSetup() {
   const inputs = S.inputs.map((x, i) => { const c = C.inputs[i]; return b === 'phone'
     ? `<div class="panel2" style="padding:12px 14px"><div class="row" style="gap:8px"><span class="mono">${esc(x.ref)}</span><strong class="small">${esc(c.name)}</strong></div><div class="mini" style="margin:4px 0 8px">Used in: ${esc(c.usedIn)}</div><div class="fgrid">${fld('Status', `inputs.${i}.status`, x.status, { select: [['','Not marked'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']] })}${fld('Date', `inputs.${i}.date`, x.date, { type: 'date' })}${fld('Note', `inputs.${i}.note`, x.note)}</div></div>`
     : `<tr><td class="code">${esc(x.ref)}</td><td>${esc(c.name)}<div class="mini">${esc(c.usedIn)}</div></td><td><select class="in" id="in-${i}-status" data-path="inputs.${i}.status" aria-label="${esc(x.ref)} status">${[['','—'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']].map(o => `<option value="${o[0]}" ${x.status === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></td><td><input class="in" type="date" id="in-${i}-date" data-path="inputs.${i}.date" value="${esc(x.date)}" aria-label="${esc(x.ref)} date"></td><td><input class="in" id="in-${i}-note" data-path="inputs.${i}.note" value="${esc(x.note)}" aria-label="${esc(x.ref)} note"></td></tr>`; }).join('');
-  return `${opening('Step 1 · set-up', 'Set up the engagement', 'Who is in the room, which functions are in scope, and what the insurer has already decided.')}
+  return `${opening('Admin · set-up', 'Set up the engagement', 'Who is in the room, which functions are in scope, and what the insurer has already decided.')}
   ${ro ? `<p class="err">${esc(blockReason('setup'))} ${whyLink()}</p>` : ''}
   <fieldset ${ro ? 'disabled' : ''} style="border:0;padding:0;margin:0" class="stack">
   <section class="card"><h2 class="sh">1 · Engagement</h2><div class="fgrid">
     ${fld('Insurer', 'engagement.insurer', e.insurer)}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
   </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
-  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<a class="btn sm" href="/admin/" style="text-decoration:none">Manage users</a>' : ''}</div>
+  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
     <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. Only people with the role CRO or insurer risk function can propose on decisions 1 and 3. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
-    ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users in <a href="/admin/">Admin</a>.' : ' An administrator adds people.'}</p>`}</section>
+    ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
   <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')}</h2>
     <div class="grid2"><div><div class="mini" style="margin-bottom:6px">FUNCTIONS · framework starting list, editable</div>
       <div class="stack" style="gap:6px">${S.functions.map((f, i) => `<div class="row" style="flex-wrap:nowrap"><input class="in" id="fn-${i}" data-path="functions.${i}.name" value="${esc(f.name)}" aria-label="Function ${i + 1}"><button class="btn sm ghost" data-act="rmFn" data-i="${i}" aria-label="Remove ${esc(f.name)}">✕</button></div>`).join('')}</div>
@@ -417,7 +422,9 @@ function screenOverview(ck) {
     <div class="row between"><span class="dnum">${d.n}</span>${badge(st.label, st.cls)}</div>
     <div class="dname">${esc(d.name)}</div><div class="small soft" style="flex:1">${esc(d.question)}</div>
     <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns}/${st.total}${st.qc ? ' · ' + st.qc + ' QC open' : ''}</span></div></button>`; }).join('');
-  return `${opening('Step 2 · decisions', 'Eight appetite decisions', 'Each is one question to the board, answered on a fixed scale and recorded with an owner.')}
+  const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
+  const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#setup">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
+  return `${opening('Decisions', 'Eight appetite decisions', 'Each is one question to the board, answered on a fixed scale and recorded with an owner.')}${setupNote}
   <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>
     <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
@@ -820,6 +827,7 @@ function render() { if (inChange) { if (!pendingRender) { pendingRender = true; 
 const dsKey = el => el && el !== document.body && el.dataset && Object.keys(el.dataset).length ? el.tagName + '|' + JSON.stringify(Object.assign({}, el.dataset)) : null;
 function doRender() {
   const app = document.getElementById('app'); lastBp = bp();
+  if (AREA !== 'app') return renderArea(app);
   if (!S) { app.innerHTML = entry(); return; }
   applyIdentity();
   if (UI.personId) { const p = person(UI.personId); if (p) UI.role = p.role; else UI.personId = ''; }
@@ -848,6 +856,9 @@ function refreshDetails() {
 }
 function toast(msg) { if (!msg) return; let t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast'; t.setAttribute('role', 'status'); clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = 'hidden'; }, 3200); }
 function go(to) {
+  if (AREA === 'app' && ADMIN_SCREENS.includes(to)) { if (SRV.user && SRV.user.isAdmin) location.href = '/admin/#' + to; else toast('Set-up is done by administrators in Admin.'); return; }
+  if (AREA === 'admin' && !ADMIN_SCREENS.includes(to)) { location.href = '/#' + to; return; }
+  if (AREA === 'admin' && to !== 'setup' && !ADM.loaded) loadAdmin();
   UI.screen = to; UI.drawer = false; UI.sheet = null; closePop(true); popAnchor = null; UI.showRef = false;
   try { history.replaceState(null, '', '#' + to); } catch (e) {}
   render(); window.scrollTo(0, 0);
@@ -928,10 +939,184 @@ function openFile(file) {
   const fr = new FileReader();
   fr.onload = () => { let st; try { st = hydrate(JSON.parse(fr.result)); } catch (e) { return toast('Rejected: ' + e.message); }
     if (SRV.exists) return toast('The engagement has already been started, so a file cannot replace it.');
-    st.engagement.id = uid(); startEngagement(st); go('overview');
+    st.engagement.id = uid(); startEngagement(st); go('setup');
     UI.dirty = true; autosave(); saveNow(); toast('Started the engagement from ' + file.name + '. People and their areas come from the user list, so check set-up.'); };
   fr.readAsText(file);
 }
+/* ---------- profile icon ---------- */
+const initials = s => { const w = String(s || '').replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase(); };
+function avatarBadge() { const u = SRV.user; return u ? `<span class="avatar" aria-hidden="true">${esc(initials(u.name || u.email))}</span>` : ''; }
+function avatar() {
+  const u = SRV.user; if (!u) return '';
+  return `<a class="avatar-link" href="/profile/" title="Your profile · ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}" aria-label="Your profile" ${AREA === 'profile' ? 'aria-current="page"' : ''}>${avatarBadge()}</a>`;
+}
+
+/* ---------- Admin and profile areas ---------- */
+const ADM = { loaded: false, users: [], roles: [], perms: [], requests: [], audit: [], editing: null, adding: false, draft: null, err: '' };
+const PRF = { err: '', msg: '', emailErr: '' };
+async function loadAdmin() {
+  const [u, a] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/audit')]);
+  if (u.ok) { ADM.users = u.body.users; ADM.roles = u.body.roles; ADM.perms = u.body.permissions; ADM.requests = u.body.accessRequests || []; }
+  else ADM.err = u.error;
+  ADM.audit = a.ok ? a.body.entries : []; ADM.loaded = true; render();
+}
+const roleLong = id => (ADM.roles.find(r => r.id === id) || (C.roles || []).find(r => r.id === id) || {}).name || (id || 'None');
+function areaHeader() {
+  const tabs = AREA === 'admin' && SRV.user && SRV.user.isAdmin ? [['setup', 'Set-up'], ['users', 'Users'], ['activity', 'Activity']] : [];
+  return `<header class="hdr"><div class="hdr-in">
+    <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none">${MARKSVG()}${bp() !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</a>
+    <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
+    ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
+    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}<a class="lnk hdr-back" href="/">Back to the app</a>${avatar()}</div>
+  </div></header>`;
+}
+const areaMsg = (title, text) => `<div class="adm-msg"><h1 class="h1" style="font-size:30px">${esc(title)}</h1><p class="soft">${text}</p><p style="margin-top:18px"><a class="btn" href="/">Back to the app</a></p></div>`;
+function renderArea(app) {
+  const ae = document.activeElement, fid = ae && ae.id; let sel = null;
+  try { if (ae && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
+  let main;
+  if (!SRV.checked) main = '<p class="soft" style="padding:40px 0">Loading…</p>';
+  else if (!SRV.on) main = areaMsg(SRV.code === 'no_access' ? 'No access' : 'Could not connect', esc(SRV.reason) + (SRV.code === 'no_access' ? ' <a href="/cdn-cgi/access/logout">Sign out</a>' : ''));
+  else if (AREA === 'profile') main = screenProfile();
+  else if (!SRV.user.isAdmin) main = areaMsg('Administrators only', 'Admin is for administrators. Ask an administrator if you need something set up or a user added.');
+  else if (UI.screen === 'users') main = screenUsers();
+  else if (UI.screen === 'activity') main = screenActivity();
+  else if (!S) main = screenStart();
+  else { applyIdentity(); versionCheck(); main = screenSetup(); }
+  app.innerHTML = areaHeader() + `<main id="main" tabindex="-1" class="area-main"><div class="wrap">${main}</div></main>`;
+  if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange && /text|search|email|textarea/.test(el.type || el.tagName.toLowerCase())) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  else if (ADM.adding || ADM.editing) { const f = document.getElementById('f-email'); if (f) f.focus(); }
+}
+function screenStart() {
+  return `${opening('Admin · set-up', 'Set up the engagement', 'This deployment holds one engagement. Start it here; everyone else then works on it in the app.')}
+  <div class="acts" style="max-width:640px">
+    <button class="act" data-act="new"><span class="mono" style="color:var(--aubergine)">01</span><span><strong>Start the engagement</strong><br><span class="small soft">Begin with the framework's function list.</span></span></button>
+    <button class="act" data-act="open"><span class="mono" style="color:var(--aubergine)">02</span><span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app. People come from the user list, so re-check owners and proposers.</span></span></button>
+  </div>`;
+}
+function roleOptions(cur) { return `<option value="" ${!cur ? 'selected' : ''}>None (no engagement role)</option>` + ADM.roles.map(r => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join(''); }
+function userForm(u, isNew) {
+  return `<form class="adm-form" id="userForm" data-id="${esc(u.id || '')}" novalidate>
+    <label class="f">Email<input class="in" id="f-email" type="email" autocomplete="off" value="${esc(u.email || '')}"></label>
+    <label class="f">Name<input class="in" id="f-name" value="${esc(u.name || '')}"></label>
+    <label class="f">Organisation<input class="in" id="f-org" value="${esc(u.organisation || '')}"></label>
+    <label class="f">Engagement role<select class="in" id="f-role">${roleOptions(u.role)}</select></label>
+    <div class="acts2"><label class="cb"><input type="checkbox" id="f-admin" ${u.isAdmin ? 'checked' : ''}> Administrator (set-up and users)</label>
+      ${isNew ? '' : `<label class="cb"><input type="checkbox" id="f-active" ${u.active !== false ? 'checked' : ''}> Active (can sign in)</label>`}</div>
+    ${u.pendingEmail ? `<p class="small soft acts2">Has asked to change their email to ${esc(u.pendingEmail)} (not yet confirmed).</p>` : ''}
+    ${ADM.err ? `<p class="err acts2" role="alert">${esc(ADM.err)}</p>` : ''}
+    <div class="acts2"><button class="btn primary sm" type="submit">${isNew ? 'Add user' : 'Save changes'}</button><button class="btn sm" type="button" data-act="admCancel">Cancel</button></div>
+  </form>`;
+}
+function screenUsers() {
+  if (!ADM.loaded) return '<p class="soft" style="padding:40px 0">Loading…</p>';
+  const me = SRV.user, active = ADM.users.filter(u => u.active).length;
+  const rows = ADM.users.map(u => {
+    if (ADM.editing === u.id) return `<tr class="adm-edit"><td colspan="7">${userForm(ADM.draft || u, false)}</td></tr>`;
+    return `<tr class="${u.active ? '' : 'off'}">
+      <td><strong>${esc(u.name || '—')}</strong>${u.id === me.id ? ' <span class="badge b-aub">you</span>' : ''}<div class="em">${esc(u.email)}</div></td>
+      <td class="adm-hide-sm">${esc(u.organisation)}</td>
+      <td>${u.role ? esc(roleLong(u.role)) : '<span class="soft">None</span>'}</td>
+      <td>${u.isAdmin ? '<span class="badge b-aub">Admin</span>' : ''}</td>
+      <td>${u.active ? '<span class="badge b-green">Active</span>' : '<span class="badge b-grey">Inactive</span>'}</td>
+      <td class="adm-hide-sm small soft">${u.lastSeenAt ? fmtLocal(u.lastSeenAt) : 'Never'}</td>
+      <td style="text-align:right"><button class="btn sm" data-act="admEdit" data-id="${esc(u.id)}">Edit</button></td></tr>`;
+  }).join('');
+  const reqs = ADM.requests.length ? `<section class="adm-sec"><h2>Waiting for access</h2>
+    <p class="small soft" style="margin:4px 0 12px">These people signed in but are not users, so the app turned them away.</p>
+    <div class="tw"><table class="lg"><thead><tr><th>Email</th><th>Last tried</th><th class="adm-hide-sm">Attempts</th><th></th></tr></thead><tbody>
+    ${ADM.requests.map(r => `<tr><td class="em">${esc(r.email)}</td><td class="small">${fmtLocal(r.last_at)}</td><td class="adm-hide-sm small">${esc(r.attempts)}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="btn sm primary" data-act="admGrant" data-email="${esc(r.email)}">Add as user</button> <button class="btn sm" data-act="admDismiss" data-email="${esc(r.email)}">Dismiss</button></td></tr>`).join('')}
+    </tbody></table></div></section>` : '';
+  const perms = `<section class="adm-sec"><h2>Roles and permissions</h2>
+    <p class="small soft" style="margin:4px 0 12px">What each engagement role can change. The server checks every save against these rules.</p>
+    <div class="tw"><table class="lg perm"><thead><tr><th>Can change</th>${ADM.roles.map(r => `<th class="r">${esc(r.name)}</th>`).join('')}</tr></thead><tbody>
+    ${ADM.perms.map(p => p.adminOnly ? `<tr><td>${esc(p.what)}</td><td colspan="${ADM.roles.length}" class="adminonly">Administrators only</td></tr>` : `<tr><td>${esc(p.what)}</td>${ADM.roles.map(r => p.roles.includes(r.id) ? '<td class="y" aria-label="yes">✓</td>' : '<td class="n" aria-label="no">·</td>').join('')}</tr>`).join('')}
+    </tbody></table></div>
+    <p class="small soft" style="margin-top:10px">A user with no engagement role can read the engagement but not change it.</p></section>`;
+  return `${opening('Admin · users', 'Users and access', '')}
+  ${reqs}
+  <section class="adm-sec">
+    <div class="row between"><p class="small soft" style="margin:0">${active} active of ${ADM.users.length}. Only active users can open the app. Their engagement role decides what they can change.</p>
+    ${ADM.adding ? '' : '<button class="btn primary" data-act="admAdd">Add user</button>'}</div>
+    ${ADM.adding ? `<div class="card" style="margin:14px 0"><h3 class="sh">New user</h3>${userForm(ADM.draft || { isAdmin: false }, true)}</div>` : ''}
+    <div class="tw" style="margin-top:12px"><table class="lg adm-users"><thead><tr><th>Name and email</th><th class="adm-hide-sm">Organisation</th><th>Engagement role</th><th>Admin</th><th>Status</th><th class="adm-hide-sm">Last seen</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <p class="small soft" style="margin-top:10px">Users are deactivated rather than deleted, so their names stay on the decisions they made.</p>
+  </section>${perms}`;
+}
+const AUDIT_NAME = { 'user.create': 'Added user', 'user.update': 'Changed user', 'user.profile': 'Updated own profile', 'user.email_requested': 'Asked to change email', 'user.email': 'Confirmed new email', 'engagement.create': 'Started the engagement', 'engagement.save': 'Saved the engagement', 'engagement.refused': 'Save refused' };
+function auditDetail(e) {
+  const d = e.detail || {}, v = (k, x) => x === null || x === '' || x === undefined ? '—' : k === 'role' ? roleLong(x) : x;
+  if (e.action === 'user.create') return `${d.email || ''}${d.role ? ' · ' + roleLong(d.role) : ''}${d.isAdmin ? ' · admin' : ''}${d.reason ? ' · ' + d.reason : ''}`;
+  if (e.action === 'user.update' || e.action === 'user.profile') return `${d.email || ''}: ` + Object.entries(d.changed || {}).map(([k, c]) => `${k} ${v(k, c.from)} → ${v(k, c.to)}`).join('; ');
+  if (e.action === 'user.email_requested' || e.action === 'user.email') return `${d.from} → ${d.to}`;
+  if (e.action === 'engagement.save' || e.action === 'engagement.create') return `revision ${d.revision}${d.changes ? ' · ' + d.changes + ' change' + (d.changes === 1 ? '' : 's') : ''}`;
+  if (e.action === 'engagement.refused') return d.reason || '';
+  return '';
+}
+function screenActivity() {
+  if (!ADM.loaded) return '<p class="soft" style="padding:40px 0">Loading…</p>';
+  return `${opening('Admin · activity', 'Activity', 'User changes and engagement saves, newest first. Detailed edits are in the engagement’s own history.')}
+    ${ADM.audit.length ? `<div class="tw"><table class="lg adm-log"><thead><tr><th>When</th><th>Who</th><th>What</th><th class="adm-hide-sm">Details</th></tr></thead><tbody>
+    ${ADM.audit.map(e => `<tr><td class="when">${fmtLocal(e.at)}</td><td>${esc(e.actor)}</td><td>${esc(AUDIT_NAME[e.action] || e.action)}</td><td class="adm-hide-sm">${esc(auditDetail(e))}</td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="soft small">Nothing yet.</p>'}`;
+}
+function screenProfile() {
+  const u = SRV.user;
+  return `${opening('Your profile', esc(u.name || u.email), '')}
+  <div class="stack" style="max-width:720px">
+  <section class="card"><h2 class="sh">Your details</h2>
+    <form id="profileForm" class="adm-form" novalidate>
+      <label class="f">Name<input class="in" id="p-name" value="${esc(u.name)}" autocomplete="name"></label>
+      <label class="f">Organisation<input class="in" id="p-org" value="${esc(u.organisation)}" autocomplete="organization"></label>
+      ${PRF.err ? `<p class="err acts2" role="alert">${esc(PRF.err)}</p>` : ''}${PRF.msg ? `<p class="small acts2" style="color:var(--green)" role="status">${esc(PRF.msg)}</p>` : ''}
+      <div class="acts2"><button class="btn primary sm" type="submit">Save</button></div>
+    </form></section>
+  <section class="card"><h2 class="sh">Email address</h2>
+    <p>You sign in as <strong>${esc(u.email)}</strong>.</p>
+    ${u.pendingEmail ? `<div class="scope" style="margin-top:12px"><span aria-hidden="true">✉</span><span>You asked to change your email to <strong>${esc(u.pendingEmail)}</strong>. To confirm, <a href="/cdn-cgi/access/logout">sign out</a> and sign in again with the new address; a code is sent there. Until then, keep using ${esc(u.email)}. <button class="lnk" data-act="cancelEmail">Cancel the change</button></span></div>`
+    : `<form id="emailForm" class="adm-form" novalidate style="margin-top:12px">
+      <label class="f">New email address<input class="in" id="p-email" type="email" autocomplete="email"></label>
+      ${PRF.emailErr ? `<p class="err acts2" role="alert">${esc(PRF.emailErr)}</p>` : ''}
+      <div class="acts2"><button class="btn sm" type="submit">Change email</button><span class="small soft">You confirm it by signing in with the new address.</span></div></form>`}
+  </section>
+  <section class="card"><h2 class="sh">Access</h2>
+    <dl class="kv"><dt>Engagement role</dt><dd>${esc(u.role ? roleLong(u.role) : 'None. You can read the engagement but not change it.')}</dd>
+    <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#setup">open Admin</a>' : 'No'}</dd></dl>
+    <p class="small soft" style="margin-top:10px">Roles are set by an administrator.</p></section>
+  <p><a class="btn" href="/cdn-cgi/access/logout">Sign out</a></p>
+  </div>`;
+}
+document.addEventListener('submit', async e => {
+  const f = e.target; if (!['userForm', 'profileForm', 'emailForm'].includes(f.id)) return;
+  e.preventDefault();
+  const val = id => ((document.getElementById(id) || {}).value || '').trim();
+  if (f.id === 'profileForm') {
+    PRF.err = PRF.msg = '';
+    const r = await api('PUT', '/api/me', { name: val('p-name'), organisation: val('p-org') });
+    if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Saved.'; } else PRF.err = r.error;
+    return render();
+  }
+  if (f.id === 'emailForm') {
+    PRF.emailErr = '';
+    const r = await api('POST', '/api/me/email', { email: val('p-email') });
+    if (r.ok) SRV.user = r.body.user; else PRF.emailErr = r.error;
+    return render();
+  }
+  const id = f.dataset.id;
+  const v = { email: val('f-email'), name: val('f-name'), organisation: val('f-org'), role: val('f-role') || null, isAdmin: !!(document.getElementById('f-admin') || {}).checked, active: document.getElementById('f-active') ? document.getElementById('f-active').checked : true };
+  ADM.draft = Object.assign({ id }, v);
+  if (!v.email || !v.name) { ADM.err = 'Enter an email address and a name.'; return render(); }
+  const r = id ? await api('PUT', '/api/admin/users/' + encodeURIComponent(id), v) : await api('POST', '/api/admin/users', v);
+  if (!r.ok) { ADM.err = r.error; return render(); }
+  ADM.err = ''; ADM.adding = false; ADM.editing = null; ADM.draft = null;
+  if (id === SRV.user.id) { const me = await api('GET', '/api/me'); if (me.ok) SRV.user = me.body.user; }
+  toast(id ? 'Saved ' + v.email : 'Added ' + v.email);
+  await loadAdmin();
+  if (AREA === 'admin') { const e2 = await api('GET', '/api/engagement'); if (e2.ok) SRV.people = e2.body.people || (e2.body.data && e2.body.data.people) || SRV.people; }
+});
+
 /* ---------- server storage ---------- */
 /* One engagement per deployment. SRV.rev: the revision this browser last loaded or saved (0 = not started).
    SRV.state: 'saved' | 'pending' | 'saving' | 'error' | 'conflict'. Practice mode (the worked example) is never saved. */
@@ -988,8 +1173,8 @@ async function loadReal(quiet) {
   SRV.exists = !!r.body.exists; SRV.rev = r.body.revision || 0; SRV.state = 'saved'; SRV.err = ''; SRV.conflict = null;
   SRV.lastAt = r.body.updatedAt || ''; SRV.lastBy = r.body.updatedBy || '';
   UI.dirty = false; UI.sel = null; lastSig = null;
-  if (r.body.exists) { try { S = hydrate(r.body.data); } catch (e) { S = null; toast('The saved engagement could not be read: ' + e.message); return false; } applyIdentity(); if (!SRV.started) go(UI.screen && UI.screen !== 'entry' ? UI.screen : 'overview'); else render(); }
-  else { S = null; UI.screen = 'entry'; render(); }
+  if (r.body.exists) { try { S = hydrate(r.body.data); } catch (e) { S = null; toast('The saved engagement could not be read: ' + e.message); return false; } applyIdentity(); if (!SRV.started && AREA === 'app') go(UI.screen && UI.screen !== 'entry' ? UI.screen : 'overview'); else render(); }
+  else { S = null; if (AREA === 'app') UI.screen = 'entry'; render(); }
   SRV.started = true;
   return true;
 }
@@ -1095,8 +1280,14 @@ function onClick(e) {
   const A = {
     go: () => go(d.to), drawer: () => { UI.drawer = !UI.drawer; render(); }, present: () => togglePresent(),
     save: () => saveEngagement(),
-    open: () => { if (SRV.exists) return toast('The engagement has already been started.'); document.getElementById('fileIn').click(); },
-    new: () => { if (SRV.exists) return; startEngagement(newEngagement()); go('setup'); },
+    open: () => { if (SRV.exists) return toast('The engagement has already been started.'); if (AREA !== 'admin') return; document.getElementById('fileIn').click(); },
+    admAdd: () => { ADM.adding = true; ADM.editing = null; ADM.err = ''; ADM.draft = null; render(); },
+    admGrant: () => { ADM.adding = true; ADM.editing = null; ADM.err = ''; ADM.draft = { email: d.email, isAdmin: false }; render(); window.scrollTo({ top: 0 }); },
+    admEdit: () => { ADM.editing = d.id; ADM.adding = false; ADM.err = ''; ADM.draft = null; render(); },
+    admCancel: () => { ADM.editing = null; ADM.adding = false; ADM.err = ''; ADM.draft = null; render(); },
+    admDismiss: async () => { await api('POST', '/api/admin/access-requests/dismiss', { email: d.email }); loadAdmin(); },
+    cancelEmail: async () => { const r = await api('DELETE', '/api/me/email'); if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Email change cancelled.'; } else PRF.err = r.error; render(); },
+    new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
     example: () => leave('open practice mode').then(ok => { if (ok) { startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
     leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
@@ -1181,8 +1372,8 @@ function togglePresent() { if (bp() !== 'desk') return toast('Present mode needs
 /* ---------- boot ---------- */
 async function boot() {
   C = window.RAF_CONTENT || null;
-  if (!C) { try { C = await (await fetch('content.json')).json(); } catch (e) { document.getElementById('app').innerHTML = '<p style="padding:40px;font-family:sans-serif">content.json could not be loaded. Keep content.js beside index.html, or serve the folder from a web server.</p>'; return; } }
-  if (!C.markSvg) { try { C.markSvg = await (await fetch('triodian-mark.svg')).text(); } catch (e) { C.markSvg = ''; } }
+  if (!C) { try { C = await (await fetch('/content.json')).json(); } catch (e) { document.getElementById('app').innerHTML = '<p style="padding:40px;font-family:sans-serif">content.json could not be loaded. Keep content.js beside index.html, or serve the folder from a web server.</p>'; return; } }
+  if (!C.markSvg) { try { C.markSvg = await (await fetch('/triodian-mark.svg')).text(); } catch (e) { C.markSvg = ''; } }
   document.addEventListener('click', onClick);
   document.addEventListener('change', onChange);
   document.addEventListener('input', onInput);
@@ -1193,10 +1384,14 @@ async function boot() {
   document.addEventListener('touchend', () => { sy0 = null; });
   window.addEventListener('resize', () => { if (bp() !== lastBp) { closePop(true); popAnchor = null; render(); } });
   window.addEventListener('beforeunload', e => { const unsaved = savesHere() ? SRV.state !== 'saved' : (UI.dirty && S && !S.engagement.example); if (unsaved) { if (savesHere()) saveNow(); e.preventDefault(); e.returnValue = ''; } });
+  const h = (location.hash || '').slice(1);
+  if (AREA === 'admin') UI.screen = ADMIN_SCREENS.includes(h) ? h : 'setup';
+  else if (AREA === 'profile') UI.screen = 'profile';
+  else if (SEQ.includes(h) || h === 'reference') UI.screen = h;
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); } else await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
