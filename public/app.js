@@ -1069,9 +1069,10 @@ function areaHeader() {
     <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none">${MARKSVG()}${bp() !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</a>
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
     ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
-    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}${bp() === 'desk' ? '<a class="lnk hdr-back" href="/user-guide/">User guide</a>' : ''}<a class="lnk hdr-back" href="/">Back to the app</a>${avatar()}</div>
+    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}${bp() === 'desk' ? '<a class="lnk hdr-back" href="/user-guide/">User guide</a>' : ''}<a class="lnk hdr-back hdr-app" href="/">${backLabel()}</a>${avatar()}</div>
   </div>${AREA === 'admin' && UI.screen === 'setup' ? docband() : ''}</header>`;
 }
+const backLabel = () => (SRV.exists ? 'Open the engagement' : 'Back to the app');
 const areaMsg = (title, text) => `<div class="adm-msg"><h1 class="h1" style="font-size:30px">${esc(title)}</h1><p class="soft">${text}</p><p style="margin-top:18px"><a class="btn" href="/">Back to the app</a></p></div>`;
 function renderArea(app) {
   const ae = document.activeElement, fid = ae && ae.id; let sel = null;
@@ -1254,7 +1255,7 @@ async function saveNow() {
     const r = await api('PUT', '/api/engagement', { revision: SRV.rev, data: text });
     SRV.inflight = null;
     if (S !== snap) return;
-    if (r.ok) { SRV.rev = r.body.revision; SRV.exists = true; SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy; SRV.err = ''; if (SRV.again) { SRV.again = false; SRV.state = 'pending'; return saveNow(); } SRV.state = 'saved'; UI.dirty = false; }
+    if (r.ok) { SRV.rev = r.body.revision; SRV.exists = true; document.querySelectorAll('.hdr-app').forEach(a => { a.textContent = backLabel(); }); SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy; SRV.err = ''; if (SRV.again) { SRV.again = false; SRV.state = 'pending'; return saveNow(); } SRV.state = 'saved'; UI.dirty = false; }
     else if (r.status === 409) { SRV.state = 'conflict'; SRV.conflict = r.body || {}; SRV.err = r.error; toast(r.error); }
     else { SRV.state = 'error'; SRV.err = r.error; toast('Not saved: ' + r.error); }
     SRV.again = false; paintSave();
@@ -1508,7 +1509,7 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); } else await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
