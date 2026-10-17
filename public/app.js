@@ -356,7 +356,7 @@ function entry() {
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     <h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
-    <p class="sub" style="font-size:18px">Record the board’s decisions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement and calibration set.</p>
+    <p class="sub" style="font-size:18px">Record the insurer’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>
     ${note ? `<p class="entry-note">${note}</p>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}
     ${who}
@@ -365,10 +365,10 @@ function entry() {
 
 /* ---------- guides shown after choosing set-up or practice ---------- */
 const STAGES = [
-  ['Session 1: decisions 1 to 3', 'The board sets the authority AI may hold in each function, the thresholds at which a failure counts as a financial loss, harm to policyholders or disruption to a critical operation, and the evidence it expects for each combination of authority and consequence. Each decision starts from the insurer’s current position. Every position is recorded with the person who proposed it and an accountable owner.'],
-  ['Session 2: decisions 4 to 8', 'The board sets how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval.'],
-  ['Checks and challenge', 'Ten consistency checks run after every change; checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about the insurer’s legal obligations are recorded for counsel, who answers them.'],
-  ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. The board then approves it, and the date, minute reference and approving body are recorded. The outputs are the appetite statement, the tolerance and trigger schedule, the session record, the calibration set and the check report.'],
+  ['Session 1: decisions 1 to 3', 'External counsel leads the session and Triodian records it. The CRO, General Counsel, head of operational risk, AI governance lead and the owners of the functions in scope work through the first three decisions: the authority AI may hold in each function; the thresholds at which a failure counts as a financial loss, harm to policyholders or disruption to a critical operation; and the evidence the insurer expects for each combination of authority and consequence. Each decision starts from the insurer’s current position. The independent reviewer attends for decision 2 only.'],
+  ['Session 2: decisions 4 to 8', 'The same group, joined by procurement or vendor management, works through how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval. The session 1 positions are then reviewed in light of these decisions.'],
+  ['Checks and challenge', 'Ten consistency checks run after every change. Failed checks go back to the CRO, and checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about what the insurer is legally obliged to do are recorded for counsel rather than settled in the session, and counsel answers them.'],
+  ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. Counsel drafts the AI risk appetite statement in a form the board can approve, and the CRO recommends it to the board or its risk committee. When the board approves it, the date, minute reference and approving body are recorded.'],
 ];
 function exampleSummary() {
   const X = buildExample(), old = S, oldRole = UI.role; S = X; UI.role = 'triodian';
@@ -386,8 +386,9 @@ function guideOverlay() {
   if (g === 'setup') {
     const admin = SRV.user && SRV.user.isAdmin;
     body = `<h1 id="entry-h" class="h1">How an engagement runs</h1>
-    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. Counsel leads it and Triodian records it. After set-up, it runs in four stages.</p>
+    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. External counsel leads it and Triodian records it. The positions come from the insurer, and the board approves the result. After set-up, the engagement runs in four stages.</p>
     <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
+    <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the insurer. On decisions 1 and 3, only the CRO or the insurer’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
     <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#setup" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
   } else {
@@ -489,7 +490,7 @@ function screenOverview(ck) {
     <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns}/${st.total}${st.qc ? ' · ' + st.qc + ' QC open' : ''}</span></div></button>`; }).join('');
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
   const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#setup">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
-  return `${opening('Decisions', 'Eight appetite decisions', 'Each decision puts one question to the board. The answer is recorded on a fixed scale, with an accountable owner.')}${setupNote}
+  return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}${setupNote}
   <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>
     <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
