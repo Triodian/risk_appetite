@@ -325,7 +325,6 @@ function header(ck) {
     <div class="hdr-r">
       ${saveChip()}
       ${b !== 'phone' ? `<button class="checkcount ${fails ? 'b-red' : 'b-green'}" data-act="go" data-to="checks">${b === 'phone' ? (fails ? fails + ' failing' : 'K ✓') : (fails ? fails + (fails === 1 ? ' check failing' : ' checks failing') : 'checks pass')}</button>` : ''}
-      ${b === 'desk' ? `<button class="iconbtn" data-act="present" aria-pressed="${UI.present}" title="Present mode (P)" aria-label="Present mode">⊡</button>` : ''}
       ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
     </div></div>${docband()}</header>
