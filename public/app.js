@@ -260,7 +260,7 @@ function statusMark() { const c = S.calibration, f = c.status !== 'default' && b
   return 'Uncalibrated'; }
 const exportBlocked = () => S.calibration.status !== 'default' && blocking(runChecks()).length > 0;
 function agreeWorking() {
-  const who = me(); if (!who || who.role !== 'cro') return toast('Choose a CRO person under "Acting as" in the header.');
+  const who = me(); if (!who || who.role !== 'cro') return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
   if (blocking(runChecks()).length) return toast('Checks K1 to K9 must pass first.');
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
   c.status = 'working'; c.agreedBy = who.name; c.agreedById = who.id; c.agreedOn = today();
@@ -284,6 +284,14 @@ function calBadge() { const s = S.calibration.status; if (s !== 'default' && blo
 function roleSelect(id) { const cur = UI.personId ? 'p:' + UI.personId : 'r:' + UI.role;
   return `<select id="${id}" data-act="role" aria-label="Acting as">${S.people.length ? `<optgroup label="People">${S.people.map(p => `<option value="p:${esc(p.id)}" ${cur === 'p:' + p.id ? 'selected' : ''}>${esc(p.name || 'Unnamed')} · ${esc(ROLE_NAME[p.role] || p.role)}</option>`).join('')}</optgroup>` : ''}<optgroup label="Role only">${C.roles.map(r => `<option value="r:${r.id}" ${cur === 'r:' + r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup></select>`; }
 const stepOf = s => s === 'overview' || /^d\d$/.test(s) ? 'decisions' : s;
+/* Privilege marking and the appetite's status, shown under the header on every engagement screen. */
+function docband() {
+  if (!S) return '';
+  const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
+  const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
+    : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#setup">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
+  return `<div class="docband"><div class="docband-in">${priv}<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''} · ` : ''}${esc(statusMark())}</span></div></div>`;
+}
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
   const steps = [['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
@@ -299,7 +307,7 @@ function header(ck) {
       ${b === 'desk' ? `<button class="iconbtn" data-act="present" aria-pressed="${UI.present}" title="Present mode (P)" aria-label="Present mode">⊡</button>` : ''}
       ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
-    </div></div></header>
+    </div></div>${docband()}</header>
     ${S.engagement.example ? `<div class="examplebar"><span>Practice mode · worked example · nothing is saved</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label><button class="lnk" data-act="leavePractice" style="color:inherit;text-decoration:underline">Leave practice</button></div>` : ''}`;
 }
 function drawer() {
@@ -590,7 +598,7 @@ function screenDecision(did, ck) {
   return `${opening(`Decision ${d.n} · session ${d.session} · ${d.param}`, esc(d.name), esc(d.question))}
   <div class="row" style="margin:-14px 0 22px">${badge(st.label, st.cls)}<span class="mini">Answered as: ${esc(d.answeredAs)}</span></div>
   <div class="stack">
-    <section class="measure"><h2 class="sh">Purpose</h2><p>${purpose}</p>${d.recorded ? `<p class="small soft">${esc(d.recorded)}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(d.note)}</p>` : ''}
+    <section class="measure"><h2 class="sh">Purpose</h2><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(d.recorded)}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(d.note)}</p>` : ''}
       ${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
     ${startPanel(d)}
     <section><h2 class="sh">Recording area</h2>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
@@ -609,7 +617,7 @@ function screenDecision(did, ck) {
 /* ---------- S11 checks ---------- */
 function screenChecks(ck) {
   const bl = blocking(ck).length;
-  return `${opening('Step 3 · consistency checks', 'Checks K1 to K10', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
+  return `${opening('Consistency checks', 'Checks K1 to K10', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
   <p class="small soft measure">Run on every change. A failed ${T('check', 'check')} goes back to the CRO; Triodian does not resolve it.</p>
   <div class="stack" style="gap:12px">${ck.map(k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
     <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.state === 'pass' ? 'b-green' : k.state === 'fail' ? 'b-red' : k.state === 'warn' ? 'b-ochre' : 'b-grey')}</div>
@@ -641,7 +649,7 @@ function screenChallenge() {
     const ed = UI.role === 'counsel';
     body = S.questionsForCounsel.length ? `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Decision and cell</th><th>Question</th><th>Response · counsel</th><th style="width:130px">Status</th></tr></thead><tbody>${S.questionsForCounsel.map((q, i) => `<tr><td class="code">${esc(q.ref)}</td><td class="small">${q.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : 'Decision ' + esc(D(q.decision).n)}</td><td class="small">${esc(q.question)}</td><td><input class="in" id="qcr-${i}" data-path="questionsForCounsel.${i}.response" value="${esc(q.response)}" ${ed ? '' : 'disabled'} aria-label="Response ${esc(q.ref)}"></td><td>${ed ? st(`questionsForCounsel.${i}.status`, q.status, ['open', 'answered']) : badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</td></tr>`).join('')}</tbody></table></div>${ed ? '' : '<p class="small soft" style="margin-top:8px">Responses are recorded by counsel.</p>'}` : '<p class="soft">No questions logged. Add them from each decision screen.</p>';
   }
-  return `${opening('Step 4 · challenge', 'Challenge round', 'Second line and each accountable person review the positions in their area. Each point is accepted or answered.')}
+  return `${opening('Challenge', 'Challenge round', 'Second line and each accountable person review the positions in their area. Each point is accepted or answered.')}
   <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab === 'challenge'}" data-act="chTab" data-t="challenge">Challenge log · ${S.challenge.length}</button><button role="tab" aria-selected="${tab === 'qc'}" data-act="chTab" data-t="qc">Questions for counsel · ${S.questionsForCounsel.length}</button></div>
   ${body}${stepbar()}`;
 }
@@ -738,8 +746,8 @@ function outputFor(tab) { return { statement: [mdStatement, 'statement'], schedu
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
   const tabs = [['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
-  const who = me(), agreeWhy = !who || who.role !== 'cro' ? 'Choose a CRO person under "Acting as" in the header' : bl ? `${bl} blocking ${bl === 1 ? 'check' : 'checks'} failing` : '', xb = tab === 'calibration' && exportBlocked();
-  return `${opening('Step 5 · outputs', 'Outputs', 'The statement for board approval, the schedule, the session record and the calibration set.')}
+  const who = me(), agreeWhy = !who || who.role !== 'cro' ? (practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') : bl ? `${bl} blocking ${bl === 1 ? 'check' : 'checks'} failing` : '', xb = tab === 'calibration' && exportBlocked();
+  return `${opening('Outputs', 'Outputs', 'The statement for board approval, the schedule, the session record and the calibration set.')}
   <section class="card" style="margin-bottom:20px"><div class="row between"><div class="row"><h2 class="sh" style="margin:0">${T('calibration', 'Calibration status')}</h2>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>${c.minuteRef ? `<span class="mono soft">minute ${esc(c.minuteRef)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">CRO only. Requires K1 to K9 passed. ${c.status === 'default' ? 'Version becomes 1.' : 'Any later change to a position increments the version.'}</p>
       <button class="btn primary sm" data-act="agree" ${agreeWhy || c.status !== 'default' ? 'disabled' : ''}>Agree working appetite</button> ${agreeWhy && c.status === 'default' ? `<span class="small" style="color:var(--red)">${esc(agreeWhy)}</span>` : c.status !== 'default' ? `<span class="small soft">Agreed ${esc(c.agreedOn)} by ${esc(c.agreedBy)}</span>` : ''}</div>
@@ -968,7 +976,7 @@ function areaHeader() {
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
     ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
     <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}<a class="lnk hdr-back" href="/">Back to the app</a>${avatar()}</div>
-  </div></header>`;
+  </div>${AREA === 'admin' && UI.screen === 'setup' ? docband() : ''}</header>`;
 }
 const areaMsg = (title, text) => `<div class="adm-msg"><h1 class="h1" style="font-size:30px">${esc(title)}</h1><p class="soft">${text}</p><p style="margin-top:18px"><a class="btn" href="/">Back to the app</a></p></div>`;
 function renderArea(app) {

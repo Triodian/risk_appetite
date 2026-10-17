@@ -53,5 +53,5 @@ The SQL in `lib/store/d1.js` is plain and ports to PostgreSQL with small changes
 - Optional: map IdP groups to engagement roles, and SCIM provisioning so users are managed in one place.
 - Backups and point-in-time restore, retention policy, and data residency confirmed for the organisation.
 - Security headers (Content-Security-Policy), rate limiting, and an independent penetration test.
-- Self-host the web fonts (they are loaded from Google Fonts today).
+- ~~Self-host the web fonts~~ Done: fonts are served from `/fonts` (SIL Open Font Licence; licences included).
 - Export of the audit log to the organisation's monitoring.
