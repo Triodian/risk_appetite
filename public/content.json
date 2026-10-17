@@ -929,7 +929,7 @@
     },
     "consequence": {
       "term": "Consequence level",
-      "def": "How serious a failure would be, from C1 immaterial to C5 disruption of a [[critOp|critical operation]].",
+      "def": "How serious a failure would be, from C1 Immaterial to C5 Critical disruption (disruption of a [[critOp|critical operation]]).",
       "where": "Decisions 2 to 5"
     },
     "critOp": {

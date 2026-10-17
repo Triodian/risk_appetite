@@ -38,8 +38,20 @@ const domId = id => 'c_' + id.replace(/[^a-zA-Z0-9]/g, '_');
 const scaleName = (code) => { const all = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence); const s = all.find(x => x.code === code); return s ? s.name : ''; };
 const scaleLabel = code => { const s = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence).find(x => x.code === code); return s ? (s.label || s.name) : ''; };
 const scaleOpt = code => scaleLabel(code) ? code + ' ' + scaleLabel(code) : code;
-const withLabels = str => String(str).replace(/\b([ACE][0-6])\b(?! [A-Z][a-z])/g, (m, c) => scaleOpt(c));
-const scaleTip = code => scaleName(code) ? `${code} ${scaleName(code)}: ${scaleDef(code)}` : '';
+/* Put the short label after a bare code: "C1 or C2" -> "C1 Immaterial or C2 Contract breach". Leaves a code alone when its
+   label or framework name already follows ("C4 Policyholder harm", "C1 immaterial", "C5 disruption of ..."), and turns
+   "C2, contract breach" into "C2 Contract breach". */
+const withLabels = (str, letters = 'ACE') => { str = String(str); let out = '', last = 0; const re = new RegExp(`\\b([${letters}][0-6])\\b`, 'g'); let m;
+  while ((m = re.exec(str))) {
+    const c = m[1], lab = scaleLabel(c), nm = scaleName(c); if (!lab) continue;
+    const after = str.slice(re.lastIndex), comma = /^, /.test(after), rest = comma ? after.slice(2) : after.startsWith(' ') ? after.slice(1) : null;
+    let skip = 0, keep = false;
+    if (rest !== null) { const lr = rest.toLowerCase(), full = [lab, nm].find(x => lr.startsWith(x.toLowerCase()) && !/[a-z]/i.test(rest[x.length] || ''));
+      if (full) skip = (comma ? 2 : 1) + full.length; else if (!comma && (lr.startsWith(nm.split(/[ -]/)[0].toLowerCase() + ' ') || (c === 'C5' && lr.startsWith('disruption')))) keep = true; }
+    out += str.slice(last, m.index) + (keep ? c : c + ' ' + lab); last = re.lastIndex + skip; re.lastIndex = last;
+  }
+  return out + str.slice(last); };
+const scaleTip = code => scaleName(code) ? `${scaleOpt(code)}: ${scaleDef(code)}` : '';
 const scaleOption = (o, sel) => `<option value="${esc(o)}" ${sel ? 'selected' : ''} title="${esc(scaleTip(o))}">${esc(scaleOpt(o))}</option>`;
 const T = (id, text) => C.glossary[id] ? `<button type="button" class="term" data-term="${id}" aria-expanded="false" aria-controls="poproot">${text || esc(C.glossary[id].term)}</button>` : (text || '');
 const linkify = s => esc(s).replace(/\[\[(\w+)(?:\|([^\]]+))?\]\]/g, (m, id, t) => T(id, t ? esc(t) : esc(C.glossary[id] ? C.glossary[id].term.toLowerCase() : id)));
@@ -76,10 +88,10 @@ function cellsFor(did) {
     D('d2').levels.forEach(l => {
       if (l.code === 'C1') return;
       if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => add(`d2.op.${o.id}`, { row: 'C5.' + o.id, col: 'setting', rowLabel: scaleOpt('C5') + ' · ' + (o.name || 'critical operation'), colLabel: 'Insurer\u2019s setting', kind: 'text' }));
-      else add(`d2.${l.code}`, { row: l.code, col: 'setting', rowLabel: l.code + ', ' + scaleLabel(l.code), colLabel: 'Insurer\u2019s setting', kind: 'text' });
+      else add(`d2.${l.code}`, { row: l.code, col: 'setting', rowLabel: scaleOpt(l.code), colLabel: 'Insurer\u2019s setting', kind: 'text' });
     });
   }
-  if (did === 'd3') AT.forEach(a => CO.forEach(c => add(`d3.${a}.${c}`, { row: a, col: c, rowLabel: a + ', ' + scaleLabel(a), colLabel: scaleOpt(c), kind: 'select', options: EV })));
+  if (did === 'd3') AT.forEach(a => CO.forEach(c => add(`d3.${a}.${c}`, { row: a, col: c, rowLabel: scaleOpt(a), colLabel: scaleOpt(c), kind: 'select', options: EV })));
   if (did === 'd4') {
     D('d4').gaps.forEach(g => D('d4').bands.forEach(b => add(`d4.${g.id}.${b.id}`, { row: g.id, col: b.id, rowLabel: g.name, colLabel: withLabels(b.name), kind: 'select', options: PRI, group: 'matrix' })));
     D('d4').priorities.forEach(p => { add(`d4.time.${p.id}`, { row: p.id, col: 'time', rowLabel: p.id, colLabel: 'Time limit', kind: 'text', group: 'time' }); add(`d4.interim.${p.id}`, { row: p.id, col: 'interim', rowLabel: p.id, colLabel: 'Interim position', kind: 'text', group: 'time' }); });
@@ -106,7 +118,7 @@ function cellsFor(did) {
 }
 const allCells = () => ['d1','d2','d3','d4','d5','d6','d7','d8'].reduce((a, d) => a.concat(cellsFor(d)), []);
 function cellById(id) { return cellsFor(id.split('.')[0]).find(c => c.id === id); }
-function cellLabel(id) { if (/^M\d+$/.test(id)) { const m = C.measures.find(x => x.ref === id); return 'Schedule · ' + id + (m ? ' ' + m.measure : ''); } const c = cellById(id); if (!c) return id; const d = D(c.did); return `Decision ${d.n} · ${c.rowLabel}${c.colLabel && c.kind !== 'number' || c.did === 'd7' ? ' · ' + c.colLabel : ''}`; }
+function cellLabel(id) { if (/^M\d+$/.test(id)) { const m = C.measures.find(x => x.ref === id); return 'Schedule · ' + id + (m ? ' ' + withLabels(m.measure, 'C') : ''); } const c = cellById(id); if (!c) return id; const d = D(c.did); return `Decision ${d.n} · ${c.rowLabel}${c.colLabel && c.kind !== 'number' || c.did === 'd7' ? ' · ' + c.colLabel : ''}`; }
 const P = id => S.decisions[id.split('.')[0]].cells[id] || null;
 function getPos(id) { const did = id.split('.')[0]; const cells = S.decisions[did].cells; if (!cells[id]) cells[id] = blankPos(); return cells[id]; }
 const val = id => { const p = P(id); return p && p.status === 'set' ? p.value : null; };
@@ -525,8 +537,8 @@ function cellCtl(c, off, nav, aria) {
   const navA = nav ? `data-gr="${nav[0]}" data-r="${nav[1]}" data-c="${nav[2]}"` : '';
   if (c.kind === 'select') return `<select id="${domId(c.id)}" class="cellsel ${st === 'notSet' ? 'notset' : !v ? 'empty' : ''} ${bad ? 'bad' : fl}" data-cell="${cid}" ${navA} ${inv} ${dis} aria-label="${esc(aria)}" title="${esc(v ? scaleTip(v) : '')}">
     <option value="">${st === 'notSet' ? '—' : '—'}</option>${st === 'notSet' ? '<option value="__ns" selected>not set</option>' : ''}${c.options.map(o => scaleOption(o, v === o)).join('')}</select>`;
-  if (c.kind !== 'number') return `<textarea id="${domId(c.id)}" class="in cellta ${bad ? 'bad' : fl}" rows="1" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#EBD7A8' : ''}" data-cell="${cid}" ${navA} ${inv} ${dis} placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">${esc(v)}</textarea>`;
-  return `<input id="${domId(c.id)}" class="in ${bad ? 'bad' : fl}" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#E4D6AE' : ''}" type="${c.kind === 'number' ? 'number' : 'text'}" ${c.kind === 'number' ? 'min="0" inputmode="decimal"' : ''} data-cell="${cid}" ${navA} ${inv} ${dis} value="${esc(v)}" placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">`;
+  if (c.kind !== 'number') return `<textarea id="${domId(c.id)}" class="in cellta ${bad ? 'bad' : fl}" rows="1" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#EBD7A8' : ''}" data-cell="${cid}" ${navA} ${inv} ${dis} placeholder="${st === 'notSet' ? 'not set' : esc(withLabels(c.hint || '', 'C'))}" aria-label="${esc(aria)}">${esc(v)}</textarea>`;
+  return `<input id="${domId(c.id)}" class="in ${bad ? 'bad' : fl}" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#E4D6AE' : ''}" type="${c.kind === 'number' ? 'number' : 'text'}" ${c.kind === 'number' ? 'min="0" inputmode="decimal"' : ''} data-cell="${cid}" ${navA} ${inv} ${dis} value="${esc(v)}" placeholder="${st === 'notSet' ? 'not set' : esc(withLabels(c.hint || '', 'C'))}" aria-label="${esc(aria)}">`;
 }
 function cellMarks(c, off) {
   const p = P(c.id); let h = '';
@@ -560,8 +572,8 @@ function decisionBody(did, off) {
     d.levels.forEach(l => {
       const sc = C.scales.consequence.find(x => x.code === l.code);
       if (l.code === 'C1') rows.push({ head: `<span class="mono">C1</span> ${esc(scaleLabel('C1'))}`, label: 'C1', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, { html: `<span class="soft">Whatever falls below ${esc(scaleOpt('C2'))}</span>` }, { html: 'n/a' }] });
-      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(scaleLabel('C5'))}: ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: 'C5 ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
-      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: l.code, sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
+      else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(scaleLabel('C5'))}: ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: scaleOpt('C5') + ': ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
+      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: scaleOpt(l.code), sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
     });
     return recArea(did, 'g2', [T('consequence', 'Level'), 'Generic definition', 'What the insurer sets', 'Insurer\u2019s setting', 'Usual source'], rows, off);
   }
@@ -621,10 +633,10 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
-  if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${scaleLabel(c)} ${c} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld(`Existing ${scaleLabel('C5')} C5 position (no critical operations recorded in set-up)`, 'current.d2.C5', S.current.d2.C5 || '')}`;
+  if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${scaleOpt(c)} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld(`Existing ${scaleOpt('C5')} position (no critical operations recorded in set-up)`, 'current.d2.C5', S.current.d2.C5 || '')}`;
   if (d.id === 'd6') extra = `<div style="margin-top:12px">${fld('Existing offshoring position (I6)', 'current.offshoring', S.current.offshoring, { area: true })}</div>`;
   return `<section class="panel2"><div class="row between"><h2 class="sh" style="margin:0">${T('starting', 'Starting position')}</h2><div class="row">${inputs}</div></div>
-    <p class="small" style="margin-top:10px">${esc(d.starting)}</p>${extra}
+    <p class="small" style="margin-top:10px">${esc(withLabels(d.starting, 'C'))}</p>${extra}
     <div class="row" style="margin-top:12px"><button class="btn sm aub" data-act="useStart" data-d="${d.id}" ${canEdit(d.id) ? '' : 'disabled'}>Use starting position</button><span class="mini">Fills empty cells only. Nothing is filled in automatically.</span></div></section>`;
 }
 function detailsHtml(id, inline) {
@@ -676,22 +688,22 @@ function getPosView(id) { return P(id) || blankPos(); }
 function screenDecision(did, ck) {
   const d = D(did), off = offenderMap(ck), st = decisionStatus(did, ck), b = bp();
   const purposeTerms = { d1: [['ceiling', 'highest level of authority']], d2: [['consequence', 'consequence definitions']], d3: [['expected', 'evidence the board expects']], d4: [['gap', 'shortfall']], d5: [['notKnown', 'not know']], d6: [['concentration', 'depend on a single platform']], d7: [['trigger', 'events']], d8: [['appetite', 'the appetite itself']] };
-  let purpose = esc(d.purpose); (purposeTerms[did] || []).forEach(([id, txt]) => { purpose = purpose.replace(esc(txt), T(id, esc(txt))); });
+  let purpose = esc(withLabels(d.purpose, 'C')); (purposeTerms[did] || []).forEach(([id, txt]) => { purpose = purpose.replace(esc(txt), T(id, esc(txt))); });
   const qcs = S.questionsForCounsel.filter(q => q.decision === did);
   const body = decisionBody(did, off);
   const details = UI.sel && UI.sel.startsWith(did + '.') ? UI.sel : null;
   const gateTxt = st.gate ? 'Every cell set or recorded as not set' : `${st.un} of ${st.total} cells blank`;
   return `${opening(`Decision ${d.n} · session ${d.session} · calibration parameter ${d.param}`, esc(d.name), esc(d.question))}
-  <div class="row" style="margin:-14px 0 22px">${badge(st.label, st.cls)}<span class="mini">Answered as: ${esc(d.answeredAs)}</span></div>
+  <div class="row" style="margin:-14px 0 22px">${badge(st.label, st.cls)}<span class="mini">Answered as: ${esc(withLabels(d.answeredAs, 'C'))}</span></div>
   <div class="stack">
-    <section class="measure"><h2 class="sh">Purpose</h2><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(d.recorded)}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(d.note)}</p>` : ''}
+    <section class="measure"><h2 class="sh">Purpose</h2><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}
       ${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
     ${startPanel(d)}
     <section><h2 class="sh">The insurer’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the insurer proposes in each cell. <strong>Details</strong> holds the proposer, owner, any condition or dissent, or records a position as not set.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
-    ${d.prompts.length ? `<details class="pr"><summary>Questions to open the discussion · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
+    ${d.prompts.length ? `<details class="pr"><summary>Questions to open the discussion · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(withLabels(p, 'C'))}</li>`).join('')}</ul></details>` : ''}
     <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">recorded for counsel, not decided in the session</span></div>
       ${qcs.length ? `<div class="stack" style="gap:8px;margin-top:12px">${qcs.map(q => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono">${esc(q.ref)}</span><span style="flex:1">${esc(q.question)}${q.cell ? `<br><button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : ''}${q.response ? `<div class="small soft">Response: ${esc(q.response)}</div>` : ''}</span>${badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</div>`).join('')}</div>` : '<p class="small soft" style="margin-top:8px">None logged.</p>'}
       ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Any question about what the insurer is legally obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
@@ -707,7 +719,7 @@ function screenChecks(ck) {
   <p class="small soft measure">The checks run after every change. A failed ${T('check', 'check')} is referred to the CRO; Triodian does not resolve it.</p>
   <div class="stack" style="gap:12px">${ck.map(k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
     <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.state === 'pass' ? 'b-green' : k.state === 'fail' ? 'b-red' : k.state === 'warn' ? 'b-ochre' : 'b-grey')}</div>
-    <p style="margin:8px 0 4px">${esc(k.result)}</p><p class="small soft" style="margin:0">Fails when: ${esc(k.fails)}</p>
+    <p style="margin:8px 0 4px">${esc(withLabels(k.result, 'C'))}</p><p class="small soft" style="margin:0">Fails when: ${esc(withLabels(k.fails, 'C'))}</p>
     ${k.id === 'K10' ? `<p class="small soft" style="margin-top:6px">${esc(C.k10Note)}</p>` : ''}
     ${k.off.length ? `<ul style="margin:10px 0 0;padding-left:18px">${k.off.map(o => `<li class="small"><button class="lnk mono" data-act="gotoCell" data-cell="${esc(o.id)}">${esc(cellLabel(o.id))}</button> · ${esc(o.why)}</li>`).join('')}</ul>` : ''}
   </section>`).join('')}</div>${stepbar()}`;
@@ -828,7 +840,7 @@ function mdCalibration() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { return { statement: [mdStatement, 'statement'], schedule: [mdSchedule, 'schedule'], session: [mdSession, 'session-record'], calibration: [mdCalibration, 'calibration-set'], checks: [mdChecks, 'check-report'] }[tab]; }
+function outputFor(tab) { const L = fn => () => withLabels(fn(), 'C'); return { statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
   const tabs = [['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
@@ -845,7 +857,7 @@ function screenOutputs(ck) {
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
-  ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(x.measure)}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
+  ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(withLabels(x.measure, 'C'))}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
   <div class="row" style="margin-bottom:12px"><button class="btn sm" id="out-copy" data-act="copy" data-t="${tab}" ${xb ? 'disabled' : ''}>Copy markdown</button>${inFrame ? '' : `<button class="btn sm" id="out-dl" data-act="download" data-t="${tab}" ${xb ? 'disabled' : ''}>Download .md</button>`}${tab === 'calibration' ? `${inFrame ? '' : `<button class="btn sm" id="out-dlj" data-act="downloadJson" ${xb ? 'disabled' : ''}>Download .json</button>`}<button class="btn sm ghost" id="out-cpj" data-act="copyJson" ${xb ? 'disabled' : ''}>Copy JSON</button>` : ''}${inFrame ? '<span class="small soft">Downloads are not available in this viewer. Use Copy, or open the file directly in a browser.</span>' : ''}${xb ? '<span class="small" style="color:var(--red)">Blocked: checks failing</span>' : ''}</div>
   <div class="card md" aria-label="Preview">${mdToHtml(md)}</div>
   ${stepbar()}`;
@@ -855,12 +867,12 @@ function screenOutputs(ck) {
 function screenReference() {
   const q = UI.refQ.trim().toLowerCase();
   const gl = Object.entries(C.glossary).filter(([id, g]) => !q || (g.term + ' ' + g.def).toLowerCase().includes(q)).sort((a, b) => a[1].term.localeCompare(b[1].term));
-  const scale = (title, list, term) => `<section class="card"><h2 class="sh">${T(term, title)}</h2><div class="stack" style="gap:8px">${list.map(s => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono" style="min-width:28px;font-weight:600">${s.code}</span><span><strong>${esc(s.name)}</strong><br><span class="small soft">${esc(s.def)}</span></span></div>`).join('')}</div></section>`;
+  const scale = (title, list, term) => `<section class="card"><h2 class="sh">${T(term, title)}</h2><div class="stack" style="gap:8px">${list.map(s => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono" style="min-width:28px;font-weight:600">${s.code}</span><span><strong>${esc(s.label || s.name)}</strong><br><span class="small soft">${s.label ? 'Framework name: ' + esc(s.name) + '. ' : ''}${esc(s.def)}</span></span></div>`).join('')}</div></section>`;
   return `${opening('Reference', 'Scales, glossary and framework', 'The AI Risk Appetite Framework, ' + esc(C.frameworkDate) + '. Read-only. For what each role does, see the <a href="/user-guide/">user guide</a>.')}
   <p class="small soft measure">${esc(C.scales.note)}</p>
   <div class="dgrid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:28px">${scale('Authority tiers', C.scales.authority, 'tier')}${scale('Consequence levels', C.scales.consequence, 'consequence')}${scale('Evidence rungs', C.scales.evidence, 'ladder')}</div>
   <section style="margin-bottom:28px"><div class="row between"><h2 class="sh" style="margin:0">Glossary</h2><input class="in" id="refq" data-act="refq" type="search" value="${esc(UI.refQ)}" placeholder="Search terms" style="max-width:280px" aria-label="Search glossary"></div>
-    <div class="tw" style="margin-top:12px"><table class="lg"><tbody>${gl.map(([id, g]) => `<tr id="g-${id}" class="fwsec"><td style="width:220px;font-weight:600">${esc(g.term)}</td><td class="small">${linkify(g.def)}</td><td class="small soft" style="width:200px">${esc(g.where)}</td></tr>`).join('') || '<tr><td>No match.</td></tr>'}</tbody></table></div></section>
+    <div class="tw" style="margin-top:12px"><table class="lg"><tbody>${gl.map(([id, g]) => `<tr id="g-${id}" class="fwsec"><td style="width:220px;font-weight:600">${esc(g.term)}</td><td class="small">${linkify(withLabels(g.def, 'C'))}</td><td class="small soft" style="width:200px">${esc(g.where)}</td></tr>`).join('') || '<tr><td>No match.</td></tr>'}</tbody></table></div></section>
   <section><h2 class="sh">Framework text</h2><div class="card md" id="fw">${mdToHtml(C.frameworkMarkdown || '', true)}</div></section>`;
 }
 
@@ -896,8 +908,8 @@ function renderPop() {
   const ck = id.startsWith('check:') ? C.checks.find(x => x.id === id.slice(6)) : null;
   const g = ck ? { term: `Check ${ck.id} · ${ck.name}`, def: ck.fails, where: '' } : C.glossary[id];
   const inner = ck ? `<div class="ptop"><span class="mini">FAILED CHECK</span><button class="iconbtn" data-pact="close" aria-label="Close">✕</button></div>
-    <h4 id="pop-h">${esc(g.term)}</h4><p class="small" style="margin:0"><strong>Fails when:</strong> ${esc(ck.fails)}.</p>${(popAnchor && popAnchor.closest('[data-td]')) ? (() => { const cid = popAnchor.closest('[data-td]').dataset.td, why = (offenderMap(runChecks())[cid] || []).filter(x => x.startsWith(ck.id + ':')).map(x => x.slice(ck.id.length + 2)); return why.length ? `<div class="where"><strong>This cell:</strong> ${esc(why.join('; '))}</div>` : ''; })() : '<div style="height:8px"></div>'}<button class="lnk small" data-pact="more" data-id="${id}">All checks</button>` : `<div class="ptop">${back ? '<button class="lnk mono" data-pact="back">← back</button>' : '<span class="mini">TERM</span>'}<button class="iconbtn" data-pact="close" aria-label="Close">✕</button></div>
-    <h4 id="pop-h">${esc(g.term)}</h4><p class="small" style="margin:0">${linkify(g.def)}</p><div class="where"><strong>Where it is used:</strong> ${esc(g.where)}</div><button class="lnk small" data-pact="more" data-id="${id}">Read more</button>`;
+    <h4 id="pop-h">${esc(g.term)}</h4><p class="small" style="margin:0"><strong>Fails when:</strong> ${esc(withLabels(ck.fails, 'C'))}.</p>${(popAnchor && popAnchor.closest('[data-td]')) ? (() => { const cid = popAnchor.closest('[data-td]').dataset.td, why = (offenderMap(runChecks())[cid] || []).filter(x => x.startsWith(ck.id + ':')).map(x => x.slice(ck.id.length + 2)); return why.length ? `<div class="where"><strong>This cell:</strong> ${esc(why.join('; '))}</div>` : ''; })() : '<div style="height:8px"></div>'}<button class="lnk small" data-pact="more" data-id="${id}">All checks</button>` : `<div class="ptop">${back ? '<button class="lnk mono" data-pact="back">← back</button>' : '<span class="mini">TERM</span>'}<button class="iconbtn" data-pact="close" aria-label="Close">✕</button></div>
+    <h4 id="pop-h">${esc(g.term)}</h4><p class="small" style="margin:0">${linkify(withLabels(g.def, 'C'))}</p><div class="where"><strong>Where it is used:</strong> ${esc(g.where)}</div><button class="lnk small" data-pact="more" data-id="${id}">Read more</button>`;
   if (bp() === 'phone') {
     root.innerHTML = `<div class="sheet-bg" data-pact="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pop-h"><div class="handle" data-pact="drag" aria-hidden="true"></div>${inner}</div>`;
   } else {
@@ -1375,7 +1387,7 @@ function buildExample() {
   ];
   X.challenge = [
     { ref: 'CH-01', raisedBy: 'p3', decision: 'd1', cell: 'd1.cl.provider', point: 'The A4 ceiling inside the claims TPA is above our own staff. The reason should cite the binder schedule.', response: 'Reason updated to cite clause 4.2 of the binder schedule.', status: 'accepted' },
-    { ref: 'CH-02', raisedBy: 'p2', decision: 'd2', cell: 'd2.C4', point: 'The hardship part of C4 has no definition. Two people assessing the same case could reach different levels.', response: '', status: 'open' }
+    { ref: 'CH-02', raisedBy: 'p2', decision: 'd2', cell: 'd2.C4', point: 'The hardship part of C4 Policyholder harm has no definition. Two people assessing the same case could reach different levels.', response: '', status: 'open' }
   ];
   X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1' };
   X.history = [{ at: '2026-10-15T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-10-22T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
