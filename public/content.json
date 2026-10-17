@@ -8,31 +8,37 @@
       {
         "code": "A1",
         "name": "productivity",
+        "label": "Assists",
         "def": "Drafts, summarises, searches. A person still acts."
       },
       {
         "code": "A2",
         "name": "analytical",
+        "label": "Recommends",
         "def": "Scores, ranks, recommends. A person decides."
       },
       {
         "code": "A3",
         "name": "decision",
+        "label": "Decides",
         "def": "Approves, declines, triages. The output is the decision; no person reviews before it takes effect."
       },
       {
         "code": "A4",
         "name": "transactional",
+        "label": "Moves money",
         "def": "Prices, allocates, pays. Money or positions move."
       },
       {
         "code": "A5",
         "name": "agentic",
+        "label": "Acts unattended",
         "def": "Plans and acts across steps and tools, unattended."
       },
       {
         "code": "A6",
         "name": "actuation",
+        "label": "Changes systems",
         "def": "Holds credentials that change systems, assets or infrastructure."
       }
     ],
@@ -40,26 +46,31 @@
       {
         "code": "C1",
         "name": "immaterial",
+        "label": "Immaterial",
         "def": "No effect outside the team using it."
       },
       {
         "code": "C2",
         "name": "contract breach",
+        "label": "Contract breach",
         "def": "The provider or insurer would be in breach of an agreement term."
       },
       {
         "code": "C3",
         "name": "financial loss",
+        "label": "Financial loss",
         "def": "Loss to the insurer above its reporting threshold for the operation."
       },
       {
         "code": "C4",
         "name": "policyholder harm",
+        "label": "Policyholder harm",
         "def": "A policyholder is wrongly declined, delayed, charged or paid."
       },
       {
         "code": "C5",
         "name": "critical-operation disruption",
+        "label": "Critical disruption",
         "def": "A critical operation moves outside the tolerance the board has set."
       }
     ],
@@ -67,36 +78,43 @@
       {
         "code": "E0",
         "name": "none",
+        "label": "None",
         "def": "Nothing is held."
       },
       {
         "code": "E1",
         "name": "disclosure",
+        "label": "Disclosure",
         "def": "A statement of what AI is used, where and for what."
       },
       {
         "code": "E2",
         "name": "attestation",
+        "label": "Attestation",
         "def": "A signed statement that the AI operated within stated limits over a period."
       },
       {
         "code": "E3",
         "name": "event notification",
+        "label": "Event notice",
         "def": "Notice when a defined trigger is crossed. Also called trigger reporting."
       },
       {
         "code": "E4",
         "name": "audit",
+        "label": "Audit right",
         "def": "A right to examine the aggregate record, exercised by the insurer or its verifier."
       },
       {
         "code": "E5",
         "name": "continuous telemetry",
+        "label": "Live telemetry",
         "def": "A stream of aggregate measures against the declared appetite. Also called continuous evidence."
       },
       {
         "code": "E6",
         "name": "deterministic actuation control",
+        "label": "Action control",
         "def": "A control at the point of action, independent of the AI's reasoning, with a signed record of what was requested, what applied and what was allowed."
       }
     ]
