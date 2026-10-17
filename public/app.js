@@ -323,6 +323,7 @@ function drawer() {
     <div class="grp">Engagement</div>
     <button class="item" data-act="save">Download a copy (.json)</button>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup">How an engagement runs</button>'}
+    <a class="item" href="/user-guide/" style="text-decoration:none">User guide</a>
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
     ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#setup" style="text-decoration:none">Admin · set-up and users</a>' : ''}
     <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
@@ -336,7 +337,7 @@ function footer() {
   return `<footer class="ft"><div class="wrap">
     <div class="scope" role="note"><span aria-hidden="true">⚠</span><span><strong>Scope.</strong> ${esc(C.banner)}</span></div>
     <div class="ftrow"><span class="row" style="gap:8px;color:var(--aubergine)">${MARKSVG().replace('<svg', '<svg width="20" height="19"')}<span style="color:var(--ink);font-weight:600">Triodian</span><span class="mono soft">RAF-01 · framework ${esc(C.frameworkDate)}</span></span>
-    <span class="row"><button class="lnk" data-act="go" data-to="reference">Reference</button><span class="mono">${esc(statusMark())}</span></span></div>
+    <span class="row"><a class="lnk" href="/user-guide/">User guide</a><button class="lnk" data-act="go" data-to="reference">Reference</button><span class="mono">${esc(statusMark())}</span></span></div>
   </div></footer>`;
 }
 function entry() {
@@ -352,7 +353,7 @@ function entry() {
     if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt('data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
     else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`; }
   } else note = 'Opening the engagement…';
-  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#setup">Admin</a>' : ''}<a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
+  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#setup">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     <h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
@@ -381,7 +382,7 @@ function exampleSummary() {
   } finally { S = old; UI.role = oldRole; }
 }
 function guideOverlay() {
-  const g = UI.guide, close = `<button class="btn" data-act="guideBack">Back</button>`;
+  const g = UI.guide, close = `<span class="row" style="gap:16px"><button class="btn" data-act="guideBack">Back</button><a href="/user-guide/${g === 'setup' ? '#fit' : '#start'}">Read the full user guide</a></span>`;
   let body;
   if (g === 'setup') {
     const admin = SRV.user && SRV.user.isAdmin;
@@ -389,6 +390,7 @@ function guideOverlay() {
     <p class="sub" style="font-size:18px">External counsel leads the engagement and Triodian records it. The positions come from the insurer, and the board approves the result. After set-up, the engagement runs in four stages.</p>
     <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
     <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the insurer. On decisions 1 and 3, only the CRO or the insurer’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
+    <div class="guide-box"><h2 class="sh">The AI Use Assessment</h2><p style="margin:0">Triodian’s AI Use Assessment runs alongside, from the same week. Its register extract is loaded on decision 3 as the evidence the insurer holds today, and its findings inform decisions 1, 4, 5 and 6. Once the CRO agrees the working appetite, the calibration set goes back to the assessment. <a href="/user-guide/#informs">How the assessment informs the appetite</a></p></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
     <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#setup" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
   } else {
@@ -598,7 +600,7 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => `<option ${pr.tier === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => `<option ${pr.consequence === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? 'Loaded ' + esc(S.current.register.on) + ': ' + esc(S.current.register.entries) + ' entries · most common pair ' + esc(S.current.register.pair || '—') + ' · highest rung received ' + esc(S.current.register.maxReceived || 'none') : 'From the AI Use Assessment app (triodian.aua.extract.v1)'}</span></div></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? 'Loaded ' + esc(S.current.register.on) + ': ' + esc(S.current.register.entries) + ' entries · most common pair ' + esc(S.current.register.pair || '—') + ' · highest rung received ' + esc(S.current.register.maxReceived || 'none') : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleName(a))}</td>${C.appendixA[a].map(e => `<td class="code">${e}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
@@ -837,7 +839,7 @@ function screenReference() {
   const q = UI.refQ.trim().toLowerCase();
   const gl = Object.entries(C.glossary).filter(([id, g]) => !q || (g.term + ' ' + g.def).toLowerCase().includes(q)).sort((a, b) => a[1].term.localeCompare(b[1].term));
   const scale = (title, list, term) => `<section class="card"><h2 class="sh">${T(term, title)}</h2><div class="stack" style="gap:8px">${list.map(s => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono" style="min-width:28px;font-weight:600">${s.code}</span><span><strong>${esc(s.name)}</strong><br><span class="small soft">${esc(s.def)}</span></span></div>`).join('')}</div></section>`;
-  return `${opening('Reference', 'Scales, glossary and framework', 'The AI Risk Appetite Framework, ' + esc(C.frameworkDate) + '. Read-only.')}
+  return `${opening('Reference', 'Scales, glossary and framework', 'The AI Risk Appetite Framework, ' + esc(C.frameworkDate) + '. Read-only. For what each role does, see the <a href="/user-guide/">user guide</a>.')}
   <p class="small soft measure">${esc(C.scales.note)}</p>
   <div class="dgrid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:28px">${scale('Authority tiers', C.scales.authority, 'tier')}${scale('Consequence levels', C.scales.consequence, 'consequence')}${scale('Evidence rungs', C.scales.evidence, 'ladder')}</div>
   <section style="margin-bottom:28px"><div class="row between"><h2 class="sh" style="margin:0">Glossary</h2><input class="in" id="refq" data-act="refq" type="search" value="${esc(UI.refQ)}" placeholder="Search terms" style="max-width:280px" aria-label="Search glossary"></div>
@@ -1061,7 +1063,7 @@ function areaHeader() {
     <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none">${MARKSVG()}${bp() !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</a>
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
     ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
-    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}<a class="lnk hdr-back" href="/">Back to the app</a>${avatar()}</div>
+    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}${bp() === 'desk' ? '<a class="lnk hdr-back" href="/user-guide/">User guide</a>' : ''}<a class="lnk hdr-back" href="/">Back to the app</a>${avatar()}</div>
   </div>${AREA === 'admin' && UI.screen === 'setup' ? docband() : ''}</header>`;
 }
 const areaMsg = (title, text) => `<div class="adm-msg"><h1 class="h1" style="font-size:30px">${esc(title)}</h1><p class="soft">${text}</p><p style="margin-top:18px"><a class="btn" href="/">Back to the app</a></p></div>`;
