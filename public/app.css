@@ -344,3 +344,32 @@ table.lg td .cellwrap input.in[type="text"]{min-width:220px;width:100%}
 table.lg td .cellwrap{min-width:0}
 textarea.in.cellta{resize:none;overflow:hidden;min-height:38px;line-height:1.4;padding:8px 10px;field-sizing:content}
 table.lg td .cellwrap textarea.cellta{min-width:230px;width:100%}
+
+/* Entry and guide pages */
+.entry{max-width:620px}
+.entry .h1{font-size:34px}
+.entry .sub{margin-bottom:6px}
+.entry-note{margin:18px 0 0;padding:10px 14px;background:var(--parchment-2);border-radius:6px;font-size:14.5px}
+.entry .acts{margin-top:18px}
+.entry .act{align-items:center;background:#fff;padding:16px 18px}
+.entry .act:hover{border-color:var(--aubergine);background:#FCFBFD}
+.entry .act>span:first-child{flex:1}
+.act-go{width:9px;height:9px;border-top:2px solid var(--ink-soft);border-right:2px solid var(--ink-soft);transform:rotate(45deg);margin-right:4px;flex-shrink:0}
+.entry .act:hover .act-go{border-color:var(--aubergine)}
+.entry-foot{display:flex;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;margin-top:26px;padding-top:14px;border-top:1px solid var(--rule-soft);font-size:13.5px;color:var(--ink-soft)}
+.entry-foot strong{color:var(--ink);font-weight:600}
+.entry.guide{max-width:760px}
+.entry.guide p,.entry.guide li{max-width:68ch}
+ol.stages{list-style:none;counter-reset:st;padding:0;margin:22px 0 0}
+ol.stages li{counter-increment:st;position:relative;padding:0 0 18px 46px;margin:0}
+ol.stages li::before{content:counter(st);position:absolute;left:0;top:-2px;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--aubergine);color:var(--aubergine);font:600 15px/27px var(--serif);text-align:center;background:#fff}
+ol.stages li:not(:last-child)::after{content:"";position:absolute;left:15px;top:30px;bottom:2px;width:1.5px;background:#D5C9DD}
+ol.stages strong{font:600 17px/1.3 var(--serif);display:block;margin-bottom:4px}
+ol.stages p{margin:0;color:var(--ink-soft)}
+.guide-box{background:var(--parchment-2);border:1px solid var(--rule-soft);border-radius:8px;padding:14px 18px;margin:8px 0 16px}
+.guide-box ul,ul.done,ul.todo{margin:0;padding-left:20px}
+.guide-box li,ul.done li,ul.todo li{margin:0 0 6px}
+ul.done li::marker{color:var(--green)}
+ul.todo li::marker{color:var(--ochre)}
+.guide-acts{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule-soft)}
+@media (max-width:639px){.entry .h1{font-size:28px}ol.stages li{padding-left:40px}}

@@ -322,7 +322,7 @@ function drawer() {
     ${SRV.user ? `<div class="grp">Signed in</div><a class="item" href="/profile/" style="text-decoration:none">${avatarBadge()}<span>${esc(SRV.user.name || SRV.user.email)}<br><span class="small soft">${esc(ROLE_NAME[myRole()])} · your profile</span></span></a>` : ''}
     <div class="grp">Engagement</div>
     <button class="item" data-act="save">Download a copy (.json)</button>
-    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="example">Practise with the worked example</button>'}
+    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup">How an engagement runs</button>'}
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
     ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#setup" style="text-decoration:none">Admin · set-up and users</a>' : ''}
     <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
@@ -340,29 +340,91 @@ function footer() {
   </div></footer>`;
 }
 function entry() {
-  const n = i => `<span class="mono" style="color:var(--aubergine)">${String(i).padStart(2, '0')}</span>`;
+  if (UI.guide) return guideOverlay();
   const u = SRV.user;
-  let i = 0, acts = '', note = '';
-  const practiceBtn = () => `<button class="act" data-act="example">${n(++i)}<span><strong>Practise with the worked example</strong><br><span class="small soft">A fictional insurer, Corvane General. You can act in any role. Nothing is saved.</span></span></button>`;
+  let acts = '', note = '';
+  const opt = (attrs, title, text) => `<${attrs.startsWith('href') ? 'a' : 'button'} class="act" ${attrs} ${attrs.startsWith('href') ? 'style="text-decoration:none"' : ''}><span><strong>${title}</strong><br><span class="small soft">${text}</span></span><span class="act-go" aria-hidden="true"></span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
+  const practice = opt('data-act="guide" data-g="practice"', 'Practise with the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
-  else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still practise with the worked example.`; acts = practiceBtn(); }
+  else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
   else if (!SRV.exists) {
-    if (u && u.isAdmin) acts = `<a class="act" href="/admin/#setup" style="text-decoration:none">${n(++i)}<span><strong>Set up the engagement</strong><br><span class="small soft">In Admin: engagement details, people, functions and inputs.</span></span></a>`;
-    else note = 'The engagement has not been set up yet. An administrator will set it up.';
-    acts += practiceBtn();
+    if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt('data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
+    else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`; }
   } else note = 'Opening the engagement…';
-  const who = u ? `Signed in as ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}${u.isAdmin ? ' · <a href="/admin/#setup">Admin</a>' : ''} · <a href="/profile/">Profile</a>.` : '';
+  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#setup">Admin</a>' : ''}<a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
-    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600">AI Risk Appetite</span></div>
-    <div class="eyebrow">AI risk appetite for APRA-regulated insurers</div>
-    <h1 id="entry-h" class="h1" style="font-size:32px">A record of the board’s decisions on AI risk</h1>
-    <p class="soft">Over two sessions the board makes eight decisions, and ten checks test them for consistency. The result is an AI risk appetite statement, a tolerance and trigger schedule, and the calibration set that the AI Use Assessment reads.</p>
-    ${note ? `<p style="margin-top:18px">${note}</p>` : ''}
+    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
+    <h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
+    <p class="sub" style="font-size:18px">Record the board’s decisions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement and calibration set.</p>
+    ${note ? `<p class="entry-note">${note}</p>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}
-    <div class="scope" style="margin-top:22px"><span aria-hidden="true">⚠</span><span>${esc(C.banner)} ${who}</span></div>
+    ${who}
   </div></div>`;
 }
+
+/* ---------- guides shown after choosing set-up or practice ---------- */
+const STAGES = [
+  ['Set-up', 'Administrators record the engagement details, including the privilege marking counsel directs; the people taking part and their roles; the functions in scope; the critical operations and their approved tolerance levels; and which of inputs I1 to I11 have been received. Counsel requests the inputs before the first session.'],
+  ['Session 1: decisions 1 to 3', 'The board sets the authority AI may hold in each function, the thresholds at which a failure counts as a financial loss, harm to policyholders or disruption to a critical operation, and the evidence it expects for each combination of authority and consequence. Each decision starts from the insurer’s current position. Every position is recorded with the person who proposed it and an accountable owner.'],
+  ['Session 2: decisions 4 to 8', 'The board sets how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval.'],
+  ['Checks and challenge', 'Ten consistency checks run after every change; checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about the insurer’s legal obligations are recorded for counsel, who answers them.'],
+  ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. The board then approves it, and the date, minute reference and approving body are recorded. The outputs are the appetite statement, the tolerance and trigger schedule, the session record, the calibration set and the check report.'],
+];
+function exampleSummary() {
+  const X = buildExample(), old = S, oldRole = UI.role; S = X; UI.role = 'triodian';
+  try {
+    const ck = runChecks(), failing = blocking(ck);
+    const decs = C.decisions.map(d => ({ d, st: decisionStatus(d.id, ck) }));
+    return { X, ck, failing, decs, people: X.people.length, inputs: X.inputs.filter(i => i.status === 'received').length,
+      chOpen: X.challenge.filter(c => c.status === 'open').length, chAll: X.challenge.length,
+      qcOpen: X.questionsForCounsel.filter(q => q.status !== 'answered').length, qcAll: X.questionsForCounsel.length };
+  } finally { S = old; UI.role = oldRole; }
+}
+function guideOverlay() {
+  const g = UI.guide, close = `<button class="btn" data-act="guideBack">Back</button>`;
+  let body;
+  if (g === 'setup') {
+    const admin = SRV.user && SRV.user.isAdmin;
+    body = `<h1 id="entry-h" class="h1">How an engagement runs</h1>
+    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. Counsel leads it and Triodian records it. It runs in five stages.</p>
+    <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
+    <div class="guide-box"><h2 class="sh">Before you start</h2><ul>
+      <li>The privilege marking, as counsel directs. It is printed as the first line of every output.</li>
+      <li>Everyone who will take part, added as users with their role. Only the CRO or the insurer risk function can propose positions on decisions 1 and 3.</li>
+      <li>Inputs I1 to I11, requested through counsel: for example the board risk appetite statement, the critical operations register and the accountability map.</li></ul></div>
+    <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
+    <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#setup" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
+  } else {
+    const x = exampleSummary(), e = x.X.engagement, done = x.decs.filter(o => o.st.gate), open = x.decs.filter(o => !o.st.gate);
+    body = `<h1 id="entry-h" class="h1">The worked example</h1>
+    <p class="sub" style="font-size:18px">${esc(e.insurer.replace(/\s*\(fictional\)/i, ''))} is a fictional general insurer. The example shows an engagement part-way through the second session, so you can see each screen with realistic content.</p>
+    <h2 class="sh" style="margin-top:22px">What has been done</h2>
+    <ul class="done">
+      <li><strong>Set-up is complete.</strong> ${cap(numW(x.people))} people are recorded, including the CRO, three members of the insurer risk function, counsel from ${esc(e.counselFirm)}, the Triodian recorder and an independent reviewer. ${cap(numW(x.X.criticalOperations.length))} critical operations are recorded with their tolerance levels, and ${x.inputs === 11 ? 'all 11 inputs are' : x.inputs + ' of the 11 inputs are'} marked as received.</li>
+      <li><strong>Session 1 is complete</strong> (dated ${esc(fmtDate(e.sessionDates[0]))}), and <strong>session 2 is under way</strong> (dated ${esc(fmtDate(e.sessionDates[1]))}).</li>
+      <li><strong>Positions are recorded</strong> on all eight decisions. ${done.length ? `Decision${done.length === 1 ? '' : 's'} ${listN(done.map(o => o.d.n))} ${done.length === 1 ? 'is' : 'are'} complete.` : ''} ${open.length ? `Decision${open.length === 1 ? '' : 's'} ${listN(open.map(o => o.d.n))} still ${open.length === 1 ? 'has' : 'have'} gaps.` : ''}</li>
+      <li><strong>Challenge has started.</strong> ${cap(numW(x.chAll))} challenge point${x.chAll === 1 ? ' has' : 's have'} been raised (${numW(x.chOpen)} still open), and ${numW(x.qcAll)} question${x.qcAll === 1 ? ' has' : 's have'} been recorded for counsel (${numW(x.qcOpen)} awaiting an answer).</li>
+    </ul>
+    <h2 class="sh" style="margin-top:18px">What is left to do</h2>
+    <ul class="todo">
+      ${x.failing.length ? `<li>${cap(numW(x.failing.length))} of the nine blocking checks fail: ${esc(listN(x.failing.map(k => k.id + ' (' + k.name + ')')))}. On the Checks page, each failure links to the position concerned.</li>` : '<li>All blocking checks pass.</li>'}
+      <li>The CRO has not yet agreed the working appetite, so the calibration set is still uncalibrated.</li>
+      <li>The board has not yet approved the appetite.</li>
+    </ul>
+    <div class="guide-box"><h2 class="sh">In practice mode</h2><ul>
+      <li>You can act as any role, using “Acting as” in the yellow bar, to see what each role can and cannot change.</li>
+      <li>Nothing you do is saved. You can leave practice mode at any time from the same bar.</li></ul></div>
+    <div class="row between guide-acts">${close}<button class="btn primary" data-act="example">Open the worked example</button></div>`;
+  }
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry guide">
+    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
+    ${body}</div></div>`;
+}
+const numW = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][n] || String(n);
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+const listN = a => a.length < 2 ? String(a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const fmtDate = d => { if (!d) return 'a date not recorded'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }); };
 function opening(eyebrow, h1, sub) { return `<div class="opening"><div class="eyebrow">${eyebrow}</div><h1 class="h1">${h1}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div>`; }
 function seqNav() {
   const i = SEQ.indexOf(UI.screen); if (i < 0) return { prev: null, next: null };
@@ -861,7 +923,7 @@ function doRender() {
   else if (s === 'outputs') main = screenOutputs(ck);
   else if (s === 'reference') main = screenReference();
   else main = screenOverview(ck);
-  app.innerHTML = header(ck) + `<main id="main" tabindex="-1"><div class="wrap">${main}</div></main>` + footer() + bottombar(g) + drawer() + (s === 'entry' ? entry() : '');
+  app.innerHTML = header(ck) + `<main id="main" tabindex="-1"><div class="wrap">${main}</div></main>` + footer() + bottombar(g) + drawer() + (s === 'entry' ? entry() : UI.guide ? guideOverlay() : '');
   renderSheet();
   if (!fid && fkey) { const m = [...document.querySelectorAll('#app [data-act],#app [data-cell],#app [data-path]')].find(x => dsKey(x) === fkey); if (m) m.focus({ preventScroll: true }); }
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange && /text|search|textarea/.test(el.type || el.tagName.toLowerCase())) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
@@ -1291,7 +1353,7 @@ function buildExample() {
   ];
   X.challenge = [
     { ref: 'CH-01', raisedBy: 'p3', decision: 'd1', cell: 'd1.cl.provider', point: 'The A4 ceiling inside the claims TPA is above our own staff. The reason should cite the binder schedule.', response: 'Reason updated to cite clause 4.2 of the binder schedule.', status: 'accepted' },
-    { ref: 'CH-02', raisedBy: 'p2', decision: 'd2', cell: 'd2.C4', point: 'The hardship limb of C4 has no definition. Two classifiers could reach different levels.', response: '', status: 'open' }
+    { ref: 'CH-02', raisedBy: 'p2', decision: 'd2', cell: 'd2.C4', point: 'The hardship part of C4 has no definition. Two people assessing the same case could reach different levels.', response: '', status: 'open' }
   ];
   X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1' };
   X.history = [{ at: '2026-10-15T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-10-22T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
@@ -1324,7 +1386,9 @@ function onClick(e) {
     admDismiss: async () => { await api('POST', '/api/admin/access-requests/dismiss', { email: d.email }); loadAdmin(); },
     cancelEmail: async () => { const r = await api('DELETE', '/api/me/email'); if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Email change cancelled.'; } else PRF.err = r.error; render(); },
     new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
-    example: () => leave('open practice mode').then(ok => { if (ok) { startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
+    example: () => leave('open practice mode').then(ok => { if (ok) { UI.guide = null; startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
+    guide: () => { UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
+    guideBack: () => { UI.guide = null; render(); },
     leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
       if (SRV.state === 'error') { if (SRV.err && /cannot change|history/.test(SRV.err)) { if (confirm(SRV.err + '\n\nReload the saved engagement? Your unsaved changes here will be lost.')) loadReal(); } else saveNow(); return; }
@@ -1395,7 +1459,7 @@ function onFocusIn(e) {
 }
 function onKey(e) {
   const t = e.target, typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
-  if (e.key === 'Escape') { if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.open && bp() !== 'phone') { closeDet(UI.open); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
+  if (e.key === 'Escape') { if (UI.guide) { UI.guide = null; render(); return; } if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.open && bp() !== 'phone') { closeDet(UI.open); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
   if ((e.key === 'p' || e.key === 'P') && !typing && !e.metaKey && !e.ctrlKey && S && UI.screen !== 'entry') { togglePresent(); return; }
   if (t.dataset && t.dataset.gr) {
     const isSel = t.tagName === 'SELECT', k = e.key;
