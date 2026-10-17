@@ -217,7 +217,7 @@ function runChecks() {
     const p = P(c.id); if (!p || p.status !== 'set') return;
     const cur = S.current.d1[c.id]; if (cur && rk(AT, p.value) > rk(AT, cur)) fail('K5', c.id, `${p.value} is above what is allowed today (${cur})`);
     if (c.col === 'provider') { const own = val(`d1.${c.row}.own`); if (own && rk(AT, p.value) > rk(AT, own) && !p.reason.trim()) fail('K6', c.id, `${p.value} is above own staff (${own}) with no reason recorded`); }
-    if (p.condition.trim() && !p.testable) fail('K7', c.id, 'condition not marked testable from documents');
+    if (p.condition.trim() && !p.testable) fail('K7', c.id, 'condition not marked as capable of being checked against documents');
   });
   cells.forEach(c => { const p = P(c.id); if (p && p.status === 'set') { if (!p.owner) fail('K8', c.id, 'no accountable person'); else if (!person(p.owner)) fail('K8', c.id, 'owner is no longer in the people list'); } });
   C.measures.forEach(m => { const o = (S.measureOwners || {})[m.ref]; if (!o) fail('K8', m.ref, 'measure has no accountable person'); else if (!person(o)) fail('K8', m.ref, 'measure owner is no longer in the people list'); });
@@ -343,21 +343,21 @@ function entry() {
   const n = i => `<span class="mono" style="color:var(--aubergine)">${String(i).padStart(2, '0')}</span>`;
   const u = SRV.user;
   let i = 0, acts = '', note = '';
-  const practiceBtn = () => `<button class="act" data-act="example">${n(++i)}<span><strong>Practise with the worked example</strong><br><span class="small soft">Corvane General, a fictional insurer. Switch roles freely. Nothing is saved.</span></span></button>`;
+  const practiceBtn = () => `<button class="act" data-act="example">${n(++i)}<span><strong>Practise with the worked example</strong><br><span class="small soft">A fictional insurer, Corvane General. You can act in any role. Nothing is saved.</span></span></button>`;
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still practise with the worked example.`; acts = practiceBtn(); }
   else if (!SRV.exists) {
     if (u && u.isAdmin) acts = `<a class="act" href="/admin/#setup" style="text-decoration:none">${n(++i)}<span><strong>Set up the engagement</strong><br><span class="small soft">In Admin: engagement details, people, functions and inputs.</span></span></a>`;
-    else note = 'The engagement has not been set up yet. An administrator sets it up.';
+    else note = 'The engagement has not been set up yet. An administrator will set it up.';
     acts += practiceBtn();
   } else note = 'Opening the engagement…';
   const who = u ? `Signed in as ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}${u.isAdmin ? ' · <a href="/admin/#setup">Admin</a>' : ''} · <a href="/profile/">Profile</a>.` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600">AI Risk Appetite</span></div>
-    <div class="eyebrow">From general appetite to AI appetite</div>
-    <h1 id="entry-h" class="h1" style="font-size:32px">The board decides. This records what it decides.</h1>
-    <p class="soft">Eight decisions, two sessions, ten checks. The result is an AI risk appetite statement, a tolerance and trigger schedule, and the calibration set the AI Use Assessment reads.</p>
+    <div class="eyebrow">AI risk appetite for APRA-regulated insurers</div>
+    <h1 id="entry-h" class="h1" style="font-size:32px">A record of the board’s decisions on AI risk</h1>
+    <p class="soft">Over two sessions the board makes eight decisions, and ten checks test them for consistency. The result is an AI risk appetite statement, a tolerance and trigger schedule, and the calibration set that the AI Use Assessment reads.</p>
     ${note ? `<p style="margin-top:18px">${note}</p>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}
     <div class="scope" style="margin-top:22px"><span aria-hidden="true">⚠</span><span>${esc(C.banner)} ${who}</span></div>
@@ -398,7 +398,7 @@ function screenSetup() {
   const inputs = S.inputs.map((x, i) => { const c = C.inputs[i]; return b === 'phone'
     ? `<div class="panel2" style="padding:12px 14px"><div class="row" style="gap:8px"><span class="mono">${esc(x.ref)}</span><strong class="small">${esc(c.name)}</strong></div><div class="mini" style="margin:4px 0 8px">Used in: ${esc(c.usedIn)}</div><div class="fgrid">${fld('Status', `inputs.${i}.status`, x.status, { select: [['','Not marked'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']] })}${fld('Date', `inputs.${i}.date`, x.date, { type: 'date' })}${fld('Note', `inputs.${i}.note`, x.note)}</div></div>`
     : `<tr><td class="code">${esc(x.ref)}</td><td>${esc(c.name)}<div class="mini">${esc(c.usedIn)}</div></td><td><select class="in" id="in-${i}-status" data-path="inputs.${i}.status" aria-label="${esc(x.ref)} status">${[['','—'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']].map(o => `<option value="${o[0]}" ${x.status === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></td><td><input class="in" type="date" id="in-${i}-date" data-path="inputs.${i}.date" value="${esc(x.date)}" aria-label="${esc(x.ref)} date"></td><td><input class="in" id="in-${i}-note" data-path="inputs.${i}.note" value="${esc(x.note)}" aria-label="${esc(x.ref)} note"></td></tr>`; }).join('');
-  return `${opening('Admin · set-up', 'Set up the engagement', 'Who is in the room, which functions are in scope, and what the insurer has already decided.')}
+  return `${opening('Admin · set-up', 'Set up the engagement', 'Who takes part, which functions are in scope, and what the insurer has already decided.')}
   ${ro ? `<p class="err">${esc(blockReason('setup'))} ${whyLink()}</p>` : ''}
   <fieldset ${ro ? 'disabled' : ''} style="border:0;padding:0;margin:0" class="stack">
   <section class="card"><h2 class="sh">1 · Engagement</h2><div class="fgrid">
@@ -406,16 +406,16 @@ function screenSetup() {
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
   </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
   <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
-    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. Only people with the role CRO or insurer risk function can propose on decisions 1 and 3. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
+    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the insurer risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
     ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
   <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')}</h2>
-    <div class="grid2"><div><div class="mini" style="margin-bottom:6px">FUNCTIONS · framework starting list, editable</div>
+    <div class="grid2"><div><div class="mini" style="margin-bottom:6px">Functions (the framework’s starting list, which can be edited)</div>
       <div class="stack" style="gap:6px">${S.functions.map((f, i) => `<div class="row" style="flex-wrap:nowrap"><input class="in" id="fn-${i}" data-path="functions.${i}.name" value="${esc(f.name)}" aria-label="Function ${i + 1}"><button class="btn sm ghost" data-act="rmFn" data-i="${i}" aria-label="Remove ${esc(f.name)}">✕</button></div>`).join('')}</div>
       <div class="row" style="margin-top:10px"><button class="btn sm" data-act="addFn">Add function</button><label class="cb"><input type="checkbox" data-path="functionsConfirmed" ${S.functionsConfirmed ? 'checked' : ''}> Function list confirmed</label></div></div>
-    <div><div class="mini" style="margin-bottom:6px">CRITICAL OPERATIONS · from I4, with approved ${T('tolerance', 'tolerance')}</div>
+    <div><div class="mini" style="margin-bottom:6px">Critical operations, from input I4, with their approved ${T('tolerance', 'tolerance levels')}</div>
       <div class="stack" style="gap:10px">${S.criticalOperations.map((o, i) => `<div class="panel2" style="padding:12px"><div class="fgrid">${fld('Operation', `criticalOperations.${i}.name`, o.name)}${fld('Tolerance', `criticalOperations.${i}.tolerance`, o.tolerance)}${fld('Source document', `criticalOperations.${i}.source`, o.source)}</div><div class="row" style="justify-content:flex-end"><button class="btn sm ghost" data-act="rmOp" data-i="${i}">Remove</button></div></div>`).join('') || '<p class="small soft">None recorded.</p>'}</div>
       <button class="btn sm" style="margin-top:10px" data-act="addOp">Add critical operation</button></div></div></section>
-  <section class="card"><h2 class="sh">4 · Inputs I1 to I11</h2><p class="small soft">Requested through counsel before session 1. Starting positions on later screens draw on what is marked received.</p>
+  <section class="card"><h2 class="sh">4 · Inputs I1 to I11</h2><p class="small soft">Requested through counsel before session 1. The starting positions on later screens use the inputs marked as received.</p>
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
     <div style="margin-top:14px;max-width:360px">${fld('I10 · notification procedure, hours the insurer can absorb', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9' })}</div></section>
   </fieldset>
@@ -432,7 +432,7 @@ function screenOverview(ck) {
     <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns}/${st.total}${st.qc ? ' · ' + st.qc + ' QC open' : ''}</span></div></button>`; }).join('');
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
   const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#setup">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
-  return `${opening('Decisions', 'Eight appetite decisions', 'Each is one question to the board, answered on a fixed scale and recorded with an owner.')}${setupNote}
+  return `${opening('Decisions', 'Eight appetite decisions', 'Each decision puts one question to the board. The answer is recorded on a fixed scale, with an accountable owner.')}${setupNote}
   <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>
     <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
@@ -533,25 +533,25 @@ function curGrid(did) {
 function startPanel(d) {
   const inputs = d.startingInputs.map(r => { const i = S.inputs.find(x => x.ref === r); return `<span class="badge ${i && i.status === 'received' ? 'b-green' : 'b-grey'}">${r} · ${i && i.status ? { received: 'received', notHeld: 'not held', notRequested: 'not requested' }[i.status] : 'not marked'}</span>`; }).join(' ');
   let extra = '';
-  if (d.id === 'd1') extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')} · where a person signs off today</summary><div style="padding:0 16px 16px">${curGrid('d1')}</div></details>`;
+  if (d.id === 'd1') extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')}: where a person signs off today</summary><div style="padding:0 16px 16px">${curGrid('d1')}</div></details>`;
   if (d.id === 'd3') {
     const pr = S.current.commonPair;
-    extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')} · evidence held today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
-      <div class="row" style="margin-top:12px"><span class="small">Most common authority and consequence pair in the set (for K10):</span>
+    extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')}: evidence the insurer holds today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
+      <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => `<option ${pr.tier === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => `<option ${pr.consequence === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
       <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? 'Loaded ' + esc(S.current.register.on) + ': ' + esc(S.current.register.entries) + ' entries · most common pair ' + esc(S.current.register.pair || '—') + ' · highest rung received ' + esc(S.current.register.maxReceived || 'none') : 'From the AI Use Assessment app (triodian.aua.extract.v1)'}</span></div></div></details>
-      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each showing is logged in the session record.</span></div>
-      ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A · reference expectation table</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleName(a))}</td>${C.appendixA[a].map(e => `<td class="code">${e}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
+      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
+      ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleName(a))}</td>${C.appendixA[a].map(e => `<td class="code">${e}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
   if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${c} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld('Existing C5 position (no critical operations recorded in set-up)', 'current.d2.C5', S.current.d2.C5 || '')}`;
   if (d.id === 'd6') extra = `<div style="margin-top:12px">${fld('Existing offshoring position (I6)', 'current.offshoring', S.current.offshoring, { area: true })}</div>`;
   return `<section class="panel2"><div class="row between"><h2 class="sh" style="margin:0">${T('starting', 'Starting position')}</h2><div class="row">${inputs}</div></div>
     <p class="small" style="margin-top:10px">${esc(d.starting)}</p>${extra}
-    <div class="row" style="margin-top:12px"><button class="btn sm aub" data-act="useStart" data-d="${d.id}" ${canEdit(d.id) ? '' : 'disabled'}>Use starting position</button><span class="mini">Copies into empty cells only. Nothing is copied automatically.</span></div></section>`;
+    <div class="row" style="margin-top:12px"><button class="btn sm aub" data-act="useStart" data-d="${d.id}" ${canEdit(d.id) ? '' : 'disabled'}>Use starting position</button><span class="mini">Fills empty cells only. Nothing is filled in automatically.</span></div></section>`;
 }
 function detailsHtml(id, inline) {
-  if (!id) return `<div class="card"><h2 class="sh">Position details</h2><p class="small soft">Select a cell to record its proposer, owner, condition, dissent or a "not set" entry.</p></div>`;
+  if (!id) return `<div class="card"><h2 class="sh">Position details</h2><p class="small soft">Select a cell to record its proposer, owner, condition or dissent, or to record it as not set.</p></div>`;
   const c = cellById(id); if (!c) return '';
   const did = c.did, p = getPosView(id), ed = canEdit(did), elig = eligible(did);
   const pOpt = (list, v) => `<option value="">—</option>` + list.map(x => `<option value="${esc(x.id)}" ${v === x.id ? 'selected' : ''}>${esc(x.name)} · ${esc(ROLE_NAME[x.role])}</option>`).join('');
@@ -564,17 +564,17 @@ function detailsHtml(id, inline) {
   const valueLine = `<div class="mini">value: ${esc(p.status === 'set' ? p.value + (scaleName(p.value) ? ' · ' + scaleName(p.value) : '') + (scaleDef(p.value) ? ' · ' + scaleDef(p.value) : '') : '—')} · starting: ${esc(sv || '—')}${p.source ? ' · source: ' + esc(p.source) : ''}</div>`;
   const alerts = `${ckOff.length ? `<div style="margin-top:8px">${ckOff.map(x => `<div class="err small">${esc(x)}</div>`).join('')}</div>` : ''}
     ${ed ? '' : `<p class="err small" style="margin-top:8px">${esc(editBlockReason(did))} ${whyLink()}</p>`}
-    ${p.status === 'set' && !proposerOk(did, p) ? `<p class="err small" role="alert" style="margin-top:8px">Choose a ${T('proposer', 'proposer')}. This position counts as incomplete until one is recorded.</p>` : ''}`;
+    ${p.status === 'set' && !proposerOk(did, p) ? `<p class="err small" role="alert" style="margin-top:8px">Choose a ${T('proposer', 'proposer')}. The position is treated as incomplete until a proposer is recorded.</p>` : ''}`;
   const who = `${canProp
         ? `<label class="f"><span>${T('proposer', 'Proposer')}</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`
         : `<label class="f"><span>${T('proposer', 'Proposer')}</span><input class="in" disabled value="Not available to ${esc(ROLE_NAME[UI.role])}" aria-describedby="prop-why"></label>
            <div id="prop-why" class="small soft">Only the ${esc(propRoles)} may propose on decision ${D(did).n}. ${T('proposerRule', 'Why')}</div>
            <label class="f"><span>Recording on behalf of</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`}
-      ${!elig.length ? `<div class="small" style="color:var(--ochre)">No eligible proposer in set-up. Add a ${esc(propRoles)} person.</div>` : ''}
+      ${!elig.length ? `<div class="small" style="color:var(--ochre)">No one in set-up can propose on this decision. An administrator needs to add a person with the role ${esc(propRoles)}.</div>` : ''}
       <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>`;
   const what = `${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
-        <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Testable from documents</label>` : ''}
-      ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (where it differs from the existing threshold)' : ' (where above own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
+        <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Can be checked against documents</label>` : ''}
+      ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (if it differs from the existing threshold)' : ' (if higher than for own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
       <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>`;
   const notSet = `<div class="panel2" style="padding:12px 14px"><div class="sh" style="margin-bottom:8px">Record as not set <span class="soft" style="font-weight:400">· needs an owner and a due date</span></div>
         <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(p.notSetDue)}"></label></div>
@@ -598,7 +598,7 @@ function detailsHtml(id, inline) {
 function getPosView(id) { return P(id) || blankPos(); }
 function screenDecision(did, ck) {
   const d = D(did), off = offenderMap(ck), st = decisionStatus(did, ck), b = bp();
-  const purposeTerms = { d1: [['ceiling', 'most authority']], d2: [['consequence', 'consequence definitions']], d3: [['expected', 'evidence the board expects']], d4: [['gap', 'shortfall']], d5: [['notKnown', 'not know']], d6: [['concentration', 'rest on one platform']], d7: [['trigger', 'events']], d8: [['appetite', 'the appetite itself']] };
+  const purposeTerms = { d1: [['ceiling', 'highest level of authority']], d2: [['consequence', 'consequence definitions']], d3: [['expected', 'evidence the board expects']], d4: [['gap', 'shortfall']], d5: [['notKnown', 'not know']], d6: [['concentration', 'depend on a single platform']], d7: [['trigger', 'events']], d8: [['appetite', 'the appetite itself']] };
   let purpose = esc(d.purpose); (purposeTerms[did] || []).forEach(([id, txt]) => { purpose = purpose.replace(esc(txt), T(id, esc(txt))); });
   const qcs = S.questionsForCounsel.filter(q => q.decision === did);
   const body = decisionBody(did, off);
@@ -612,12 +612,12 @@ function screenDecision(did, ck) {
     ${startPanel(d)}
     <section><h2 class="sh">Recording area</h2>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
-      ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Owner for every set cell without one:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
+      ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
     ${d.prompts.length ? `<details class="pr"><summary>Prompts for the session · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
-    <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">parked, not settled in the room</span></div>
+    <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">recorded for counsel, not decided in the session</span></div>
       ${qcs.length ? `<div class="stack" style="gap:8px;margin-top:12px">${qcs.map(q => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono">${esc(q.ref)}</span><span style="flex:1">${esc(q.question)}${q.cell ? `<br><button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : ''}${q.response ? `<div class="small soft">Response: ${esc(q.response)}</div>` : ''}</span>${badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</div>`).join('')}</div>` : '<p class="small soft" style="margin-top:8px">None logged.</p>'}
-      ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Anything that turns on what the insurer is obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
+      ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Any question about what the insurer is legally obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
     </section>
   </div>
   ${stepbar(gate(st.gate, gateTxt))}`;
@@ -627,7 +627,7 @@ function screenDecision(did, ck) {
 function screenChecks(ck) {
   const bl = blocking(ck).length;
   return `${opening('Consistency checks', 'Checks K1 to K10', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
-  <p class="small soft measure">Run on every change. A failed ${T('check', 'check')} goes back to the CRO; Triodian does not resolve it.</p>
+  <p class="small soft measure">The checks run after every change. A failed ${T('check', 'check')} is referred to the CRO; Triodian does not resolve it.</p>
   <div class="stack" style="gap:12px">${ck.map(k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
     <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.state === 'pass' ? 'b-green' : k.state === 'fail' ? 'b-red' : k.state === 'warn' ? 'b-ochre' : 'b-grey')}</div>
     <p style="margin:8px 0 4px">${esc(k.result)}</p><p class="small soft" style="margin:0">Fails when: ${esc(k.fails)}</p>
@@ -648,7 +648,7 @@ function screenChallenge() {
     const list = S.challenge.map((c, i) => ({ c, i })).filter(x => !f || x.c.raisedBy === f);
     body = `<div class="row" style="margin-bottom:12px"><label class="f" style="flex-direction:row;align-items:center;gap:8px"><span>Filter by ${T('ap', 'accountable person')}</span><select class="in" style="width:auto" id="chFilter" data-act="chFilter"><option value="">Everyone</option>${S.people.map(p => `<option value="${esc(p.id)}" ${f === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label></div>
     ${list.length ? (b === 'phone' ? `<div class="stack" style="gap:10px">${list.map(({ c, i }) => `<div class="card" style="padding:14px"><div class="row between"><span class="mono">${esc(c.ref)}</span>${badge(c.status, c.status === 'open' ? 'b-ochre' : 'b-green')}</div><div class="small soft">${esc(pname(c.raisedBy))}${c.cell ? ` · <button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : ''}</div><p style="margin:8px 0">${esc(c.point)}</p><label class="f"><span>Response</span><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" ${rdis}></label><div style="margin-top:8px">${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</div></div>`).join('')}</div>`
-      : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Raised by</th><th>Decision and cell</th><th>Point</th><th>Response</th><th style="width:130px">Status</th></tr></thead><tbody>${list.map(({ c, i }) => `<tr><td class="code">${esc(c.ref)}</td><td class="small">${esc(pname(c.raisedBy))}</td><td class="small">${c.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : c.decision ? 'Decision ' + esc(D(c.decision).n) : ''}${c.status === 'accepted' && c.cell ? '<div class="mini">changed this position</div>' : ''}</td><td class="small">${esc(c.point)}</td><td><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" aria-label="Response ${esc(c.ref)}" ${rdis}></td><td>${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</td></tr>`).join('')}</tbody></table></div>`) : '<p class="soft">No challenge points recorded.</p>'}
+      : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Raised by</th><th>Decision and cell</th><th>Point</th><th>Response</th><th style="width:130px">Status</th></tr></thead><tbody>${list.map(({ c, i }) => `<tr><td class="code">${esc(c.ref)}</td><td class="small">${esc(pname(c.raisedBy))}</td><td class="small">${c.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : c.decision ? 'Decision ' + esc(D(c.decision).n) : ''}${c.status === 'accepted' && c.cell ? '<div class="mini">changed this position</div>' : ''}</td><td class="small">${esc(c.point)}</td><td><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" aria-label="Response ${esc(c.ref)}" ${rdis}></td><td>${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</td></tr>`).join('')}</tbody></table></div>`) : '<p class="soft">No challenge points have been recorded.</p>'}
     ${allowed.length ? `<section class="card" style="margin-top:18px"><h2 class="sh">Record a challenge point</h2>${UI.role === 'independent' ? `<p class="small soft">${esc(blockReason('d1'))} ${whyLink()}</p>` : ''}<div class="fgrid">
       <label class="f"><span>Raised by</span><select class="in" id="ch-by"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${UI.personId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
       <label class="f"><span>Decision</span><select class="in" id="ch-dec" data-act="chDec">${decOpts}</select></label>
@@ -656,9 +656,9 @@ function screenChallenge() {
       <label class="f" style="margin-top:12px"><span>Point</span><textarea class="in" id="ch-point"></textarea></label><button class="btn sm" style="margin-top:10px" data-act="addCH">Add to log</button></section>` : ''}`;
   } else {
     const ed = UI.role === 'counsel';
-    body = S.questionsForCounsel.length ? `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Decision and cell</th><th>Question</th><th>Response · counsel</th><th style="width:130px">Status</th></tr></thead><tbody>${S.questionsForCounsel.map((q, i) => `<tr><td class="code">${esc(q.ref)}</td><td class="small">${q.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : 'Decision ' + esc(D(q.decision).n)}</td><td class="small">${esc(q.question)}</td><td><input class="in" id="qcr-${i}" data-path="questionsForCounsel.${i}.response" value="${esc(q.response)}" ${ed ? '' : 'disabled'} aria-label="Response ${esc(q.ref)}"></td><td>${ed ? st(`questionsForCounsel.${i}.status`, q.status, ['open', 'answered']) : badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</td></tr>`).join('')}</tbody></table></div>${ed ? '' : '<p class="small soft" style="margin-top:8px">Responses are recorded by counsel.</p>'}` : '<p class="soft">No questions logged. Add them from each decision screen.</p>';
+    body = S.questionsForCounsel.length ? `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Decision and cell</th><th>Question</th><th>Response · counsel</th><th style="width:130px">Status</th></tr></thead><tbody>${S.questionsForCounsel.map((q, i) => `<tr><td class="code">${esc(q.ref)}</td><td class="small">${q.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : 'Decision ' + esc(D(q.decision).n)}</td><td class="small">${esc(q.question)}</td><td><input class="in" id="qcr-${i}" data-path="questionsForCounsel.${i}.response" value="${esc(q.response)}" ${ed ? '' : 'disabled'} aria-label="Response ${esc(q.ref)}"></td><td>${ed ? st(`questionsForCounsel.${i}.status`, q.status, ['open', 'answered']) : badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</td></tr>`).join('')}</tbody></table></div>${ed ? '' : '<p class="small soft" style="margin-top:8px">Responses are recorded by counsel.</p>'}` : '<p class="soft">No questions recorded. Questions are added from each decision screen.</p>';
   }
-  return `${opening('Challenge', 'Challenge round', 'Second line and each accountable person review the positions in their area. Each point is accepted or answered.')}
+  return `${opening('Challenge', 'Challenge round', 'The second line and each accountable person review the positions in their area. Each point raised is either accepted or answered.')}
   <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab === 'challenge'}" data-act="chTab" data-t="challenge">Challenge log · ${S.challenge.length}</button><button role="tab" aria-selected="${tab === 'qc'}" data-act="chTab" data-t="qc">Questions for counsel · ${S.questionsForCounsel.length}</button></div>
   ${body}${stepbar()}`;
 }
@@ -669,10 +669,10 @@ const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'
 function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[Insurer]'} · ${e.reference || '[reference]'} · generated ${today()}\n\n`; }
 function mdStatement() {
   const e = S.engagement, ins = e.insurer || '[insurer]'; let m = mdHead('AI risk appetite statement');
-  m += `## 1. Purpose and scope\n\nThis statement covers AI used by ${ins}, by its material service providers, and by the platforms behind them. It sits under ${ins}'s board risk appetite statement and takes its loss thresholds and critical-operation tolerances from what the board has already approved.\n\n`;
+  m += `## 1. Purpose and scope\n\nThis statement covers AI used by ${ins}, by its material service providers, and by the platforms behind them. It sits within ${ins}'s board-approved risk appetite statement, and uses the loss thresholds and critical operation tolerance levels the board has already approved.\n\n`;
   m += `## 2. Overall position\n\n${e.overallPosition || '[For counsel to write, in the board\u2019s words. For example: ' + C.overallExample + ']'}\n\n`;
-  m += `## 3. Authority\n\nThe ceiling is the highest authority tier the board accepts for each function and location.\n\n` + tbl(['Function', 'Own staff', 'Inside a provider', 'Platform behind a provider'], S.functions.map(f => [f.name, ...C.locations.map(l => { const id = `d1.${f.id}.${l.id}`, p = P(id); return pv(id) + (p && p.condition ? ` (${p.condition})` : ''); })]));
-  m += `Exception route: a use above the ceiling is approved by the person named in decision 1, time-limited, and reported as M1.\n\n`;
+  m += `## 3. Authority\n\nThe ceiling is the highest level of authority the board accepts for AI in each function and location.\n\n` + tbl(['Function', 'Own staff', 'Inside a provider', 'Platform behind a provider'], S.functions.map(f => [f.name, ...C.locations.map(l => { const id = `d1.${f.id}.${l.id}`, p = P(id); return pv(id) + (p && p.condition ? ` (${p.condition})` : ''); })]));
+  m += `Exceptions: a use above the ceiling must be approved by the person named in decision 1, for a limited period, and is reported under measure M1.\n\n`;
   m += `## 4. Consequence thresholds\n\n` + tbl(['Level', 'Threshold', 'Source'], [['C1, immaterial', 'Whatever falls below C2', 'n/a'], ...cellsFor('d2').map(c => { const o = c.id.startsWith('d2.op.') ? S.criticalOperations.find(x => x.id === c.id.split('.')[2]) : null; return [c.rowLabel, pv(c.id), o ? o.source : (D('d2').levels.find(l => l.code === c.row) || {}).source]; })]);
   m += `## 5. Evidence expected\n\n` + tbl(['Authority', ...CO], AT.map(a => [a + ', ' + scaleName(a), ...CO.map(c => pv(`d3.${a}.${c}`))]));
   m += `## 6. Tolerances\n\n### Shortfall\n\n` + tbl(['Gap', ...D('d4').bands.map(b => b.name)], D('d4').gaps.map(g => [g.name, ...D('d4').bands.map(b => pv(`d4.${g.id}.${b.id}`))])) + tbl(['Priority', 'Time limit', 'Interim position'], D('d4').priorities.map(p => [p.id, pv(`d4.time.${p.id}`), pv(`d4.interim.${p.id}`)]));
@@ -688,12 +688,12 @@ function mdStatement() {
 function irContributed() { const ir = S.people.filter(p => p.role === 'independent').map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
 function mdSchedule() {
   let m = mdHead('Tolerance and trigger schedule');
-  m += `The measurable part of the statement, kept as a schedule so it can change without re-approving the whole document.\n\n## Measures\n\n` + tbl(['Ref', 'Measure', 'Limit', 'Owner', 'Counted from', 'Reported'], C.measures.map(x => [x.ref, x.measure, x.ref === 'M6' ? (val('d6.concentration') ? val('d6.concentration') + '%' : pv('d6.concentration')) : (x.limit ? (x.limit.startsWith('[') ? x.limit : `[${x.limit}]`) : '[ ]'), pname((S.measureOwners || {})[x.ref]) || `[${x.owner}]`, x.from, x.reported]));
+  m += `The measurable parts of the statement, kept in a separate schedule so that they can be updated without the board re-approving the whole statement.\n\n## Measures\n\n` + tbl(['Ref', 'Measure', 'Limit', 'Owner', 'Counted from', 'Reported'], C.measures.map(x => [x.ref, x.measure, x.ref === 'M6' ? (val('d6.concentration') ? val('d6.concentration') + '%' : pv('d6.concentration')) : (x.limit ? (x.limit.startsWith('[') ? x.limit : `[${x.limit}]`) : '[ ]'), pname((S.measureOwners || {})[x.ref]) || `[${x.owner}]`, x.from, x.reported]));
   m += `## Triggers\n\n` + tbl(['Ref', 'Trigger', 'Measure', 'Threshold', 'Notify within', 'Notified to'], S.decisions.d7.triggers.map(t => [t.ref, t.name, t.measure, pv(`d7.${t.ref}.threshold`), val(`d7.${t.ref}.time`) ? val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`), pv(`d7.${t.ref}.to`)]));
   return m;
 }
 function mdSession() {
-  let m = mdHead('Session record') + 'A working paper, not a board document. Handled as counsel directs.\n\n';
+  let m = mdHead('Session record') + 'A working paper, not a board paper. To be handled as counsel directs.\n\n';
   C.decisions.forEach(d => {
     m += `## Decision ${d.n}: ${d.name} (session ${d.session})\n\n**Starting position.** ${d.starting}\n\n`;
     const rows = cellsFor(d.id).filter(c => P(c.id)).map(c => { const p = P(c.id); return [cellLabel(c.id).replace(/^D\d · /, ''), startingValue(c.id) || '—', p.status === 'set' ? p.value : p.status === 'notSet' ? 'not set' : '—', pname(p.proposedBy) || '—', ROLE_NAME[p.recordedBy] || '—', pname(p.owner) || '—', p.condition || '', p.dissent || '']; });
@@ -735,7 +735,7 @@ function mdCalibration() {
   const pn = id => (C.parameters.find(p => p.id === id) || {}).name || '';
   const hd = id => `### ${id} · ${pn(id)}${cs.fellBackIds.includes(id) ? ' · ' + cs.fellBackToDefault.find(x => x.startsWith(id + ':')).slice(id.length + 2) : ''}\n\n`;
   let m = mdHead('Calibration set');
-  m += `Status: ${cs.status} · version ${cs.version}${cs.date ? ' · ' + cs.date : ''}${cs.agreedBy ? ' · agreed by ' + cs.agreedBy + (cs.agreedOn ? ', ' + cs.agreedOn : '') : ''}${cs.approvedBy ? ' · approved by ' + cs.approvedBy : ''}${cs.minuteRef ? ' · minute ' + cs.minuteRef : ''}\n\nThe set carries no client facts. It holds positions and thresholds only. Values marked ${d} were not set and take the framework default.\n\n`;
+  m += `Status: ${cs.status} · version ${cs.version}${cs.date ? ' · ' + cs.date : ''}${cs.agreedBy ? ' · agreed by ' + cs.agreedBy + (cs.agreedOn ? ', ' + cs.agreedOn : '') : ''}${cs.approvedBy ? ' · approved by ' + cs.approvedBy : ''}${cs.minuteRef ? ' · minute ' + cs.minuteRef : ''}\n\nThe calibration set contains no client facts. It holds only positions and thresholds. Values marked ${d} were not set, and the framework default applies.\n\n`;
   m += hd('P1') + tbl(['Function', ...C.locations.map(l => l.name)], S.functions.map(f => [f.name, ...C.locations.map(l => { const id = `d1.${f.id}.${l.id}`, p = P(id); return val(id) ? val(id) + (p.condition ? ' (' + p.condition + ')' : '') : 'none ' + d; })]));
   m += hd('P2') + cellsFor('d2').map(c => `- ${c.rowLabel}: ${vd(c.id, Q.P2[c.rowLabel])}`).join('\n') + '\n\n';
   m += hd('P3') + tbl(['Authority', ...CO], AT.map(a2 => [a2 + ', ' + scaleName(a2), ...CO.map(c => vd(`d3.${a2}.${c}`, Q.P3[a2][c]))]));
@@ -758,14 +758,14 @@ function screenOutputs(ck) {
   const who = me(), agreeWhy = !who || who.role !== 'cro' ? (practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') : bl ? `${bl} blocking ${bl === 1 ? 'check' : 'checks'} failing` : '', xb = tab === 'calibration' && exportBlocked();
   return `${opening('Outputs', 'Outputs', 'The statement for board approval, the schedule, the session record and the calibration set.')}
   <section class="card" style="margin-bottom:20px"><div class="row between"><div class="row"><h2 class="sh" style="margin:0">${T('calibration', 'Calibration status')}</h2>${calBadge()}<span class="mono soft">${esc(statusMark())}</span></div>${c.minuteRef ? `<span class="mono soft">minute ${esc(c.minuteRef)}</span>` : ''}</div>
-    <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">CRO only. Requires K1 to K9 passed. ${c.status === 'default' ? 'Version becomes 1.' : 'Any later change to a position increments the version.'}</p>
+    <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">For the CRO only. Checks K1 to K9 must pass first. ${c.status === 'default' ? 'Version becomes 1.' : 'Any later change to a position raises the version number.'}</p>
       <button class="btn primary sm" data-act="agree" ${agreeWhy || c.status !== 'default' ? 'disabled' : ''}>Agree working appetite</button> ${agreeWhy && c.status === 'default' ? `<span class="small" style="color:var(--red)">${esc(agreeWhy)}</span>` : c.status !== 'default' ? `<span class="small soft">Agreed ${esc(c.agreedOn)} by ${esc(c.agreedBy)}</span>` : ''}</div>
-    <div class="panel2"><div style="font-weight:600">Record board approval</div><p class="small soft" style="margin:4px 0 10px">Board record role only. Version unchanged.</p>
+    <div class="panel2"><div style="font-weight:600">Record board approval</div><p class="small soft" style="margin:4px 0 10px">For the board record role only. The version number does not change.</p>
       <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="f"><span>Date</span><input class="in" type="date" id="ap-date" value="${esc(c.approvedOn || today())}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Minute reference</span><input class="in" id="ap-min" value="${esc(c.minuteRef)}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Approved by (board or committee)</span><input class="in" id="ap-by" value="${esc(c.approvedBy)}" ${UI.role === 'board' ? '' : 'disabled'}></label></div>
       ${UI.err.approval ? `<p class="err" role="alert">${esc(UI.err.approval)}</p>` : ''}
       <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' ? '' : 'disabled'}>Record approval</button> ${UI.role !== 'board' ? '<span class="small soft">Board record role only</span>' : c.status !== 'working' ? '<span class="small soft">Needs a working appetite</span>' : ''}</div></div>
     ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(x.on)}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
-    ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. Export of the calibration set is blocked until K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
+    ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
   ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(x.measure)}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
@@ -976,7 +976,7 @@ function openFile(file) {
   fr.onload = () => { let st; try { st = hydrate(JSON.parse(fr.result)); } catch (e) { return toast('Rejected: ' + e.message); }
     if (SRV.exists) return toast('The engagement has already been started, so a file cannot replace it.');
     st.engagement.id = uid(); startEngagement(st); go('setup');
-    UI.dirty = true; autosave(); saveNow(); toast('Started the engagement from ' + file.name + '. People and their areas come from the user list, so check set-up.'); };
+    UI.dirty = true; autosave(); saveNow(); toast('Started the engagement from ' + file.name + '. People are taken from the user list, so check owners, proposers and accountability areas.'); };
   fr.readAsText(file);
 }
 /* ---------- profile icon ---------- */
@@ -1027,7 +1027,7 @@ function screenStart() {
   return `${opening('Admin · set-up', 'Set up the engagement', 'This deployment holds one engagement. Start it here; everyone else then works on it in the app.')}
   <div class="acts" style="max-width:640px">
     <button class="act" data-act="new"><span class="mono" style="color:var(--aubergine)">01</span><span><strong>Start the engagement</strong><br><span class="small soft">Begin with the framework's function list.</span></span></button>
-    <button class="act" data-act="open"><span class="mono" style="color:var(--aubergine)">02</span><span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app. People come from the user list, so re-check owners and proposers.</span></span></button>
+    <button class="act" data-act="open"><span class="mono" style="color:var(--aubergine)">02</span><span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app. People are taken from the user list, so check owners and proposers afterwards.</span></span></button>
   </div>`;
 }
 function roleOptions(cur) { return `<option value="" ${!cur ? 'selected' : ''}>None (no engagement role)</option>` + ADM.roles.map(r => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join(''); }
@@ -1059,7 +1059,7 @@ function screenUsers() {
       <td style="text-align:right"><button class="btn sm" data-act="admEdit" data-id="${esc(u.id)}">Edit</button></td></tr>`;
   }).join('');
   const reqs = ADM.requests.length ? `<section class="adm-sec"><h2>Waiting for access</h2>
-    <p class="small soft" style="margin:4px 0 12px">These people signed in but are not users, so the app turned them away.</p>
+    <p class="small soft" style="margin:4px 0 12px">These people signed in but are not users, so they could not open the app.</p>
     <div class="tw"><table class="lg"><thead><tr><th>Email</th><th>Last tried</th><th class="adm-hide-sm">Attempts</th><th></th></tr></thead><tbody>
     ${ADM.requests.map(r => `<tr><td class="em">${esc(r.email)}</td><td class="small">${fmtLocal(r.last_at)}</td><td class="adm-hide-sm small">${esc(r.attempts)}</td>
       <td style="text-align:right;white-space:nowrap"><button class="btn sm primary" data-act="admGrant" data-email="${esc(r.email)}">Add as user</button> <button class="btn sm" data-act="admDismiss" data-email="${esc(r.email)}">Dismiss</button></td></tr>`).join('')}
@@ -1408,7 +1408,7 @@ function onKey(e) {
     const nx = document.querySelector(`[data-gr="${t.dataset.gr}"][data-r="${r}"][data-c="${c}"]`); if (nx) nx.focus();
   }
 }
-function togglePresent() { if (bp() !== 'desk') return toast('Present mode needs a screen 1024px or wider.'); UI.present = !UI.present; render(); }
+function togglePresent() { if (bp() !== 'desk') return toast('Present mode needs a wider screen (at least 1,024 pixels).'); UI.present = !UI.present; render(); }
 
 /* ---------- boot ---------- */
 async function boot() {

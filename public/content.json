@@ -1,7 +1,7 @@
 {
   "schema": "triodian.raf.content.v1",
   "frameworkDate": "12 October 2026",
-  "banner": "Prepared for discussion with counsel. This app records positions the board decides. It is not legal advice, and it gives no view on what the appetite should be.",
+  "banner": "Prepared for discussion with counsel. This app records the positions the board decides. It is not legal advice and it does not suggest what the appetite should be.",
   "scales": {
     "note": "Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.",
     "authority": [
@@ -157,7 +157,7 @@
     {
       "ref": "I1",
       "name": "Board risk appetite statement, current version",
-      "usedIn": "All decisions; consistency check"
+      "usedIn": "All decisions and the consistency checks"
     },
     {
       "ref": "I2",
@@ -196,8 +196,8 @@
     },
     {
       "ref": "I9",
-      "name": "Accountability map: which accountable person holds which function",
-      "usedIn": "Owners for every position"
+      "name": "Accountability map, showing which accountable person holds each function",
+      "usedIn": "The owner of every position"
     },
     {
       "ref": "I10",
@@ -207,7 +207,7 @@
     {
       "ref": "I11",
       "name": "Board and risk committee calendar",
-      "usedIn": "Timing of approval"
+      "usedIn": "Timing of board approval"
     }
   ],
   "roles": [
@@ -243,19 +243,19 @@
       "session": 1,
       "name": "Authority",
       "param": "P1",
-      "question": "How much authority may AI hold in each function, in our own hands, in a provider's and in a platform behind one?",
-      "answeredAs": "A ceiling tier, A1 to A6, for each function and location in the chain",
-      "purpose": "To state the most authority AI may hold in each function, depending on whose hands it is in.",
-      "recorded": "One ceiling tier per cell, with any condition written beside it.",
+      "question": "How much authority may AI hold in each function, whether it is used by our own staff, by a provider, or by a platform the provider relies on?",
+      "answeredAs": "A ceiling, A1 to A6, for each function and each of the three locations",
+      "purpose": "To set the highest level of authority AI may hold in each function, separately for AI used by the insurer's own staff, by a provider and by a platform the provider relies on.",
+      "recorded": "Record one ceiling in each cell, with any condition beside it.",
       "prompts": [
-        "Where does a named person sign off today? Would we accept that sign-off being removed?",
-        "Would we accept a provider's AI declining or paying a claim with no person involved? Up to what amount?",
-        "Is our position different when the AI is ours and when it is a provider's? Why?",
-        "Is there any function where AI may assist but must never decide?",
+        "Where does a named person sign off today? Would we accept removing that sign-off?",
+        "Would we accept a provider's AI declining or paying a claim without a person reviewing it? If so, up to what amount?",
+        "Is our position different for AI we operate and AI a provider operates? If so, why?",
+        "Is there any function where AI may assist but must not make the decision?",
         "Who may approve a use above the ceiling, and for how long?"
       ],
-      "note": "Conditions. A ceiling may carry a limit, for example \"A4 up to a stated amount per transaction\" or \"A3 for triage only\". Each condition must be something the assessment can test from documents.",
-      "starting": "The current state. The session begins from where a person signs off today in each function, and asks whether the board accepts that as the ceiling.",
+      "note": "A ceiling may carry a condition, for example \"A4 up to a stated amount per transaction\" or \"A3 for triage only\". Each condition must be capable of being checked against documents.",
+      "starting": "The starting position is the current state: the point at which a person signs off today in each function. The session asks whether the board accepts that point as the ceiling.",
       "startingInputs": [
         "I7",
         "I8"
@@ -267,15 +267,15 @@
       "session": 1,
       "name": "Consequence thresholds",
       "param": "P2",
-      "question": "At what point does a failure count as a financial loss, as policyholder harm, and as disruption of a critical operation?",
+      "question": "At what point does a failure count as a financial loss, as harm to policyholders, or as disruption to a critical operation?",
       "answeredAs": "A threshold for each of C3, C4 and C5",
-      "purpose": "To replace the generic consequence definitions with the insurer's own, so two classifiers reach the same level.",
+      "purpose": "To replace the framework's generic consequence definitions with thresholds the insurer already uses, so that any two people assessing the same failure place it at the same level.",
       "prompts": [
-        "Do we already have these thresholds for operational incidents? If so, we use them unchanged.",
-        "Does one wrongly declined claim count as policyholder harm, or does it take a pattern?",
-        "Which critical operations could an AI failure, ours or a provider's, move outside tolerance?"
+        "Do we already have thresholds for operational incidents? If so, they are used unchanged.",
+        "Does a single wrongly declined claim count as harm to policyholders, or only a pattern of them?",
+        "Which critical operations could be taken outside their tolerance level by a failure of AI, whether ours or a provider's?"
       ],
-      "starting": "The insurer's existing operational risk and conduct thresholds, unchanged. A new threshold is set only where none exists. Where one is needed, the Independent Reviewer advises the CRO on the figure. The Independent Reviewer advises on this decision only.",
+      "starting": "The insurer's existing operational risk and conduct thresholds, unchanged. A new threshold is set only where none exists. Where one is needed, the independent reviewer advises the CRO on the figure. The independent reviewer advises on this decision only.",
       "startingInputs": [
         "I2",
         "I3",
@@ -284,27 +284,27 @@
       "levels": [
         {
           "code": "C1",
-          "sets": "Nothing. It is whatever falls below C2",
+          "sets": "Nothing. C1 covers anything below C2",
           "source": "n/a"
         },
         {
           "code": "C2",
-          "sets": "Whether any class of breach is treated as higher",
+          "sets": "Whether any class of breach is treated as more serious",
           "source": "Outsourcing policy"
         },
         {
           "code": "C3",
-          "sets": "An amount for a single event and for a period",
+          "sets": "An amount for a single event and an amount for a period",
           "source": "Operational risk incident thresholds"
         },
         {
           "code": "C4",
-          "sets": "The number affected, and the kinds of harm, at which this level applies",
+          "sets": "The number of policyholders affected, and the kinds of harm, at which this level applies",
           "source": "Conduct and breach reporting definitions"
         },
         {
           "code": "C5",
-          "sets": "For each critical operation in scope, the tolerance already approved",
+          "sets": "The tolerance level the board has already approved for each critical operation in scope",
           "source": "Critical operations register"
         }
       ]
@@ -316,17 +316,17 @@
       "name": "Evidence expectation",
       "param": "P3",
       "question": "For each level of authority and consequence, what evidence do we expect to hold?",
-      "answeredAs": "A rung, E0 to E6, for each tier and consequence",
-      "purpose": "To state, for each combination of authority and consequence, the evidence the board expects to hold. This is the centre of the calibration.",
-      "recorded": "One rung per cell.",
+      "answeredAs": "One evidence level, E0 to E6, for each combination of authority and consequence",
+      "purpose": "To set, for each combination of authority and consequence, the evidence the board expects the insurer to hold. This decision is the core of the calibration.",
+      "recorded": "Record one evidence level in each cell.",
       "prompts": [
-        "For a provider's AI that decides claims, is a signed statement each quarter enough, or do we expect to be told when a limit is crossed?",
+        "For a provider's AI that decides claims, is a signed quarterly statement enough, or do we expect to be told whenever a limit is crossed?",
         "At what point do we expect to audit the aggregate record ourselves?",
-        "Is there any use for which we expect a control that does not depend on the AI behaving as instructed?",
-        "What would we want to hold if a regulator or a trustee asked tomorrow?"
+        "Is there any use for which we expect a control that does not rely on the AI behaving as instructed?",
+        "What would we want to be able to produce if APRA or a court asked for it tomorrow?"
       ],
-      "note": "Rule. Moving right or down the table, the rung may stay level or rise. It may not fall.",
-      "starting": "The current state. Before the session, each cell is filled with the evidence the insurer holds today for uses of that kind, taken from the inputs in section 7.1 and from the assessment's register where mapping has started. Cells with no current use are left empty. The session asks whether the board accepts what it holds today as its expectation. A reference table drawn from the assessment framework is in Appendix A. It is shown only if the insurer asks for it.",
+      "note": "The evidence level may stay the same or rise as authority or consequence increases. It may not fall.",
+      "starting": "The starting position is the current state. Before the session, each cell is filled with the evidence the insurer holds today for uses of that kind, drawn from the inputs in section 7.1 and from the assessment register where mapping has begun. Cells with no current use are left blank. The session asks whether the board accepts the evidence it holds today as its expectation. A reference table from the assessment framework is in Appendix A. It is shown only if the insurer asks for it.",
       "startingInputs": [
         "I1",
         "I5",
@@ -339,16 +339,16 @@
       "session": 2,
       "name": "Shortfall tolerance",
       "param": "P4, P5",
-      "question": "When the evidence falls short, how serious is it and how long may it stand?",
-      "answeredAs": "A priority matrix and a time limit for each priority",
-      "purpose": "To state how seriously a shortfall is treated and how long it may stand.",
-      "recorded": "Priority. The gap is the number of rungs between what is required and what is obtainable.",
+      "question": "When the evidence falls short of what we expect, how serious is the shortfall and how long may it continue?",
+      "answeredAs": "A priority for each size of shortfall and consequence, and a time limit for each priority",
+      "purpose": "To set how seriously a shortfall in evidence is treated and how long it may continue.",
+      "recorded": "The gap is the number of evidence levels between what is required and what can be obtained.",
       "prompts": [
-        "Are we prepared to ask a provider to switch a capability off until evidence exists?",
+        "Are we prepared to ask a provider to switch a capability off until the evidence exists?",
         "Who may accept a high-priority gap, and must that acceptance be reported to the board?",
-        "Does an above-ceiling result follow the same limits, or a shorter one?"
+        "Does a use above the authority ceiling follow the same time limits, or shorter ones?"
       ],
-      "starting": "The framework matrix and the starting time limits and interim positions in section 5.4.",
+      "starting": "The framework's priority table, and the starting time limits and interim positions in section 5.4.",
       "startingInputs": [
         "I6"
       ],
@@ -400,12 +400,12 @@
       "priorities": [
         {
           "id": "High",
-          "limit": "Reported to the next board risk committee, with a plan",
-          "interim": "Choose one: restrict the AI's authority · add a compensating control · accept, with a named accountable person"
+          "limit": "Reported to the next board risk committee meeting, with a plan",
+          "interim": "One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person"
         },
         {
           "id": "Medium",
-          "limit": "Closed by the next contracting point for the arrangement",
+          "limit": "Closed by the next contract renewal or variation for the arrangement",
           "interim": "Accept, recorded with an owner"
         },
         {
@@ -421,14 +421,14 @@
       "session": 2,
       "name": "Unknowns",
       "param": "P6, P7",
-      "question": "How much may we not know about AI in our chain?",
-      "answeredAs": "A limit on not-known facts and a minimum confidence, by consequence",
-      "purpose": "To state how much the insurer may not know about AI in its chain. The assessment approaches no provider, so some facts will be unknown. This decision says how many, and for how long.",
+      "question": "How much may we not know about the AI used in our supply chain?",
+      "answeredAs": "A limit on facts that are not known, and a minimum confidence, for each consequence level",
+      "purpose": "To set how much the insurer may not know about AI in its supply chain. The assessment relies on the insurer's own documents and does not approach providers, so some facts will not be known. This decision sets how many may remain unknown, and for how long.",
       "prompts": [
-        "If we cannot tell from our documents whether a claims manager uses AI to decide, how long are we content not to know?",
-        "At what point do we ask the provider directly, accepting that this takes the work beyond a desk assessment?"
+        "If our documents do not show whether a claims manager uses AI to make decisions, how long are we prepared not to know?",
+        "At what point do we ask the provider directly, accepting that this goes beyond a review of our own documents?"
       ],
-      "starting": "The framework table, with the stated number and date left for the session.",
+      "starting": "The framework table, with the number and the date left for the session to decide.",
       "startingInputs": [],
       "bands": [
         {
@@ -442,20 +442,20 @@
           "id": "b3",
           "name": "C3",
           "notKnown": "",
-          "f4": "Until the next contracting point",
+          "f4": "Until the next contract renewal or variation",
           "conf": "Medium"
         },
         {
           "id": "b45",
           "name": "C4 or C5",
-          "notKnown": "None among the facts that decide the authority tier",
+          "notKnown": "None among the facts that determine the authority level",
           "f4": "",
           "conf": "Medium"
         }
       ],
       "blankHints": {
         "b3.notKnown": "A stated number",
-        "b45.f4": "Until a stated date; then the provider is asked"
+        "b45.f4": "Until a stated date, after which the provider is asked"
       }
     },
     {
@@ -464,31 +464,31 @@
       "session": 2,
       "name": "Location and concentration",
       "param": "P8, P9",
-      "question": "Where may AI that acts for us run, and how much may depend on one platform?",
-      "answeredAs": "Each location marked accepted, escalate or not accepted; a concentration limit",
-      "purpose": "To state where AI acting for the insurer may run, and how much may rest on one platform.",
-      "recorded": "Each jurisdiction that appears in the register is marked once, separately for where the provider is established and where the AI runs. Whether a location limits audit rights, data access or enforceability is counsel's question.",
+      "question": "Where may AI acting for us operate, and how much may depend on a single platform?",
+      "answeredAs": "Each location marked accepted, escalate or not accepted, and a concentration limit",
+      "purpose": "To set where AI acting for the insurer may operate, and how much may depend on a single platform.",
+      "recorded": "Each jurisdiction in the register is marked once for where the provider is established and once for where the AI operates. Whether a location limits audit rights, access to data or enforceability is a question for counsel.",
       "markings": [
         {
           "id": "Accepted",
-          "meaning": "Recorded. No further step"
+          "meaning": "Recorded. No further step is needed"
         },
         {
           "id": "Escalate",
-          "meaning": "A question to counsel is raised for every entry in that location"
+          "meaning": "A question for counsel is raised for every entry in that location"
         },
         {
           "id": "Not accepted",
-          "meaning": "The entry is flagged in the same way as an above-ceiling result"
+          "meaning": "The entry is flagged in the same way as a use above the authority ceiling"
         }
       ],
       "prompts": [
-        "Do we know which model provider sits behind each of our material providers?",
+        "Do we know which AI model provider sits behind each of our material service providers?",
         "If one platform failed or changed its terms, how many critical operations would be affected?",
-        "Is our position on offshore AI the same as our existing position on offshoring generally?"
+        "Is our position on AI operating offshore the same as our existing position on offshoring generally?"
       ],
-      "concentrationNote": "One limit is set: the largest share of critical operations that may depend on a single platform or model provider. The register's platform field makes this countable across the set.",
-      "starting": "The insurer's existing offshoring position for location. No starting position for concentration; most insurers will not yet have counted it.",
+      "concentrationNote": "One limit is set: the largest share of critical operations that may depend on a single platform or AI model provider. The register records the platform for each entry, so this share can be counted.",
+      "starting": "For location, the insurer's existing offshoring position. There is no starting position for concentration, because most insurers will not yet have measured it.",
       "startingInputs": [
         "I6"
       ]
@@ -499,12 +499,12 @@
       "session": 2,
       "name": "Triggers",
       "param": "P10",
-      "question": "What events must reach us, and how fast?",
-      "answeredAs": "A list of triggers, each with a measure, a threshold and a time",
-      "purpose": "To define the events that must reach the insurer, and how fast. APRA's letter, as quoted in the counsel briefing, expects monitoring with \"clearly defined triggers\".",
-      "note": "Rule for timing. Each time must leave the insurer able to assess the event and meet its own notification obligations. The counsel briefing's example wording used 12 hours for an event that could disrupt a critical operation and 48 hours for other triggers. Those figures are examples; counsel settles the timing.",
+      "question": "Which events must be reported to us, and how quickly?",
+      "answeredAs": "A list of triggers, each with a measure, a threshold and a time limit",
+      "purpose": "To define the events that must be reported to the insurer, and how quickly. APRA's letter on AI of 30 April 2026, as quoted in the counsel briefing, expects monitoring with \"clearly defined triggers\".",
+      "note": "Each time limit must leave the insurer able to assess the event and meet its own notification obligations. The example wording in the counsel briefing used 12 hours for an event that could disrupt a critical operation and 48 hours for other triggers. Those figures are examples only. Counsel advises on the timing.",
       "prompts": [],
-      "starting": "The eight triggers, with thresholds and times left for the session.",
+      "starting": "The eight triggers, with thresholds and time limits left for the session to decide.",
       "startingInputs": [
         "I4",
         "I10"
@@ -519,13 +519,13 @@
         {
           "ref": "TR2",
           "name": "Evidence lapse",
-          "measure": "An expected evidence item is not received",
+          "measure": "An expected item of evidence is not received",
           "threshold": "Days past due"
         },
         {
           "ref": "TR3",
           "name": "Tolerance signal",
-          "measure": "An aggregate measure approaches or crosses a declared tolerance",
+          "measure": "An aggregate measure approaches or crosses a tolerance the board has set",
           "threshold": "Set per measure"
         },
         {
@@ -543,19 +543,19 @@
         {
           "ref": "TR6",
           "name": "Model or platform change",
-          "measure": "The provider changes the model or platform behind the service",
+          "measure": "The provider changes the AI model or platform behind the service",
           "threshold": "Any, for A3 or above"
         },
         {
           "ref": "TR7",
           "name": "Sub-contractor change",
-          "measure": "A new party enters the chain",
+          "measure": "A new party is added to the supply chain",
           "threshold": "Any, for a critical operation"
         },
         {
           "ref": "TR8",
           "name": "Location change",
-          "measure": "The AI runs, or the provider operates, from a new location",
+          "measure": "The AI operates, or the provider operates, from a new location",
           "threshold": "Any"
         }
       ]
@@ -566,11 +566,11 @@
       "session": 2,
       "name": "Change and review",
       "param": "P11",
-      "question": "What changes bring an arrangement back for approval, and how often is the appetite reviewed?",
+      "question": "Which changes bring an arrangement back for approval, and how often is the appetite reviewed?",
       "answeredAs": "A list of change events and a review interval",
-      "purpose": "To state what brings an arrangement, or the appetite itself, back for decision.",
+      "purpose": "To set which changes bring an arrangement, or the appetite itself, back for decision.",
       "prompts": [],
-      "starting": "Review at least annually, in the same cycle as the main risk appetite statement.",
+      "starting": "A review at least once a year, in the same cycle as the board's risk appetite statement.",
       "startingInputs": [
         "I1",
         "I11"
@@ -583,28 +583,28 @@
         },
         {
           "id": "e2",
-          "event": "TR1, TR6, TR7 or TR8 fires",
-          "revisit": "The register entry is reclassified and the finding re-set"
+          "event": "Trigger TR1, TR6, TR7 or TR8 occurs",
+          "revisit": "The register entry is reassessed and its finding set again"
         },
         {
           "id": "e3",
-          "event": "An arrangement reaches its contracting point",
-          "revisit": "Its evidence terms are reviewed against the expectation"
+          "event": "An arrangement reaches renewal or variation of its contract",
+          "revisit": "Its evidence terms are reviewed against the board's expectation"
         },
         {
           "id": "e4",
-          "event": "A material AI incident, at the insurer or in its chain",
+          "event": "A material AI incident, at the insurer or in its supply chain",
           "revisit": "Decisions 1, 3 and 7"
         },
         {
           "id": "e5",
           "event": "New regulatory guidance on AI or outsourcing",
-          "revisit": "All eight, on counsel's advice"
+          "revisit": "All eight decisions, on counsel's advice"
         },
         {
           "id": "e6",
-          "event": "The interval set by the board has passed",
-          "revisit": "All eight"
+          "event": "The review interval set by the board has passed",
+          "revisit": "All eight decisions"
         }
       ],
       "interval": "Annual"
@@ -654,27 +654,27 @@
       "E6"
     ]
   },
-  "appendixANote": "This table is the AI Use Assessment Framework's base rule with its proposed consequence adjustment applied. It is what the assessment uses when no appetite has been set. It is not a starting position for decision 3 and is shown in a session only if the insurer asks for it.",
+  "appendixANote": "This table is the AI Use Assessment Framework's base rule, adjusted for consequence as the framework proposes. The assessment uses it when no appetite has been set. It is not a starting position for decision 3, and it is shown in a session only if the insurer asks for it.",
   "checks": [
     {
       "id": "K1",
       "name": "Complete",
-      "fails": "Any cell is blank and not recorded as \"not set\" with an owner and date"
+      "fails": "A cell is blank and has not been recorded as \"not set\" with an owner and a due date"
     },
     {
       "id": "K2",
       "name": "Ordered",
-      "fails": "In the expectation table, a rung falls when moving to higher authority or higher consequence"
+      "fails": "In the evidence table, the evidence level falls as authority or consequence increases"
     },
     {
       "id": "K3",
       "name": "Priority ordered",
-      "fails": "In the priority matrix, priority falls as the gap or the consequence grows"
+      "fails": "In the priority table, the priority falls as the gap or the consequence increases"
     },
     {
       "id": "K4",
       "name": "Consistent with existing thresholds",
-      "fails": "A consequence threshold differs from the insurer's existing one without a recorded reason"
+      "fails": "A consequence threshold differs from the insurer's existing threshold and no reason is recorded"
     },
     {
       "id": "K5",
@@ -683,13 +683,13 @@
     },
     {
       "id": "K6",
-      "name": "Provider against own",
-      "fails": "A ceiling inside a provider is higher than for the insurer's own staff in the same function, without a recorded reason"
+      "name": "Provider compared with own staff",
+      "fails": "A ceiling for a provider is higher than for the insurer's own staff in the same function, and no reason is recorded"
     },
     {
       "id": "K7",
       "name": "Testable",
-      "fails": "A condition on a ceiling cannot be tested from documents"
+      "fails": "A condition on a ceiling cannot be checked against documents"
     },
     {
       "id": "K8",
@@ -699,53 +699,53 @@
     {
       "id": "K9",
       "name": "Timed",
-      "fails": "A trigger has no time, or a time longer than the insurer's own notification procedure can absorb"
+      "fails": "A trigger has no time limit, or a time limit longer than the insurer's own notification procedure allows"
     },
     {
       "id": "K10",
       "name": "Reachable",
-      "fails": "The expectation for the most common authority and consequence pair in the set is above anything currently obtained anywhere in the set"
+      "fails": "The expected evidence for the most common combination of authority and consequence is higher than any evidence the insurer currently obtains"
     }
   ],
-  "k10Note": "K10 is not a failure of logic. It tells the board that its expectation will show as a gap on most arrangements from the first day, so that position is taken knowingly.",
+  "k10Note": "K10 does not indicate an error. It tells the board that, from the first day, its expectation will show as a gap for most arrangements, so that the board sets the position knowing this.",
   "parameters": [
     {
       "id": "P1",
       "name": "Authority ceilings",
       "decision": "d1",
-      "form": "A tier, with optional condition, for each function and each of own staff, provider, platform",
-      "default": "None. No above-ceiling result is produced",
-      "used": "New flag on each register entry"
+      "form": "A level, with any condition, for each function and for each of own staff, provider and platform",
+      "default": "None. No use is reported as above the ceiling",
+      "used": "A new flag on each register entry"
     },
     {
       "id": "P2",
       "name": "Consequence thresholds",
       "decision": "d2",
-      "form": "An amount for C3; a definition for C4; a tolerance per critical operation for C5",
-      "default": "The generic definitions",
+      "form": "An amount for C3, a definition for C4, and a tolerance level for each critical operation for C5",
+      "default": "The framework's generic definitions",
       "used": "Failure consequence, section 8.2"
     },
     {
       "id": "P3",
       "name": "Evidence expectation",
       "decision": "d3",
-      "form": "A rung for each of 30 tier and consequence pairs",
+      "form": "An evidence level for each of the 30 combinations of authority and consequence",
       "default": "The reference table in Appendix A",
-      "used": "Expected rung, replacing the indicative rung in section 8.3"
+      "used": "The expected evidence level, replacing the indicative level in section 8.3"
     },
     {
       "id": "P4",
       "name": "Gap priority",
       "decision": "d4",
-      "form": "A priority for each gap size and consequence band",
-      "default": "The matrix in section 5.4",
+      "form": "A priority for each size of gap and each consequence band",
+      "default": "The table in section 5.4",
       "used": "Gap rating, section 9.2"
     },
     {
       "id": "P5",
       "name": "Time limits and interim positions",
       "decision": "d4",
-      "form": "A limit and an interim position per priority",
+      "form": "A time limit and an interim position for each priority",
       "default": "None. Priority is reported without a due date",
       "used": "Finding worksheet, part I"
     },
@@ -753,15 +753,15 @@
       "id": "P6",
       "name": "Not-known limits",
       "decision": "d5",
-      "form": "A limit per consequence band, and how long an F4 may stand",
-      "default": "None. Not-known facts are counted and reported only",
+      "form": "A limit for each consequence band, and how long an F4 finding may stand",
+      "default": "None. Facts that are not known are counted and reported only",
       "used": "Completion rules, section 6.3; F4, section 9.1"
     },
     {
       "id": "P7",
       "name": "Minimum confidence",
       "decision": "d5",
-      "form": "A minimum per consequence band",
+      "form": "A minimum for each consequence band",
       "default": "None. Confidence is reported beside the finding",
       "used": "Obtainability test, section 8.4"
     },
@@ -769,9 +769,9 @@
       "id": "P8",
       "name": "Location markings",
       "decision": "d6",
-      "form": "Accepted, escalate or not accepted, per jurisdiction, for where the provider is and where the AI runs",
-      "default": "All locations treated as escalate",
-      "used": "Question 4; new flag on each entry"
+      "form": "Accepted, escalate or not accepted, for each jurisdiction, for where the provider is established and where the AI operates",
+      "default": "Every location is treated as escalate",
+      "used": "Question 4, and a new flag on each entry"
     },
     {
       "id": "P9",
@@ -785,15 +785,15 @@
       "id": "P10",
       "name": "Triggers",
       "decision": "d7",
-      "form": "A list: reference, measure, threshold, time, recipient",
-      "default": "The eight triggers in section 6.3, without thresholds or times",
+      "form": "A list of reference, measure, threshold, time limit and recipient",
+      "default": "The eight triggers in section 6.3, without thresholds or time limits",
       "used": "Timely test T5; technical schedule"
     },
     {
       "id": "P11",
       "name": "Change events and review interval",
       "decision": "d8",
-      "form": "A list of events and an interval",
+      "form": "A list of events and a review interval",
       "default": "Annual",
       "used": "Hand-over notes at close"
     }
@@ -801,7 +801,7 @@
   "measures": [
     {
       "ref": "M1",
-      "measure": "Entries above the authority ceiling without an approved exception",
+      "measure": "Register entries above the authority ceiling without an approved exception",
       "limit": "0",
       "owner": "Accountable person for the function",
       "from": "Register: authority tier against P1",
@@ -817,15 +817,15 @@
     },
     {
       "ref": "M3",
-      "measure": "Medium-priority gaps open past the contracting point",
+      "measure": "Medium-priority gaps still open after the contract renewal or variation",
       "limit": "",
       "owner": "Arrangement owner",
-      "from": "Findings and next contracting date",
+      "from": "Findings and the next contract date",
       "reported": "Quarterly"
     },
     {
       "ref": "M4",
-      "measure": "F4 findings standing beyond their allowed date, at C4 or C5",
+      "measure": "F4 findings open beyond their permitted date, at C4 or C5",
       "limit": "0",
       "owner": "CRO",
       "from": "Findings: type and date set",
@@ -833,7 +833,7 @@
     },
     {
       "ref": "M5",
-      "measure": "Expected evidence items overdue",
+      "measure": "Expected items of evidence that are overdue",
       "limit": "[ ] days",
       "owner": "Arrangement owner",
       "from": "Technical schedule: item and due date",
@@ -841,7 +841,7 @@
     },
     {
       "ref": "M6",
-      "measure": "Share of critical operations depending on one platform or model provider",
+      "measure": "Share of critical operations that depend on a single platform or AI model provider",
       "limit": "[ ]%",
       "owner": "CRO",
       "from": "Register: platform field",
@@ -849,7 +849,7 @@
     },
     {
       "ref": "M7",
-      "measure": "Entries in a location marked not accepted",
+      "measure": "Register entries in a location marked not accepted",
       "limit": "0",
       "owner": "Accountable person for the function",
       "from": "Register: location against P8",
@@ -857,7 +857,7 @@
     },
     {
       "ref": "M8",
-      "measure": "Triggers notified later than the time set",
+      "measure": "Triggers reported later than the time limit",
       "limit": "0",
       "owner": "Arrangement owner",
       "from": "Trigger log",
@@ -865,7 +865,7 @@
     },
     {
       "ref": "M9",
-      "measure": "Obtainable rungs held at low confidence, at C4 or C5",
+      "measure": "Evidence levels established with low confidence, at C4 or C5",
       "limit": "0",
       "owner": "CRO",
       "from": "Register: confidence against P7",
@@ -881,17 +881,17 @@
   "glossary": {
     "appetite": {
       "term": "AI risk appetite",
-      "def": "The board's statement of how much [[tier|authority]] AI may hold, what failure it will tolerate, and what [[rung|evidence]] it expects in return.",
+      "def": "The board's statement of how much [[tier|authority]] AI may hold, what failures it will tolerate, and what [[rung|evidence]] it expects the insurer to hold.",
       "where": "Throughout"
     },
     "ras": {
       "term": "Risk appetite statement",
-      "def": "The board-approved statement of the risk the insurer is willing to accept. The [[appetite|AI appetite]] sits under it.",
+      "def": "The board-approved statement of the risk the insurer is prepared to accept. The [[appetite|AI risk appetite]] sits within it.",
       "where": "Set-up, Statement"
     },
     "tier": {
       "term": "Authority tier",
-      "def": "How much AI can do on its own, from A1 productivity to A6 actuation.",
+      "def": "How much AI may do without a person deciding, from A1 productivity to A6 actuation.",
       "where": "Decisions 1 and 3"
     },
     "ceiling": {
@@ -901,152 +901,152 @@
     },
     "condition": {
       "term": "Condition",
-      "def": "A limit attached to a [[ceiling]], such as a maximum amount. It must be testable from documents.",
+      "def": "A limit attached to a [[ceiling]], such as a maximum amount. It must be capable of being checked against documents.",
       "where": "Decision 1"
     },
     "aboveCeiling": {
       "term": "Above ceiling",
-      "def": "An AI use whose authority is higher than the [[ceiling]] the board set. Reported separately from evidence.",
+      "def": "An AI use with more authority than the [[ceiling]] the board has set. It is reported separately from evidence shortfalls.",
       "where": "Decision 1, Assessment"
     },
     "consequence": {
       "term": "Consequence level",
-      "def": "How serious a failure would be, from C1 immaterial to C5 [[critOp|critical-operation]] disruption.",
+      "def": "How serious a failure would be, from C1 immaterial to C5 disruption of a [[critOp|critical operation]].",
       "where": "Decisions 2 to 5"
     },
     "critOp": {
       "term": "Critical operation",
-      "def": "A business process whose disruption the insurer has assessed as critical, with a [[tolerance]] set by the board.",
+      "def": "A business process whose disruption the insurer has assessed as critical, with a [[tolerance|tolerance level]] approved by the board.",
       "where": "Decision 2"
     },
     "tolerance": {
       "term": "Tolerance level",
-      "def": "The maximum disruption the board accepts for a [[critOp|critical operation]].",
+      "def": "The maximum disruption to a [[critOp|critical operation]] the board accepts.",
       "where": "Decision 2"
     },
     "rung": {
       "term": "Evidence rung",
-      "def": "A type of evidence, from E0 none to E6 deterministic actuation control.",
+      "def": "A level of evidence, from E0 none to E6 deterministic actuation control.",
       "where": "Decision 3"
     },
     "ladder": {
       "term": "Evidence ladder",
-      "def": "The seven [[rung|evidence rungs]] in order of strength.",
+      "def": "The seven [[rung|evidence levels]], in order of strength.",
       "where": "Decision 3"
     },
     "expected": {
-      "term": "Expected rung",
-      "def": "The evidence the board expects for an [[tier|authority tier]] and [[consequence|consequence level]].",
+      "term": "Expected evidence",
+      "def": "The evidence the board expects the insurer to hold for a given [[tier|authority tier]] and [[consequence|consequence level]].",
       "where": "Decision 3"
     },
     "required": {
-      "term": "Required rung",
-      "def": "The evidence the insurer can reasonably require at a boundary, as determined with [[counsel]].",
+      "term": "Required evidence",
+      "def": "The evidence the insurer can reasonably require from a provider under its contract, as settled with [[counsel]].",
       "where": "Assessment"
     },
     "obtainable": {
-      "term": "Obtainable rung",
-      "def": "The evidence that can in fact be produced and independently checked.",
+      "term": "Obtainable evidence",
+      "def": "The evidence that can actually be produced and independently checked.",
       "where": "Assessment"
     },
     "current": {
       "term": "Current state",
-      "def": "What the insurer has or holds today. The starting point for decisions 1 and 3.",
+      "def": "What the insurer does or holds today. It is the starting point for decisions 1 and 3.",
       "where": "Decisions 1 and 3"
     },
     "starting": {
       "term": "Starting position",
-      "def": "A pre-filled value to begin discussion from. Never a recommendation.",
+      "def": "A value filled in before the session as a basis for discussion. It is not a recommendation.",
       "where": "All decisions"
     },
     "gap": {
       "term": "Gap",
-      "def": "The number of rungs between [[required|required]] and [[obtainable|obtainable]] evidence.",
+      "def": "The number of evidence levels between [[required|required]] and [[obtainable|obtainable]] evidence.",
       "where": "Decision 4"
     },
     "gapPriority": {
       "term": "Gap priority",
-      "def": "How serious a [[gap]] is, from its size and the consequence level.",
+      "def": "How serious a [[gap]] is, based on its size and the consequence level.",
       "where": "Decision 4"
     },
     "interim": {
       "term": "Interim position",
-      "def": "What the insurer does while a gap stands: restrict, compensate or accept.",
+      "def": "What the insurer does while a gap remains open: restrict the AI's authority, add a compensating control, or accept the gap.",
       "where": "Decision 4"
     },
     "notKnown": {
       "term": "Not known",
-      "def": "A fact the documents do not show. Counted, never estimated.",
+      "def": "A fact the insurer's documents do not show. Such facts are counted, not estimated.",
       "where": "Decision 5"
     },
     "f4": {
       "term": "Not determinable (F4)",
-      "def": "An assessment finding where the documents cannot show whether or how AI is used.",
+      "def": "An assessment finding that the documents cannot show whether, or how, AI is used.",
       "where": "Decision 5"
     },
     "confidence": {
       "term": "Confidence",
-      "def": "How firmly an [[obtainable|obtainable rung]] is established: high if seen, medium if described, low if inferred.",
+      "def": "How firmly the [[obtainable|obtainable evidence]] is established: high if seen, medium if described, and low if inferred.",
       "where": "Decision 5"
     },
     "msp": {
       "term": "Material service provider",
-      "def": "A provider the insurer relies on for a critical operation or a material risk.",
+      "def": "A provider the insurer relies on for a critical operation or to manage a material risk.",
       "where": "Decisions 1 and 6"
     },
     "platform": {
       "term": "Platform behind a provider",
-      "def": "The technology, pricing or AI model a provider relies on: the fourth party.",
+      "def": "The technology, pricing service or AI model a provider relies on (a fourth party).",
       "where": "Decisions 1 and 6"
     },
     "concentration": {
       "term": "Concentration",
-      "def": "The share of critical operations depending on one [[platform]] or model provider.",
+      "def": "The share of critical operations that depend on a single [[platform]] or AI model provider.",
       "where": "Decision 6"
     },
     "trigger": {
       "term": "Trigger",
-      "def": "A defined event that must reach the insurer within a set time.",
+      "def": "A defined event that must be reported to the insurer within a set time.",
       "where": "Decision 7"
     },
     "working": {
       "term": "Working appetite",
-      "def": "Positions agreed by the CRO and used to calibrate the assessment before board approval.",
+      "def": "Positions agreed by the CRO and used to calibrate the assessment before the board approves them.",
       "where": "Outputs"
     },
     "calibration": {
       "term": "Calibration set",
-      "def": "The eleven parameters, P1 to P11, the assessment reads.",
+      "def": "The eleven parameters, P1 to P11, that the AI Use Assessment reads.",
       "where": "Outputs"
     },
     "check": {
       "term": "Consistency check",
-      "def": "One of ten tests, K1 to K10, run on the recorded positions.",
+      "def": "One of ten tests, K1 to K10, applied to the recorded positions.",
       "where": "Checks"
     },
     "ap": {
       "term": "Accountable person",
-      "def": "The senior person responsible for a function under the accountability regime.",
+      "def": "The senior person responsible for a function under the Financial Accountability Regime.",
       "where": "Set-up, Challenge"
     },
     "counsel": {
       "term": "Counsel",
-      "def": "The law firm leading the engagement. Owns every legal call.",
+      "def": "The law firm leading the engagement. Counsel is responsible for every legal judgement.",
       "where": "Roles"
     },
     "proposer": {
       "term": "Proposer",
-      "def": "The person who put a position forward. Only the CRO or insurer risk function on decisions 1 and 3.",
+      "def": "The person who put a position forward. On decisions 1 and 3 this must be the CRO or the insurer's risk function.",
       "where": "All decisions"
     },
     "proposerRule": {
       "term": "Who may propose",
-      "def": "On decisions 1 and 3 only the CRO or the insurer's risk function proposes. Decision 2 also admits the independent reviewer. Counsel and Triodian explain and record; neither proposes.",
+      "def": "On decisions 1 and 3, only the CRO or the insurer's risk function may propose a position. On decision 2, the independent reviewer may also propose. Counsel and Triodian explain and record positions; neither proposes them.",
       "where": "Framework 7.3"
     },
     "roleLimits": {
       "term": "Role limits",
-      "def": "Counsel, Triodian, the CRO and the risk function edit set-up, starting data and positions. The independent reviewer edits decision 2 only, including its starting data, questions and challenge. The board record role edits the approval fields only. The overall position is written by counsel or the CRO. Challenge responses and status are recorded by counsel, the CRO or the risk function.",
+      "def": "Administrators complete set-up. Counsel, Triodian, the CRO and the insurer's risk function record positions and starting data. The independent reviewer may change decision 2 only, including its starting data, questions and challenge. The board record role may complete the approval fields only. Only counsel or the CRO may write the overall position. Challenge responses and their status are recorded by counsel, the CRO or the risk function.",
       "where": "Every editable field"
     }
   },
