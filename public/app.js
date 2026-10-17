@@ -386,7 +386,7 @@ function guideOverlay() {
   if (g === 'setup') {
     const admin = SRV.user && SRV.user.isAdmin;
     body = `<h1 id="entry-h" class="h1">How an engagement runs</h1>
-    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. External counsel leads it and Triodian records it. The positions come from the insurer, and the board approves the result. After set-up, the engagement runs in four stages.</p>
+    <p class="sub" style="font-size:18px">External counsel leads the engagement and Triodian records it. The positions come from the insurer, and the board approves the result. After set-up, the engagement runs in four stages.</p>
     <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
     <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the insurer. On decisions 1 and 3, only the CRO or the insurer’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
