@@ -13,6 +13,10 @@ const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 
 const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
 const ADMIN_SCREENS = ['setup', 'users', 'activity'];
 const SEQ = ['overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
+/* Readable URL fragments: #decision-2 instead of #d2. Old fragments (#d2, #overview, #setup) still open the right screen. */
+const SLUG = { overview: 'decisions', setup: 'set-up' }; for (let i = 1; i <= 8; i++) SLUG['d' + i] = 'decision-' + i;
+const toSlug = id => SLUG[id] || id;
+const fromSlug = h => { h = decodeURIComponent(h || '').toLowerCase(); const hit = Object.keys(SLUG).find(k => SLUG[k] === h); return hit || h; };
 
 /* ---------- helpers ---------- */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -293,7 +297,7 @@ function docband() {
   if (!S) return '';
   const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
   const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
-    : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#setup">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
+    : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
   return `<div class="docband"><div class="docband-in">${priv}<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''} · ` : ''}${esc(S.calibration.status === 'default' ? 'Uncalibrated: working appetite not yet agreed' : statusMark())}</span></div></div>`;
 }
 function header(ck) {
@@ -329,7 +333,7 @@ function drawer() {
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
     <a class="item" href="/user-guide/" style="text-decoration:none">User guide</a>
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
-    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#setup" style="text-decoration:none">Admin · set-up and users</a>' : ''}
+    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#set-up" style="text-decoration:none">Admin · set-up and users</a>' : ''}
     <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
     ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
@@ -359,10 +363,10 @@ function entry() {
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
   else if (!SRV.exists) {
-    if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt(quick ? 'href="/admin/#setup"' : 'data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
+    if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt(quick ? 'href="/admin/#set-up"' : 'data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
     else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + (quick ? '' : `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`); }
   } else note = 'Opening the engagement…';
-  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#setup">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
+  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
@@ -402,7 +406,7 @@ function guideOverlay() {
     <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the insurer. On decisions 1 and 3, only the CRO or the insurer’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
     <div class="guide-box"><h2 class="sh">The AI Use Assessment</h2><p style="margin:0">Triodian’s AI Use Assessment runs alongside, from the same week. Its register extract is loaded on decision 3 as the evidence the insurer holds today, and its findings inform decisions 1, 4, 5 and 6. Once the CRO agrees the working appetite, the calibration set goes back to the assessment. <a href="/user-guide/#informs">How the assessment informs the appetite</a></p></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
-    <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#setup" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
+    <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#set-up" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
   } else {
     const x = exampleSummary(), e = x.X.engagement, done = x.decs.filter(o => o.st.gate), open = x.decs.filter(o => !o.st.gate);
     body = `<h1 id="entry-h" class="h1">The worked example</h1>
@@ -501,7 +505,7 @@ function screenOverview(ck) {
     <div class="dname">${esc(d.name)}</div><div class="small soft" style="flex:1">${esc(d.question)}</div>
     <div class="row between mini"><span>Session ${d.session} · ${d.param}</span><span>${st.set + st.ns} of ${st.total} recorded${st.qc ? ' · ' + st.qc + ' open question' + (st.qc === 1 ? '' : 's') : ''}</span></div></button>`; }).join('');
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
-  const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#setup">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
+  const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#set-up">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
   return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}${setupNote}
   <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(S.calibration.status === 'default' ? 'The working appetite has not yet been agreed' : statusMark())}</span></div>
     <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
@@ -965,12 +969,12 @@ function refreshDetails() {
 }
 function toast(msg) { if (!msg) return; let t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast'; t.setAttribute('role', 'status'); clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = 'hidden'; }, 3200); }
 function go(to) {
-  if (AREA === 'app' && ADMIN_SCREENS.includes(to)) { if (SRV.user && SRV.user.isAdmin) location.href = '/admin/#' + to; else toast('Set-up is done by administrators in Admin.'); return; }
-  if (AREA === 'admin' && !ADMIN_SCREENS.includes(to)) { location.href = '/#' + to; return; }
+  if (AREA === 'app' && ADMIN_SCREENS.includes(to)) { if (SRV.user && SRV.user.isAdmin) location.href = '/admin/#' + toSlug(to); else toast('Set-up is done by administrators in Admin.'); return; }
+  if (AREA === 'admin' && !ADMIN_SCREENS.includes(to)) { location.href = '/#' + toSlug(to); return; }
   if (AREA === 'admin' && to !== 'setup' && !ADM.loaded) loadAdmin();
   if (UI.open && !UI.open.startsWith(to + '.')) UI.open = null;
   UI.screen = to; UI.drawer = false; UI.sheet = null; closePop(true); popAnchor = null; UI.showRef = false;
-  try { history.replaceState(null, '', '#' + to); } catch (e) {}
+  try { history.replaceState(null, '', '#' + toSlug(to)); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 function gotoCell(id) {
@@ -1197,7 +1201,7 @@ function screenProfile() {
     <p class="small soft" style="margin-top:8px">This setting applies in this browser only.</p></section>
   <section class="card"><h2 class="sh">Access</h2>
     <dl class="kv"><dt>Engagement role</dt><dd>${esc(u.role ? roleLong(u.role) : 'None. You can read the engagement but not change it.')}</dd>
-    <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#setup">open Admin</a>' : 'No'}</dd></dl>
+    <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#set-up">open Admin</a>' : 'No'}</dd></dl>
     <p class="small soft" style="margin-top:10px">Roles are set by an administrator.</p></section>
   <p><a class="btn" href="/cdn-cgi/access/logout">Sign out</a></p>
   </div>`;
@@ -1405,7 +1409,7 @@ function onClick(e) {
     new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
     example: () => leave('open practice mode').then(ok => { if (ok) { UI.guide = null; startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
     guide: () => {
-      if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#setup'; return; } }
+      if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#set-up'; return; } }
       UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
     guideBack: () => { UI.guide = null; render(); },
     leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
@@ -1510,11 +1514,12 @@ async function boot() {
   document.addEventListener('touchend', () => { sy0 = null; });
   window.addEventListener('resize', () => { if (bp() !== lastBp) { closePop(true); popAnchor = null; render(); } });
   window.addEventListener('beforeunload', e => { const unsaved = savesHere() ? SRV.state !== 'saved' : (UI.dirty && S && !S.engagement.example); if (unsaved) { if (savesHere()) saveNow(); e.preventDefault(); e.returnValue = ''; } });
-  const h = (location.hash || '').slice(1);
+  const h = fromSlug((location.hash || '').slice(1));
   if (AREA === 'admin') UI.screen = ADMIN_SCREENS.includes(h) ? h : 'setup';
   else if (AREA === 'profile') UI.screen = 'profile';
   else if (SEQ.includes(h) || h === 'reference') UI.screen = h;
   else if (h === 'worked-example') { UI.guide = 'practice'; history.replaceState(null, '', location.pathname); }
+  if (location.hash && UI.screen && location.hash.slice(1) !== toSlug(UI.screen)) try { history.replaceState(null, '', '#' + toSlug(UI.screen)); } catch (e) {}
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
