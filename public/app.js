@@ -320,8 +320,7 @@ function header(ck) {
     <button class="brand" data-act="go" data-to="overview" aria-label="Triodian · go to decisions overview"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></button>
     ${b !== 'phone' ? '<span class="vrule" aria-hidden="true"></span>' : ''}
     <span class="apptitle">AI Risk Appetite</span>
-    ${b === 'desk' ? `<span class="dot" aria-hidden="true"></span>
-    <nav class="steps" aria-label="Steps">${steps.map(s => `<button data-act="go" data-to="${s[0] === 'decisions' ? 'overview' : s[0]}" ${cur === s[0] ? 'aria-current="page"' : ''}>${s[1]}</button>`).join('')}</nav>` : ''}
+    ${b === 'desk' ? `<nav class="steps" aria-label="Steps">${steps.map(s => `<button data-act="go" data-to="${s[0] === 'decisions' ? 'overview' : s[0]}" ${cur === s[0] ? 'aria-current="page"' : ''}>${s[1]}</button>`).join('')}</nav>` : ''}
     <div class="hdr-r">
       ${saveChip()}
       ${b !== 'phone' ? `<button class="checkcount ${fails ? 'b-red' : 'b-green'}" data-act="go" data-to="checks">${b === 'phone' ? (fails ? fails + ' failing' : 'K ✓') : (fails ? fails + (fails === 1 ? ' check failing' : ' checks failing') : 'checks pass')}</button>` : ''}
