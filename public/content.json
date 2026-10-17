@@ -1,7 +1,7 @@
 {
   "schema": "triodian.raf.content.v1",
   "frameworkDate": "12 October 2026",
-  "banner": "Prepared for discussion with counsel. This app records the positions the board decides. It is not legal advice and it does not suggest what the appetite should be.",
+  "banner": "It records the positions the insurer proposes and the board approves, with who proposed each one. It does not recommend what the appetite should be. Questions about the insurer’s legal obligations are recorded for counsel to answer.",
   "scales": {
     "note": "Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.",
     "authority": [

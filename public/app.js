@@ -299,7 +299,6 @@ function recordApproval(date, minute, by) {
 }
 
 /* ---------- shell ---------- */
-const MARKSVG = () => (C.markSvg || '').replace('<svg', '<svg aria-hidden="true" focusable="false"');
 function badge(label, cls) { return `<span class="badge ${cls}">${esc(label)}</span>`; }
 function gate(ok, text) { return `<span class="gate ${ok ? 'ok' : 'no'}" role="status"><i></i>${esc(text)}</span>`; }
 function calBadge() { const s = S.calibration.status; if (s !== 'default' && blocking(runChecks()).length) return badge(`${s === 'approved' ? 'Approved' : 'Working'}, version ${S.calibration.version}, checks failing`, 'b-red'); return badge(s === 'default' ? 'Default · uncalibrated' : s === 'working' ? 'Working · v' + S.calibration.version : 'Approved · v' + S.calibration.version, s === 'approved' ? 'b-green' : s === 'working' ? 'b-ochre' : 'b-grey'); }
@@ -318,7 +317,7 @@ function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
   const steps = [['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
   return `<header class="hdr"><div class="hdr-in">
-    <button class="brand" data-act="go" data-to="overview" aria-label="Triodian · go to decisions overview">${MARKSVG()}${b !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</button>
+    <button class="brand" data-act="go" data-to="overview" aria-label="Triodian · go to decisions overview"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></button>
     ${b !== 'phone' ? '<span class="vrule" aria-hidden="true"></span>' : ''}
     <span class="apptitle">AI Risk Appetite</span>
     ${b === 'desk' ? `<span class="dot" aria-hidden="true"></span>
@@ -357,8 +356,8 @@ function drawer() {
 }
 function footer() {
   return `<footer class="ft"><div class="wrap">
-    <div class="scope" role="note"><span aria-hidden="true">⚠</span><span><strong>Scope.</strong> ${esc(C.banner)}</span></div>
-    <div class="ftrow"><span class="row" style="gap:8px;color:var(--aubergine)">${MARKSVG().replace('<svg', '<svg width="20" height="19"')}<span style="color:var(--ink);font-weight:600">Triodian</span><span class="mono soft">RAF-01 · framework ${esc(C.frameworkDate)}</span></span>
+    <div class="scope" role="note"><span><strong>About this app.</strong> ${esc(C.banner)}</span></div>
+    <div class="ftrow"><span class="row" style="gap:8px;color:var(--aubergine)"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="20" style="height:20px;width:auto;display:block"><span class="mono soft">RAF-01 · framework ${esc(C.frameworkDate)}</span></span>
     <span class="row"><a class="lnk" href="/user-guide/">User guide</a><button class="lnk" data-act="go" data-to="reference">Reference</button><span class="mono">${esc(statusMark())}</span></span></div>
   </div></footer>`;
 }
@@ -382,7 +381,7 @@ function entry() {
   } else note = 'Opening the engagement…';
   const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
-    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
+    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="30" style="height:30px;width:auto;display:block"><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
     <p class="sub" style="font-size:18px">Record the insurer’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>`}
     ${note ? `<p class="entry-note">${note}</p>` : ''}
@@ -444,7 +443,7 @@ function guideOverlay() {
     <div class="row between guide-acts">${close}<button class="btn primary" data-act="example">Open the worked example</button></div>`;
   }
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry guide">
-    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
+    <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="30" style="height:30px;width:auto;display:block"><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${body}</div></div>`;
 }
 const numW = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][n] || String(n);
@@ -1092,7 +1091,7 @@ const roleLong = id => (ADM.roles.find(r => r.id === id) || (C.roles || []).find
 function areaHeader() {
   const tabs = AREA === 'admin' && SRV.user && SRV.user.isAdmin ? [['setup', 'Set-up'], ['users', 'Users'], ['activity', 'Activity']] : [];
   return `<header class="hdr"><div class="hdr-in">
-    <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none">${MARKSVG()}${bp() !== 'phone' ? '<span class="wordmark">Triodian</span>' : ''}</a>
+    <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></a>
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
     ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
     <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}${bp() === 'desk' ? '<a class="lnk hdr-back" href="/user-guide/">User guide</a>' : ''}<a class="lnk hdr-back hdr-app" href="/">${backLabel()}</a>${avatar()}</div>
@@ -1517,7 +1516,7 @@ function togglePresent() { if (bp() !== 'desk') return toast('Present mode needs
 async function boot() {
   C = window.RAF_CONTENT || null;
   if (!C) { try { C = await (await fetch('/content.json')).json(); } catch (e) { document.getElementById('app').innerHTML = '<p style="padding:40px;font-family:sans-serif">content.json could not be loaded. Keep content.js beside index.html, or serve the folder from a web server.</p>'; return; } }
-  if (!C.markSvg) { try { C.markSvg = await (await fetch('/triodian-mark.svg')).text(); } catch (e) { C.markSvg = ''; } }
+
   document.addEventListener('click', onClick);
   document.addEventListener('change', onChange);
   document.addEventListener('input', onInput);
