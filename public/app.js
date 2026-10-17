@@ -1,13 +1,14 @@
 /* AI Risk Appetite · Triodian
-   Single-page app. No libraries. Engagements are saved to the server database (Cloudflare D1) behind
-   Cloudflare Access sign-in. Engagement files (.json) can still be downloaded and imported. */
+   Single-page app. No libraries. One engagement per deployment, saved to the server.
+   The signed-in user's engagement role (managed in /admin) decides what they can change; the server enforces it.
+   The worked example is a practice mode: never saved, and the role can be switched to see what each role can do. */
 (function () {
 'use strict';
 let C = null;            // content.json
 let S = null;            // engagement
 const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
-const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record' };
+const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 const SEQ = ['setup','overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
 
 /* ---------- helpers ---------- */
@@ -115,10 +116,12 @@ const existingValue = id => id.startsWith('d2.') ? startingValue(id) : '';
 /* ---------- permissions ---------- */
 const proposerRoles = did => did === 'd2' ? ['cro','risk','independent'] : ['cro','risk'];
 const roleCanPropose = did => proposerRoles(did).includes(UI.role);
-const eligible = did => S.people.filter(p => proposerRoles(did).includes(p.role));
+const activePeople = () => S.people.filter(p => p.active !== false);
+const eligible = did => activePeople().filter(p => proposerRoles(did).includes(p.role));
 /* One gate for every editable control. target: a decision id, 'setup', 'measures', 'overall', 'challengeResponse', 'qcResponse' or 'approval'. */
 function can(target, role) {
   role = role || UI.role;
+  if (role === 'none') return false;
   if (target === 'approval') return role === 'board';
   if (role === 'board') return false;
   if (target === 'overall') return role === 'counsel' || role === 'cro';
@@ -128,6 +131,7 @@ function can(target, role) {
   return true;
 }
 function blockReason(target) {
+  if (UI.role === 'none') return 'You have no engagement role, so you can read the engagement but not change it. An administrator can give you a role.';
   if (target === 'approval') return 'Only the board record role records approval.';
   if (UI.role === 'board') return 'The board record role records approval only. It does not edit anything else.';
   if (target === 'overall') return 'The overall position is written by counsel or the CRO.';
@@ -288,10 +292,10 @@ function header(ck) {
       ${saveChip()}
       ${b !== 'phone' ? `<button class="checkcount ${fails ? 'b-red' : 'b-green'}" data-act="go" data-to="checks">${b === 'phone' ? (fails ? fails + ' failing' : 'K ✓') : (fails ? fails + (fails === 1 ? ' check failing' : ' checks failing') : 'checks pass')}</button>` : ''}
       ${b === 'desk' ? `<button class="iconbtn" data-act="present" aria-pressed="${UI.present}" title="Present mode (P)" aria-label="Present mode">⊡</button>` : ''}
-      ${b !== 'phone' ? `<label class="chip"><span aria-hidden="true">⌾</span>${roleSelect('role-hdr')}</label>` : ''}
+      ${b !== 'phone' ? (practice() || !SRV.user ? `<label class="chip"><span aria-hidden="true">⌾</span>${roleSelect('role-hdr')}</label>` : `<span class="chip" title="Signed in as ${esc(SRV.user.email)}"><span aria-hidden="true">⌾</span>${esc(SRV.user.name || SRV.user.email)} · ${esc(ROLE_NAME[myRole()])}</span>`) : ''}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
     </div></div></header>
-    ${S.engagement.example ? '<div class="examplebar">Worked example · fictional insurer · not client data</div>' : ''}`;
+    ${S.engagement.example ? '<div class="examplebar">Practice mode · worked example · fictional insurer · nothing is saved · <button class="lnk" data-act="leavePractice" style="color:inherit;text-decoration:underline">leave practice</button></div>' : ''}`;
 }
 function drawer() {
   if (!UI.drawer) return '';
@@ -301,14 +305,13 @@ function drawer() {
     <div class="grp">Steps</div>${it('setup','Set-up')}${it('overview','Decisions overview')}
     ${C.decisions.map(d => it(d.id, `<span class="mono soft" style="width:22px">${d.n}</span>${esc(d.name)}`)).join('')}
     ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}${it('reference','Reference')}
-    <div class="grp">Acting as</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>
+    ${practice() || !SRV.user ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : `<div class="grp">Signed in</div><p class="small" style="padding:4px 10px">${esc(SRV.user.name || SRV.user.email)}<br><span class="soft">${esc(SRV.user.email)} · ${esc(ROLE_NAME[myRole()])}</span></p>`}
     <div class="grp">Engagement</div>
-    <button class="item" data-act="home">All engagements</button>
-    <button class="item" data-act="new">New engagement</button>
     <button class="item" data-act="save">Download a copy (.json)</button>
-    <button class="item" data-act="open">Import engagement file</button>
-    <button class="item" data-act="example">Open worked example</button>
-    ${SRV.on ? `<p class="small soft" style="padding:4px 10px">Signed in as ${esc(SRV.email)}. Changes save automatically.</p>` : '<p class="small soft" style="padding:4px 10px">The database is not reachable. Download a copy to keep your work.</p>'}
+    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="example">Practise with the worked example</button>'}
+    ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
+    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/" style="text-decoration:none">Admin · users and access</a>' : ''}
+    <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
     ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
@@ -323,36 +326,28 @@ function footer() {
   </div></footer>`;
 }
 function entry() {
-  let saved = []; try { saved = Object.keys(localStorage).filter(k => k.startsWith('raf.autosave.')); } catch (e) {}
   const n = i => `<span class="mono" style="color:var(--aubergine)">${String(i).padStart(2, '0')}</span>`;
-  let list = '';
-  if (SRV.on) {
-    const rows = SRV.list;
-    list = `<div class="eyebrow" style="margin-top:22px">Engagements</div>` + (rows == null ? '<p class="small soft">Loading…</p>'
-      : SRV.listErr ? `<p class="small" style="color:var(--red)">${esc(SRV.listErr)}</p>`
-      : !rows.length ? '<p class="small soft">None yet. Start a new engagement or import a file.</p>'
-      : `<div class="englist" role="list">${rows.map(e => `<button class="engrow" role="listitem" data-act="openEng" data-id="${esc(e.id)}">
-          <span class="engname"><strong>${esc(e.insurer || 'Untitled engagement')}</strong>${e.reference ? `<span class="small soft"> · ${esc(e.reference)}</span>` : ''}</span>
-          <span class="mono small soft">${esc(e.cal_status || 'default')} v${esc(e.cal_version)}</span>
-          <span class="small soft">${esc(fmtLocal(e.updated_at))} · ${esc(e.updated_by)}</span></button>`).join('')}</div>`);
-  }
-  let i = 0;
-  const note = !SRV.checked ? 'Connecting to the database…'
-    : SRV.on ? `Engagements are saved automatically to Triodian's private database. Signed in as ${esc(SRV.email)}.`
-    : `The database could not be reached (${esc(SRV.reason)}). Work here is not saved; download a copy from the menu.`;
+  const u = SRV.user, setupRoles = ['counsel', 'triodian', 'cro', 'risk'];
+  let i = 0, acts = '', note = '';
+  const practiceBtn = () => `<button class="act" data-act="example">${n(++i)}<span><strong>Practise with the worked example</strong><br><span class="small soft">Corvane General, a fictional insurer. Switch roles freely. Nothing is saved.</span></span></button>`;
+  if (!SRV.checked) note = 'Connecting…';
+  else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
+  else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still practise with the worked example.`; acts = practiceBtn(); }
+  else if (!SRV.exists) {
+    if (setupRoles.includes(myRole())) acts = `<button class="act" data-act="new">${n(++i)}<span><strong>Start the engagement</strong><br><span class="small soft">Begin at set-up with the framework's function list.</span></span></button>
+      <button class="act" data-act="open">${n(++i)}<span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app.</span></span></button>`;
+    else note = 'The engagement has not been started yet. Counsel, Triodian, the CRO or the insurer risk function can start it.';
+    acts += practiceBtn();
+  } else note = 'Opening the engagement…';
+  const who = u ? `Signed in as ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}${u.isAdmin ? ' · <a href="/admin/">Admin</a>' : ''}.` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:22px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600">AI Risk Appetite</span></div>
     <div class="eyebrow">From general appetite to AI appetite</div>
     <h1 id="entry-h" class="h1" style="font-size:32px">The board decides. This records what it decides.</h1>
     <p class="soft">Eight decisions, two sessions, ten checks. The result is an AI risk appetite statement, a tolerance and trigger schedule, and the calibration set the AI Use Assessment reads.</p>
-    ${list}
-    <div class="acts" style="margin-top:${SRV.on ? '18px' : '0'}">
-      <button class="act" data-act="new">${n(++i)}<span><strong>New engagement</strong><br><span class="small soft">Start from set-up with the framework's function list.</span></span></button>
-      <button class="act" data-act="open">${n(++i)}<span><strong>Import engagement file</strong><br><span class="small soft">A .json file saved from this app${SRV.on ? '. It is added as a new engagement' : ''}.</span></span></button>
-      <button class="act" data-act="example">${n(++i)}<span><strong>Open worked example</strong><br><span class="small soft">Corvane General, a fictional insurer, part-way through session 2. Never saved.</span></span></button>
-      ${saved.length ? `<button class="act" data-act="resume" data-key="${esc(saved[0])}">${n(++i)}<span><strong>${SRV.on ? 'Move autosaved engagement to the database' : 'Resume autosaved engagement'}</strong><br><span class="small soft">Held in this browser from the earlier version of the app.</span></span></button>` : ''}
-    </div>
-    <div class="scope" style="margin-top:22px"><span aria-hidden="true">⚠</span><span>${esc(C.banner)} ${note}</span></div>
+    ${note ? `<p style="margin-top:18px">${note}</p>` : ''}
+    ${acts ? `<div class="acts">${acts}</div>` : ''}
+    <div class="scope" style="margin-top:22px"><span aria-hidden="true">⚠</span><span>${esc(C.banner)} ${who}</span></div>
   </div></div>`;
 }
 function opening(eyebrow, h1, sub) { return `<div class="opening"><div class="eyebrow">${eyebrow}</div><h1 class="h1">${h1}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div>`; }
@@ -383,10 +378,10 @@ function fld(label, path, value, opts) {
 function screenSetup() {
   const e = S.engagement, g = setupGate(), b = bp(), ro = !can('setup');
   const roleOpts = C.roles.map(r => [r.id, r.name]);
-  const people = S.people.map((p, i) => `<div class="panel2" style="padding:14px 16px">
-      <div class="fgrid">${fld('Name', `people.${i}.name`, p.name)}${fld('Organisation', `people.${i}.organisation`, p.organisation)}${fld('Role', `people.${i}.role`, p.role, { select: roleOpts })}</div>
-      <div style="margin-top:10px"><div class="mini" style="margin-bottom:4px">${T('ap', 'ACCOUNTABLE-PERSON AREAS')}</div><div class="row" style="gap:4px 14px">${S.functions.map(f => `<label class="cb small"><input type="checkbox" id="area-${i}-${sid(f.id)}" data-area="${i}" value="${esc(f.id)}" ${(p.areas || []).includes(f.id) ? 'checked' : ''}>${esc(f.name)}</label>`).join('')}</div></div>
-      <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn sm ghost" data-act="rmPerson" data-i="${i}">Remove</button></div></div>`).join('');
+  const people = S.people.length ? `<div class="tw"><table class="lg ppl"><thead><tr><th class="who">Person and role</th>${S.functions.map(f => `<th class="fn" scope="col">${esc(f.name)}</th>`).join('')}</tr></thead><tbody>
+    ${S.people.map((p, i) => `<tr class="${p.active === false ? 'off' : ''}"><th scope="row" class="who"><strong>${esc(p.name || 'Unnamed')}</strong>${p.active === false ? ' <span class="badge b-grey">inactive</span>' : ''}<div class="small soft">${esc(ROLE_NAME[p.role] || p.role)}${p.organisation ? ' · ' + esc(p.organisation) : ''}</div></th>
+      ${S.functions.map(f => `<td class="tick"><input type="checkbox" id="area-${i}-${sid(f.id)}" data-area="${i}" value="${esc(f.id)}" ${(p.areas || []).includes(f.id) ? 'checked' : ''} aria-label="${esc(p.name)} accountable for ${esc(f.name)}"></td>`).join('')}</tr>`).join('')}
+    </tbody></table></div><p class="mini" style="margin-top:8px">Tick the functions each person is ${T('ap', 'accountable')} for.</p>` : '';
   const inputs = S.inputs.map((x, i) => { const c = C.inputs[i]; return b === 'phone'
     ? `<div class="panel2" style="padding:12px 14px"><div class="row" style="gap:8px"><span class="mono">${esc(x.ref)}</span><strong class="small">${esc(c.name)}</strong></div><div class="mini" style="margin:4px 0 8px">Used in: ${esc(c.usedIn)}</div><div class="fgrid">${fld('Status', `inputs.${i}.status`, x.status, { select: [['','Not marked'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']] })}${fld('Date', `inputs.${i}.date`, x.date, { type: 'date' })}${fld('Note', `inputs.${i}.note`, x.note)}</div></div>`
     : `<tr><td class="code">${esc(x.ref)}</td><td>${esc(c.name)}<div class="mini">${esc(c.usedIn)}</div></td><td><select class="in" id="in-${i}-status" data-path="inputs.${i}.status" aria-label="${esc(x.ref)} status">${[['','—'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']].map(o => `<option value="${o[0]}" ${x.status === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></td><td><input class="in" type="date" id="in-${i}-date" data-path="inputs.${i}.date" value="${esc(x.date)}" aria-label="${esc(x.ref)} date"></td><td><input class="in" id="in-${i}-note" data-path="inputs.${i}.note" value="${esc(x.note)}" aria-label="${esc(x.ref)} note"></td></tr>`; }).join('');
@@ -397,9 +392,9 @@ function screenSetup() {
     ${fld('Insurer', 'engagement.insurer', e.insurer)}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
   </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
-  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2><button class="btn sm" data-act="addPerson">Add person</button></div>
-    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. Only people with the role CRO or insurer risk function can propose on decisions 1 and 3.</p>
-    <div class="stack" style="gap:10px">${people || '<p class="soft small">No one recorded yet.</p>'}</div></section>
+  <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<a class="btn sm" href="/admin/" style="text-decoration:none">Manage users</a>' : ''}</div>
+    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. Only people with the role CRO or insurer risk function can propose on decisions 1 and 3. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
+    ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users in <a href="/admin/">Admin</a>.' : ' An administrator adds people.'}</p>`}</section>
   <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')}</h2>
     <div class="grid2"><div><div class="mini" style="margin-bottom:6px">FUNCTIONS · framework starting list, editable</div>
       <div class="stack" style="gap:6px">${S.functions.map((f, i) => `<div class="row" style="flex-wrap:nowrap"><input class="in" id="fn-${i}" data-path="functions.${i}.name" value="${esc(f.name)}" aria-label="Function ${i + 1}"><button class="btn sm ghost" data-act="rmFn" data-i="${i}" aria-label="Remove ${esc(f.name)}">✕</button></div>`).join('')}</div>
@@ -561,13 +556,13 @@ function detailsHtml(id) {
            <div id="prop-why" class="small soft">Only the ${esc(propRoles)} may propose on decision ${D(did).n}. ${T('proposerRule', 'Why')}</div>
            <label class="f"><span>Recording on behalf of</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`}
       ${!elig.length ? `<div class="small" style="color:var(--ochre)">No eligible proposer in set-up. Add a ${esc(propRoles)} person.</div>` : ''}
-      <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(S.people, p.owner)}</select></label>
+      <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>
       ${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
         <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Testable from documents</label>` : ''}
       ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (where it differs from the existing threshold)' : ' (where above own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
       <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>
       <div class="panel2" style="padding:12px 14px"><div class="mini" style="margin-bottom:8px">RECORD AS NOT SET · needs an owner and a due date</div>
-        <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(S.people, p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(p.notSetDue)}"></label></div>
+        <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(p.notSetDue)}"></label></div>
         ${UI.err[id] ? `<p class="err" role="alert" style="margin:8px 0 0">${esc(UI.err[id])}</p>` : ''}
         <div class="row" style="margin-top:10px"><button class="btn sm" data-act="notSet" data-cell="${eid}">Record not set</button>${p.status === 'notSet' ? `<button class="btn sm ghost" data-act="clearNotSet" data-cell="${eid}">Clear</button>` : ''}</div></div>
     </fieldset>
@@ -593,7 +588,7 @@ function screenDecision(did, ck) {
     ${startPanel(d)}
     <section><h2 class="sh">Recording area</h2>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${b === 'desk' ? `<div class="split"><div style="min-width:0">${body}</div><div id="details" style="position:sticky;top:76px">${detailsHtml(details)}</div></div>` : `${body}${b === 'tab' ? `<div id="details" style="margin-top:18px">${detailsHtml(details)}</div>` : ''}`}
-      ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Owner for every set cell without one:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${S.people.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
+      ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Owner for every set cell without one:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
     ${d.prompts.length ? `<details class="pr"><summary>Prompts for the session · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
     <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">parked, not settled in the room</span></div>
@@ -631,7 +626,7 @@ function screenChallenge() {
     ${list.length ? (b === 'phone' ? `<div class="stack" style="gap:10px">${list.map(({ c, i }) => `<div class="card" style="padding:14px"><div class="row between"><span class="mono">${esc(c.ref)}</span>${badge(c.status, c.status === 'open' ? 'b-ochre' : 'b-green')}</div><div class="small soft">${esc(pname(c.raisedBy))}${c.cell ? ` · <button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : ''}</div><p style="margin:8px 0">${esc(c.point)}</p><label class="f"><span>Response</span><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" ${rdis}></label><div style="margin-top:8px">${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</div></div>`).join('')}</div>`
       : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Raised by</th><th>Decision and cell</th><th>Point</th><th>Response</th><th style="width:130px">Status</th></tr></thead><tbody>${list.map(({ c, i }) => `<tr><td class="code">${esc(c.ref)}</td><td class="small">${esc(pname(c.raisedBy))}</td><td class="small">${c.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : c.decision ? 'Decision ' + esc(D(c.decision).n) : ''}${c.status === 'accepted' && c.cell ? '<div class="mini">changed this position</div>' : ''}</td><td class="small">${esc(c.point)}</td><td><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" aria-label="Response ${esc(c.ref)}" ${rdis}></td><td>${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</td></tr>`).join('')}</tbody></table></div>`) : '<p class="soft">No challenge points recorded.</p>'}
     ${allowed.length ? `<section class="card" style="margin-top:18px"><h2 class="sh">Record a challenge point</h2>${UI.role === 'independent' ? `<p class="small soft">${esc(blockReason('d1'))} ${whyLink()}</p>` : ''}<div class="fgrid">
-      <label class="f"><span>Raised by</span><select class="in" id="ch-by"><option value="">—</option>${S.people.map(p => `<option value="${esc(p.id)}" ${UI.personId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
+      <label class="f"><span>Raised by</span><select class="in" id="ch-by"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${UI.personId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
       <label class="f"><span>Decision</span><select class="in" id="ch-dec" data-act="chDec">${decOpts}</select></label>
       <label class="f"><span>Cell</span><select class="in" id="ch-cell"><option value="">Whole decision</option>${cellsFor(chDec).map(c => `<option value="${esc(c.id)}">${esc(cellLabel(c.id))}</option>`).join('')}</select></label></div>
       <label class="f" style="margin-top:12px"><span>Point</span><textarea class="in" id="ch-point"></textarea></label><button class="btn sm" style="margin-top:10px" data-act="addCH">Add to log</button></section>` : ''}`;
@@ -749,7 +744,7 @@ function screenOutputs(ck) {
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. Export of the calibration set is blocked until K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
-  ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(x.measure)}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${S.people.map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
+  ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(x.measure)}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
   <div class="row" style="margin-bottom:12px"><button class="btn sm" id="out-copy" data-act="copy" data-t="${tab}" ${xb ? 'disabled' : ''}>Copy markdown</button>${inFrame ? '' : `<button class="btn sm" id="out-dl" data-act="download" data-t="${tab}" ${xb ? 'disabled' : ''}>Download .md</button>`}${tab === 'calibration' ? `${inFrame ? '' : `<button class="btn sm" id="out-dlj" data-act="downloadJson" ${xb ? 'disabled' : ''}>Download .json</button>`}<button class="btn sm ghost" id="out-cpj" data-act="copyJson" ${xb ? 'disabled' : ''}>Copy JSON</button>` : ''}${inFrame ? '<span class="small soft">Downloads are not available in this viewer. Use Copy, or open the file directly in a browser.</span>' : ''}${xb ? '<span class="small" style="color:var(--red)">Blocked: checks failing</span>' : ''}</div>
   <div class="card md" aria-label="Preview">${mdToHtml(md)}</div>
   ${stepbar()}`;
@@ -826,6 +821,7 @@ const dsKey = el => el && el !== document.body && el.dataset && Object.keys(el.d
 function doRender() {
   const app = document.getElementById('app'); lastBp = bp();
   if (!S) { app.innerHTML = entry(); return; }
+  applyIdentity();
   if (UI.personId) { const p = person(UI.personId); if (p) UI.role = p.role; else UI.personId = ''; }
   versionCheck();
   const ck = runChecks(), ae = document.activeElement, fid = ae && ae.id, fkey = !fid ? dsKey(ae) : null; let sel = null;
@@ -931,28 +927,31 @@ function hydrate(obj) {
 function openFile(file) {
   const fr = new FileReader();
   fr.onload = () => { let st; try { st = hydrate(JSON.parse(fr.result)); } catch (e) { return toast('Rejected: ' + e.message); }
-    st.engagement.id = uid(); st.engagement.example = false; startLocal(st); go('overview');
-    if (SRV.on) { UI.dirty = true; autosave(); saveNow(); toast('Imported ' + file.name + ' as a new engagement.'); } else toast('Opened ' + file.name + '. The database is not reachable, so it is not saved.'); };
+    if (SRV.exists) return toast('The engagement has already been started, so a file cannot replace it.');
+    st.engagement.id = uid(); startEngagement(st); go('overview');
+    UI.dirty = true; autosave(); saveNow(); toast('Started the engagement from ' + file.name + '. People and their areas come from the user list, so check set-up.'); };
   fr.readAsText(file);
 }
 /* ---------- server storage ---------- */
-/* SRV.on: the database is reachable. SRV.rev: the revision this browser last loaded or saved (null = not yet created).
-   SRV.state: 'saved' | 'pending' | 'saving' | 'error' | 'conflict' | 'local' (worked example, never saved). */
-const SRV = { on: false, checked: false, email: '', reason: '', list: null, listErr: '', rev: null, state: 'saved', err: '', timer: null, inflight: null, again: false, conflict: null, lastAt: '', lastBy: '' };
+/* One engagement per deployment. SRV.rev: the revision this browser last loaded or saved (0 = not started).
+   SRV.state: 'saved' | 'pending' | 'saving' | 'error' | 'conflict'. Practice mode (the worked example) is never saved. */
+const SRV = { checked: false, on: false, user: null, reason: '', code: '', exists: false, people: [], rev: 0, state: 'saved', err: '', timer: null, inflight: null, again: false, conflict: null, lastAt: '', lastBy: '' };
 async function api(method, path, body) {
   let r;
   try { r = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin', redirect: 'manual', cache: 'no-store' }); }
   catch (e) { return { ok: false, status: 0, error: 'The server could not be reached. Check your connection.' }; }
   if (r.type === 'opaqueredirect' || r.status === 401) return { ok: false, status: 401, error: 'Your sign-in has expired. Reload the page to sign in again.' };
   let j = null; try { j = await r.json(); } catch (e) {}
-  if (!r.ok) return { ok: false, status: r.status, error: (j && j.error) || ('The server returned an error (' + r.status + ').'), body: j };
+  if (!r.ok) return { ok: false, status: r.status, error: (j && j.error) || ('The server returned an error (' + r.status + ').'), code: j && j.code, body: j };
   return { ok: true, status: r.status, body: j };
 }
-async function loadList() { const r = await api('GET', '/api/engagements'); if (r.ok) { SRV.list = r.body.engagements || []; SRV.listErr = ''; } else { SRV.list = []; SRV.listErr = r.error; } if (!S) render(); }
-const savesHere = () => SRV.on && S && !S.engagement.example;
+const practice = () => !!(S && S.engagement.example);
+const savesHere = () => SRV.on && S && !practice();
+const myRole = () => (SRV.user && SRV.user.role) || 'none';
+/* In the real engagement the signed-in user is the actor; only practice mode lets the role be switched. */
+function applyIdentity() { if (!SRV.user || practice()) return; UI.personId = SRV.user.id; UI.role = myRole(); }
 function autosave() {
-  if (!savesHere()) return;
-  if (SRV.state === 'conflict') return;
+  if (!savesHere() || SRV.state === 'conflict') return;
   SRV.state = 'pending'; clearTimeout(SRV.timer); SRV.timer = setTimeout(saveNow, 1200); paintSave();
 }
 async function saveNow() {
@@ -962,10 +961,10 @@ async function saveNow() {
   const snap = S, text = JSON.parse(JSON.stringify(S));
   SRV.state = 'saving'; paintSave();
   SRV.inflight = (async () => {
-    const r = SRV.rev == null ? await api('POST', '/api/engagements', { data: text }) : await api('PUT', '/api/engagements/' + encodeURIComponent(snap.engagement.id), { revision: SRV.rev, data: text });
+    const r = await api('PUT', '/api/engagement', { revision: SRV.rev, data: text });
     SRV.inflight = null;
-    if (S !== snap) return;            /* the user moved to another engagement meanwhile */
-    if (r.ok) { SRV.rev = r.body.revision; SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy; SRV.err = ''; if (SRV.again) { SRV.again = false; SRV.state = 'pending'; return saveNow(); } SRV.state = 'saved'; UI.dirty = false; }
+    if (S !== snap) return;
+    if (r.ok) { SRV.rev = r.body.revision; SRV.exists = true; SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy; SRV.err = ''; if (SRV.again) { SRV.again = false; SRV.state = 'pending'; return saveNow(); } SRV.state = 'saved'; UI.dirty = false; }
     else if (r.status === 409) { SRV.state = 'conflict'; SRV.conflict = r.body || {}; SRV.err = r.error; toast(r.error); }
     else { SRV.state = 'error'; SRV.err = r.error; toast('Not saved: ' + r.error); }
     SRV.again = false; paintSave();
@@ -975,27 +974,45 @@ async function saveNow() {
 async function flushSave() { if (!savesHere()) return true; if (SRV.state === 'pending' || SRV.timer) await saveNow(); else if (SRV.inflight) await SRV.inflight; return SRV.state === 'saved'; }
 function saveLabel() {
   if (!S) return '';
-  if (S.engagement.example) return ['b-ochre', 'Example · not saved', 'The worked example is never saved to the database.'];
-  if (!SRV.on) return ['b-ochre', 'Not saved', 'The database is not reachable. Download a copy from the menu to keep your work.'];
-  return { saved: ['b-green', 'Saved', SRV.lastAt ? 'Saved ' + fmtLocal(SRV.lastAt) + ' by ' + SRV.lastBy : 'Saved'], pending: ['b-grey', 'Saving…', 'Changes will be saved in a moment'], saving: ['b-grey', 'Saving…', 'Saving to the database'], error: ['b-red', 'Not saved · retry', SRV.err], conflict: ['b-red', 'Changed elsewhere', SRV.err] }[SRV.state] || ['b-grey', '', ''];
+  if (practice()) return ['b-ochre', 'Practice · not saved', 'The worked example is for practice. Nothing here is saved.'];
+  if (!SRV.on) return ['b-ochre', 'Not saved', 'The server is not reachable. Download a copy from the menu to keep your work.'];
+  return { saved: ['b-green', 'Saved', SRV.lastAt ? 'Saved ' + fmtLocal(SRV.lastAt) + ' by ' + SRV.lastBy : 'Saved'], pending: ['b-grey', 'Saving…', 'Changes will be saved in a moment'], saving: ['b-grey', 'Saving…', 'Saving'], error: ['b-red', 'Not saved', SRV.err], conflict: ['b-red', 'Changed elsewhere', SRV.err] }[SRV.state] || ['b-grey', '', ''];
 }
 function saveChip() { const l = saveLabel(); if (!l || !l[1]) return ''; return `<button class="badge ${l[0]}" id="savechip" data-act="saveChip" title="${esc(l[2])}" aria-label="${esc(l[1])}" style="cursor:pointer"><span class="sdot" aria-hidden="true"></span><span class="st">${esc(l[1])}</span></button>`; }
 function paintSave() { const el = document.getElementById('savechip'); if (el) el.outerHTML = saveChip(); }
-async function openFromServer(id) {
-  const r = await api('GET', '/api/engagements/' + encodeURIComponent(id));
-  if (!r.ok) return toast('Could not open: ' + r.error);
-  try { S = hydrate(r.body.data); } catch (e) { return toast('Could not open: ' + e.message); }
-  SRV.rev = r.body.revision; SRV.state = 'saved'; SRV.err = ''; SRV.conflict = null; SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy;
-  UI.dirty = false; UI.sel = null; UI.personId = ''; lastSig = null; go('overview');
-}
-/* Before leaving the current engagement: wait for saving to finish; if it cannot be saved, ask. */
-async function leave(what) {
-  if (!S) return true;
-  if (savesHere()) { if (await flushSave()) return true; return confirm('The latest changes could not be saved (' + (SRV.err || 'unknown error') + '). Discard them and ' + what + '?'); }
-  if (UI.dirty && !S.engagement.example) return confirm('Your changes are not saved anywhere. Discard them and ' + what + '?');
+/* Loads the saved engagement (or the start screen if none). */
+async function loadReal(quiet) {
+  const r = await api('GET', '/api/engagement');
+  if (!r.ok) { if (!quiet) toast('Could not load the engagement: ' + r.error); return false; }
+  SRV.people = r.body.people || (r.body.data && r.body.data.people) || [];
+  SRV.exists = !!r.body.exists; SRV.rev = r.body.revision || 0; SRV.state = 'saved'; SRV.err = ''; SRV.conflict = null;
+  SRV.lastAt = r.body.updatedAt || ''; SRV.lastBy = r.body.updatedBy || '';
+  UI.dirty = false; UI.sel = null; lastSig = null;
+  if (r.body.exists) { try { S = hydrate(r.body.data); } catch (e) { S = null; toast('The saved engagement could not be read: ' + e.message); return false; } applyIdentity(); if (!SRV.started) go(UI.screen && UI.screen !== 'entry' ? UI.screen : 'overview'); else render(); }
+  else { S = null; UI.screen = 'entry'; render(); }
+  SRV.started = true;
   return true;
 }
-function startLocal(state) { S = state; SRV.rev = null; SRV.state = 'saved'; SRV.err = ''; SRV.conflict = null; SRV.lastAt = ''; SRV.lastBy = ''; UI.dirty = false; UI.sel = null; UI.personId = ''; lastSig = null; }
+/* When the tab comes back into view, pick up anyone else's saves (only if nothing is unsaved here). */
+async function refreshIfQuiet() {
+  if (!savesHere() || SRV.state !== 'saved' || SRV.inflight || UI.pop || UI.sheet) return;
+  const ae = document.activeElement; if (ae && (/TEXTAREA|SELECT/.test(ae.tagName) || (ae.tagName === 'INPUT' && !/checkbox|radio|button|submit/.test(ae.type)))) return;
+  const r = await api('GET', '/api/engagement');
+  if (!r.ok || !r.body.exists || r.body.revision === SRV.rev || SRV.state !== 'saved' || !savesHere()) return;
+  const screen = UI.screen; await loadReal(true); if (S) { UI.screen = screen; render(); } toast('Updated with the latest saved changes from ' + (r.body.updatedBy || 'another user') + '.');
+}
+/* Before leaving the current view of the engagement: wait for saving to finish; if it cannot be saved, ask. */
+async function leave(what) {
+  if (!S || practice()) return true;
+  if (savesHere()) { if (await flushSave()) return true; return confirm('The latest changes could not be saved (' + (SRV.err || 'unknown error') + '). Discard them and ' + what + '?'); }
+  if (UI.dirty) return confirm('Your changes are not saved anywhere. Discard them and ' + what + '?');
+  return true;
+}
+function startPractice() { S = buildExample(); UI.personId = ''; UI.role = 'triodian'; UI.dirty = false; UI.sel = null; lastSig = null; go('overview'); }
+function startEngagement(state) {
+  S = state; S.engagement.example = false; S.engagement.autosave = false; S.people = SRV.people.map(p => ({ ...p, areas: [] }));
+  SRV.rev = 0; SRV.state = 'saved'; SRV.err = ''; SRV.conflict = null; UI.sel = null; lastSig = null; applyIdentity();
+}
 
 /* ---------- worked example (fictional) ---------- */
 function buildExample() {
@@ -1078,25 +1095,19 @@ function onClick(e) {
   const A = {
     go: () => go(d.to), drawer: () => { UI.drawer = !UI.drawer; render(); }, present: () => togglePresent(),
     save: () => saveEngagement(),
-    open: () => leave('open another file').then(ok => { if (ok) document.getElementById('fileIn').click(); }),
-    new: () => leave('start a new engagement').then(ok => { if (!ok) return; startLocal(newEngagement()); go('setup'); }),
-    example: () => leave('open the worked example').then(ok => { if (!ok) return; startLocal(buildExample()); go('overview'); toast('Worked example open. Corvane General is fictional. It is never saved.'); }),
-    home: () => leave('go to the list of engagements').then(ok => { if (!ok) return; S = null; UI.drawer = false; UI.screen = 'entry'; if (SRV.on) { SRV.list = null; loadList(); } render(); }),
-    openEng: () => openFromServer(d.id),
+    open: () => { if (SRV.exists) return toast('The engagement has already been started.'); document.getElementById('fileIn').click(); },
+    new: () => { if (SRV.exists) return; startEngagement(newEngagement()); go('setup'); },
+    example: () => leave('open practice mode').then(ok => { if (ok) { startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
+    leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
-      if (SRV.state === 'error') { saveNow(); return; }
+      if (SRV.state === 'error') { if (SRV.err && /cannot change|history/.test(SRV.err)) { if (confirm(SRV.err + '\n\nReload the saved engagement? Your unsaved changes here will be lost.')) loadReal(); } else saveNow(); return; }
       if (SRV.state === 'conflict') {
         const c = SRV.conflict || {};
-        if (!confirm('Someone else' + (c.updatedBy ? ' (' + c.updatedBy + ')' : '') + ' saved this engagement' + (c.updatedAt ? ' at ' + fmtLocal(c.updatedAt) : '') + ' after you opened it, so your latest changes were not saved.\n\nOK: download your version as a file, then load theirs.\nCancel: stay here without saving.')) return;
-        saveEngagement(); const id = S.engagement.id; S = null; openFromServer(id); return;
+        if (!confirm('Someone else' + (c.updatedBy ? ' (' + c.updatedBy + ')' : '') + ' saved the engagement' + (c.updatedAt ? ' at ' + fmtLocal(c.updatedAt) : '') + ' after you opened it, so your latest changes were not saved.\n\nOK: download your version as a file, then load theirs.\nCancel: stay here without saving.')) return;
+        saveEngagement(); loadReal(); return;
       }
       toast(saveLabel()[2]);
     },
-    resume: () => leave('move the autosaved engagement').then(ok => { if (!ok) return; let st; try { st = hydrate(JSON.parse(localStorage.getItem(d.key))); } catch (er) { return toast('Autosaved copy could not be read: ' + er.message); }
-      st.engagement.autosave = false; startLocal(st); go('overview');
-      if (SRV.on) { UI.dirty = true; autosave(); saveNow().then(() => { if (SRV.state === 'saved') { try { localStorage.removeItem(d.key); } catch (er) {} toast('Moved to the database and removed from this browser.'); } }); } }),
-    addPerson: () => { S.people.push({ id: 'p' + uid(), name: '', organisation: '', role: 'risk', areas: [] }); log('addPerson', 'people'); render(); },
-    rmPerson: () => { const p = S.people[+d.i]; if (confirm('Remove ' + (p.name || 'this person') + '?')) { S.people.splice(+d.i, 1); log('removePerson', 'people', p.name, null); render(); } },
     addFn: () => { S.functions.push({ id: 'f' + uid(), name: 'New function' }); S.functionsConfirmed = false; log('addFunction', 'functions'); render(); },
     rmFn: () => { const f = S.functions[+d.i]; if (confirm('Remove ' + f.name + '?')) { S.functions.splice(+d.i, 1); S.functionsConfirmed = false; log('removeFunction', 'functions', f.name, null); render(); } },
     addOp: () => { S.criticalOperations.push({ id: 'o' + uid(), name: '', tolerance: '', source: '' }); log('addCriticalOperation', 'criticalOperations'); render(); },
@@ -1129,7 +1140,7 @@ function onClick(e) {
 function onChange(e) { inChange = true; try { changeHandler(e); } finally { inChange = false; } }
 function changeHandler(e) {
   const t = e.target, d = t.dataset;
-  if (d.act === 'role') { const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
+  if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
@@ -1185,8 +1196,8 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.email = r.body.email; loadList(); } else { SRV.on = false; SRV.reason = r.error; }
-  render();
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
 boot();

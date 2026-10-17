@@ -200,3 +200,15 @@ footer.ft{border-top:1px solid var(--rule);padding:26px 0 34px;background:var(--
 #savechip .sdot{width:8px;height:8px;border-radius:50%;background:currentColor;display:none}
 @media (min-width:1200px){.apptitle{flex-shrink:0}}
 @media (max-width:1199px){#savechip .st{display:none}#savechip .sdot{display:inline-block}#savechip{padding:6px}}
+/* people table in set-up */
+table.ppl th.who{text-align:left;min-width:190px;font:inherit;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--card);vertical-align:middle}
+table.ppl thead th.who{font:600 12px/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);background:var(--parchment-2);vertical-align:bottom}
+table.ppl th.fn{font-size:11px;letter-spacing:.04em;text-align:center;min-width:84px;max-width:110px;white-space:normal;line-height:1.25}
+table.ppl td.tick{text-align:center;vertical-align:middle}
+table.ppl td.tick input{width:18px;height:18px;cursor:pointer}
+table.ppl tr.off th.who strong,table.ppl tr.off th.who{color:var(--ink-faint)}
+fieldset{min-width:0}
+table.ppl th.fn{overflow-wrap:anywhere;hyphens:auto;min-width:92px}
+table.ppl th.fn{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;overflow-wrap:normal;hyphens:manual;min-width:76px}
+table.ppl th.who{min-width:170px}
+table.ppl tbody th.who{border-bottom:1px solid var(--rule-soft);padding:9px 12px}
