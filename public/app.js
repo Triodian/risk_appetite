@@ -1082,7 +1082,7 @@ function renderArea(app) {
   else if (ADM.adding || ADM.editing) { const f = document.getElementById('f-email'); if (f) f.focus(); }
 }
 function screenStart() {
-  return `${opening('Admin · set-up', 'Set up the engagement', 'This deployment holds one engagement. Start it here; everyone else then works on it in the app.')}
+  return `${opening('Admin · set-up', 'Set up the engagement', 'Start the engagement here. Everyone taking part then works on it in the app.')}
   <div class="acts" style="max-width:640px">
     <button class="act" data-act="new"><span class="mono" style="color:var(--aubergine)">01</span><span><strong>Start the engagement</strong><br><span class="small soft">Begin with the framework's function list.</span></span></button>
     <button class="act" data-act="open"><span class="mono" style="color:var(--aubergine)">02</span><span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app. People are taken from the user list, so check owners and proposers afterwards.</span></span></button>
