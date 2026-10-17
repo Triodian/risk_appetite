@@ -373,3 +373,6 @@ ul.done li::marker{color:var(--green)}
 ul.todo li::marker{color:var(--ochre)}
 .guide-acts{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule-soft)}
 @media (max-width:639px){.entry .h1{font-size:28px}ol.stages li{padding-left:40px}}
+/* Centre the modal only when it fits; when taller than the window, start at the top and scroll. */
+.overlay{align-items:flex-start;justify-content:flex-start}
+.overlay>.entry{margin:auto}
