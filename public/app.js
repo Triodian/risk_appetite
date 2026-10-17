@@ -322,7 +322,7 @@ function drawer() {
     ${SRV.user ? `<div class="grp">Signed in</div><a class="item" href="/profile/" style="text-decoration:none">${avatarBadge()}<span>${esc(SRV.user.name || SRV.user.email)}<br><span class="small soft">${esc(ROLE_NAME[myRole()])} · your profile</span></span></a>` : ''}
     <div class="grp">Engagement</div>
     <button class="item" data-act="save">Download a copy (.json)</button>
-    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup">How an engagement runs</button>'}
+    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
     <a class="item" href="/user-guide/" style="text-decoration:none">User guide</a>
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
     ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#setup" style="text-decoration:none">Admin · set-up and users</a>' : ''}
@@ -340,26 +340,32 @@ function footer() {
     <span class="row"><a class="lnk" href="/user-guide/">User guide</a><button class="lnk" data-act="go" data-to="reference">Reference</button><span class="mono">${esc(statusMark())}</span></span></div>
   </div></footer>`;
 }
+/* "Don't show the introduction again" is a per-browser convenience. */
+const INTRO_KEY = 'raf.hideIntro';
+function introHidden() { try { return localStorage.getItem(INTRO_KEY) === '1'; } catch (e) { return false; } }
+function setIntroHidden(v) { try { if (v) localStorage.setItem(INTRO_KEY, '1'); else localStorage.removeItem(INTRO_KEY); } catch (e) {} }
 function entry() {
   if (UI.guide) return guideOverlay();
+  const quick = introHidden();
   const u = SRV.user;
   let acts = '', note = '';
   const opt = (attrs, title, text) => `<${attrs.startsWith('href') ? 'a' : 'button'} class="act" ${attrs} ${attrs.startsWith('href') ? 'style="text-decoration:none"' : ''}><span><strong>${title}</strong><br><span class="small soft">${text}</span></span><span class="act-go" aria-hidden="true"></span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
-  const practice = opt('data-act="guide" data-g="practice"', 'Practise with the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
+  const practice = opt(quick ? 'data-act="example"' : 'data-act="guide" data-g="practice"', 'Practise with the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
   else if (!SRV.exists) {
-    if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt('data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
-    else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`; }
+    if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt(quick ? 'href="/admin/#setup"' : 'data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
+    else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + (quick ? '' : `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`); }
   } else note = 'Opening the engagement…';
   const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#setup">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px">${MARKSVG().replace('<svg', '<svg width="30" height="28"')}<span class="wordmark">Triodian</span><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
-    <h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
-    <p class="sub" style="font-size:18px">Record the insurer’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>
+    ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
+    <p class="sub" style="font-size:18px">Record the insurer’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>`}
     ${note ? `<p class="entry-note">${note}</p>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}
+    ${acts && !quick ? '<label class="entry-skip"><input type="checkbox" data-act="hideIntro"> Don’t show this introduction again</label>' : ''}
     ${who}
   </div></div>`;
 }
@@ -1177,6 +1183,9 @@ function screenProfile() {
       ${PRF.emailErr ? `<p class="err acts2" role="alert">${esc(PRF.emailErr)}</p>` : ''}
       <div class="acts2"><button class="btn sm" type="submit">Change email</button><span class="small soft">You confirm it by signing in with the new address.</span></div></form>`}
   </section>
+  <section class="card"><h2 class="sh">Introduction</h2>
+    <label class="entry-skip" style="margin:0"><input type="checkbox" data-act="showIntro" ${introHidden() ? '' : 'checked'}> Show the introduction when the app opens, and the explanation before set-up and the worked example</label>
+    <p class="small soft" style="margin-top:8px">This setting applies in this browser only.</p></section>
   <section class="card"><h2 class="sh">Access</h2>
     <dl class="kv"><dt>Engagement role</dt><dd>${esc(u.role ? roleLong(u.role) : 'None. You can read the engagement but not change it.')}</dd>
     <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#setup">open Admin</a>' : 'No'}</dd></dl>
@@ -1385,7 +1394,9 @@ function onClick(e) {
     cancelEmail: async () => { const r = await api('DELETE', '/api/me/email'); if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Email change cancelled.'; } else PRF.err = r.error; render(); },
     new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
     example: () => leave('open practice mode').then(ok => { if (ok) { UI.guide = null; startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
-    guide: () => { UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
+    guide: () => {
+      if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#setup'; return; } }
+      UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
     guideBack: () => { UI.guide = null; render(); },
     leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
@@ -1432,6 +1443,8 @@ function onChange(e) { inChange = true; try { changeHandler(e); } finally { inCh
 function changeHandler(e) {
   const t = e.target, d = t.dataset;
   if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
+  if (d.act === 'hideIntro') { setIntroHidden(t.checked); return; }
+  if (d.act === 'showIntro') { setIntroHidden(!t.checked); PRF.msg = ''; return; }
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
@@ -1491,6 +1504,7 @@ async function boot() {
   if (AREA === 'admin') UI.screen = ADMIN_SCREENS.includes(h) ? h : 'setup';
   else if (AREA === 'profile') UI.screen = 'profile';
   else if (SEQ.includes(h) || h === 'reference') UI.screen = h;
+  else if (h === 'worked-example') { UI.guide = 'practice'; history.replaceState(null, '', location.pathname); }
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;

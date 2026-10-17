@@ -376,3 +376,7 @@ ul.todo li::marker{color:var(--ochre)}
 /* Centre the modal only when it fits; when taller than the window, start at the top and scroll. */
 .overlay{align-items:flex-start;justify-content:flex-start}
 .overlay>.entry{margin:auto}
+/* "Don't show this introduction again" */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.entry-skip{display:flex;align-items:flex-start;gap:10px;margin:18px 0 0;font-size:14.5px;color:var(--ink-soft);cursor:pointer;line-height:1.45}
+.entry-skip input{width:17px;height:17px;margin:2px 0 0;flex:none;accent-color:var(--aubergine)}
