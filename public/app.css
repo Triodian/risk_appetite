@@ -188,3 +188,15 @@ footer.ft{border-top:1px solid var(--rule);padding:26px 0 34px;background:var(--
 @media (max-width:1023px){:root{--pad:20px}.dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:minmax(0,1fr)}.outgrid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:639px){:root{--pad:16px}main{padding:28px 0 96px}.h1{font-size:28px}.sub{font-size:18px}.dgrid,.grid2{grid-template-columns:minmax(0,1fr)}.card{padding:18px 16px}.in,select.in,textarea.in,.cellsel,.chip select{font-size:16px}.entry{padding:24px 20px}.hdr-in{gap:8px}.brand img{width:22px;height:20px}.stepbar{display:none}footer.ft{padding-bottom:96px}.mdsrc{min-height:320px}}
 @media print{.hdr,.bottombar,footer.ft,.drawer,.drawer-bg{display:none}}
+/* engagement list on the entry screen (database) */
+.englist{display:grid;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-top:8px;max-height:320px;overflow-y:auto}
+.engrow{display:grid;grid-template-columns:1fr auto;gap:2px 14px;align-items:baseline;text-align:left;background:var(--card);border:0;border-bottom:1px solid var(--rule-soft);padding:11px 14px;cursor:pointer;color:inherit;font:inherit;min-height:44px}
+.engrow:last-child{border-bottom:0}
+.engrow:hover,.engrow:focus-visible{background:var(--parchment-2)}
+.engrow .engname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.engrow>.small{grid-column:1/-1}
+/* save status in the header */
+#savechip{text-transform:none;letter-spacing:0;font-weight:500;padding:3px 8px}
+#savechip .sdot{width:8px;height:8px;border-radius:50%;background:currentColor;display:none}
+@media (min-width:1200px){.apptitle{flex-shrink:0}}
+@media (max-width:1199px){#savechip .st{display:none}#savechip .sdot{display:inline-block}#savechip{padding:6px}}
