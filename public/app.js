@@ -6,7 +6,7 @@
 'use strict';
 let C = null;            // content.json
 let S = null;            // engagement
-const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
+const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, open: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
 const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 /* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
@@ -449,6 +449,7 @@ function cellCtl(c, off, nav, aria) {
   const ph = bp() === 'phone';
   if (c.kind === 'select') return `<select id="${domId(c.id)}" class="cellsel ${st === 'notSet' ? 'notset' : !v ? 'empty' : ''} ${bad ? 'bad' : ''}" data-cell="${cid}" ${navA} ${dis} aria-label="${esc(aria)}" title="${esc(v ? v + ' ' + scaleName(v) + (scaleDef(v) ? ': ' + scaleDef(v) : '') : '')}">
     <option value="">${st === 'notSet' ? '—' : '—'}</option>${st === 'notSet' ? '<option value="__ns" selected>not set</option>' : ''}${c.options.map(o => `<option value="${o}" ${v === o ? 'selected' : ''}>${o}${ph && scaleName(o) ? ' · ' + esc(scaleName(o)) : ''}</option>`).join('')}</select>`;
+  if (c.kind !== 'number') return `<textarea id="${domId(c.id)}" class="in cellta ${bad ? 'bad' : ''}" rows="1" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#EBD7A8' : ''}" data-cell="${cid}" ${navA} ${dis} placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">${esc(v)}</textarea>`;
   return `<input id="${domId(c.id)}" class="in ${bad ? 'bad' : ''}" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#E4D6AE' : ''}" type="${c.kind === 'number' ? 'number' : 'text'}" ${c.kind === 'number' ? 'min="0" inputmode="decimal"' : ''} data-cell="${cid}" ${navA} ${dis} value="${esc(v)}" placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">`;
 }
 function cellMarks(c, off) {
@@ -458,7 +459,8 @@ function cellMarks(c, off) {
   if (p && p.status === 'notSet') h += `<span class="mini" style="color:var(--ochre)">not set · ${esc(pname(p.notSetOwner))} · ${esc(p.notSetDue)}</span>`;
   if (p && p.condition) h += `<span class="mini">cond: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
   if ((off[c.id] || []).some(x => !/^K[23]:/.test(x))) h += `<span class="mini" style="color:var(--red)">${esc((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]).join(' · '))}</span>`;
-  if (bp() !== 'desk') h += `<button class="lnk mono" data-act="details" data-cell="${esc(c.id)}" style="min-height:28px">details</button>`;
+  if (bp() === 'phone') h += `<button class="lnk mono" data-act="details" data-cell="${esc(c.id)}" style="min-height:28px">details</button>`;
+  else { const o = UI.open === c.id; h += `<button class="detbtn" data-act="toggleDet" data-cell="${esc(c.id)}" aria-expanded="${o}" ${o ? 'aria-controls="details"' : ''} title="${o ? 'Close the details for this position' : 'Proposer, owner, condition, dissent, not set'}">${o ? 'Close' : 'Details'}</button>`; }
   return h;
 }
 /* rows: [{head, sub, items:[cell | {html}]}]; cols: header html list (first = row header) */
@@ -467,8 +469,8 @@ function recArea(did, gr, cols, rows, off) {
       <div style="font-weight:600;margin-bottom:${r.sub ? '2px' : '10px'}">${r.head}</div>${r.sub ? `<div class="small soft" style="margin-bottom:10px">${r.sub}</div>` : ''}
       <div class="stack" style="gap:10px">${r.items.map((it, i) => `<div><div class="mini" style="margin-bottom:4px">${cols[i + 1]}</div>${it.id ? `<div class="cellwrap" style="align-items:stretch">${cellCtl(it, off, null, r.label + ' · ' + strip(cols[i + 1]))}${cellMarks(it, off)}</div>` : `<div class="small">${it.html}</div>`}</div>`).join('')}</div></div>`).join('')}</div>`;
   return `<div class="tw"><table class="lg" data-grid="${gr}"><thead><tr>${cols.map(h => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>
-    ${rows.map((r, ri) => `<tr><th scope="row" style="background:none;text-transform:none;letter-spacing:0;font:400 14px/1.4 var(--sans);color:var(--ink);border-bottom:1px solid var(--rule-soft);vertical-align:top">${r.head}${r.sub ? `<div class="mini">${r.sub}</div>` : ''}</th>
-      ${r.items.map((it, ci) => it.id ? `<td data-td="${esc(it.id)}" class="${UI.sel === it.id ? 'sel' : ''}"><div class="cellwrap">${cellCtl(it, off, [gr, ri, ci], r.label + ' · ' + strip(cols[ci + 1]))}${cellMarks(it, off)}</div></td>` : `<td class="small">${it.html}</td>`).join('')}</tr>`).join('')}
+    ${rows.map((r, ri) => `<tr class="${r.items.some(it => it && it.id && it.id === UI.open) ? 'detopen' : ''}"><th scope="row" style="background:none;text-transform:none;letter-spacing:0;font:400 14px/1.4 var(--sans);color:var(--ink);border-bottom:1px solid var(--rule-soft);vertical-align:top">${r.head}${r.sub ? `<div class="mini">${r.sub}</div>` : ''}</th>
+      ${r.items.map((it, ci) => it.id ? `<td data-td="${esc(it.id)}" class="${UI.sel === it.id ? 'sel' : ''}"><div class="cellwrap">${cellCtl(it, off, [gr, ri, ci], r.label + ' · ' + strip(cols[ci + 1]))}${cellMarks(it, off)}</div></td>` : `<td class="small">${it.html}</td>`).join('')}</tr>${r.items.some(it => it && it.id && it.id === UI.open) ? `<tr class="detrow"><td colspan="${cols.length}"><div id="details">${detailsHtml(UI.open, true)}</div></td></tr>` : ''}`).join('')}
   </tbody></table></div>`;
 }
 const strip = h => String(h).replace(/<[^>]+>/g, '');
@@ -502,7 +504,7 @@ function decisionBody(did, off) {
     return `${rows.length ? recArea(did, 'g6', ['Jurisdiction', 'Where the provider is established', 'Where the AI runs'], rows, off) : '<p class="soft">No jurisdictions yet. Add each one that appears in the register.</p>'}
     ${ed ? `<div class="row" style="margin-top:10px"><input class="in" id="newJur" placeholder="Jurisdiction" style="max-width:220px" aria-label="New jurisdiction"><select class="in" id="newJurStart" style="max-width:200px" aria-label="Starting marking from offshoring position"><option value="">No starting marking</option>${MARK.map(m => `<option>${m}</option>`).join('')}</select><button class="btn sm" data-act="addJur">Add jurisdiction</button></div>` : ''}
     <div class="card" style="margin-top:18px"><h3 class="sh">${T('concentration', 'Concentration')} limit</h3><p class="small soft measure">${esc(D('d6').concentrationNote)}</p>
-      <div class="cellwrap" style="max-width:260px;align-items:stretch">${cellCtl(conc, off, null, 'Concentration limit, percent')}${cellMarks(conc, off)}</div><div class="mini" style="margin-top:4px">Percent of critical operations</div></div>`;
+      <div class="cellwrap" style="max-width:260px;align-items:stretch">${cellCtl(conc, off, null, 'Concentration limit, percent')}${cellMarks(conc, off)}</div><div class="mini" style="margin-top:4px">Percent of critical operations</div>${UI.open === conc.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(conc.id, true)}</div>` : ''}</div>`;
   }
   if (did === 'd7') {
     const ed = canEdit('d7');
@@ -515,7 +517,7 @@ function decisionBody(did, off) {
     const ed = canEdit('d8'), iv = by('d8.interval');
     const rows = S.decisions.d8.events.map((e, i) => ({ head: e.custom && ed ? `<input class="in" id="ev-${i}" data-path="decisions.d8.events.${i}.event" value="${esc(e.event)}" aria-label="Event">` : esc(e.event), label: e.event, sub: e.custom && ed ? `<button class="lnk mono" data-act="rmEvent" data-i="${i}">remove</button>` : '', items: [by(`d8.ev.${e.id}`)] }));
     return `${recArea(did, 'g8', ['Event', 'What is revisited'], rows, off)}${ed ? '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="addEvent">Add event</button></div>' : ''}
-      <div class="card" style="margin-top:18px"><h3 class="sh">Review interval</h3><div class="cellwrap" style="max-width:360px;align-items:stretch">${cellCtl(iv, off, null, 'Review interval')}${cellMarks(iv, off)}</div></div>`;
+      <div class="card" style="margin-top:18px"><h3 class="sh">Review interval</h3><div class="cellwrap" style="max-width:360px;align-items:stretch">${cellCtl(iv, off, null, 'Review interval')}${cellMarks(iv, off)}</div>${UI.open === iv.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(iv.id, true)}</div>` : ''}</div>`;
   }
   return '';
 }
@@ -548,7 +550,7 @@ function startPanel(d) {
     <p class="small" style="margin-top:10px">${esc(d.starting)}</p>${extra}
     <div class="row" style="margin-top:12px"><button class="btn sm aub" data-act="useStart" data-d="${d.id}" ${canEdit(d.id) ? '' : 'disabled'}>Use starting position</button><span class="mini">Copies into empty cells only. Nothing is copied automatically.</span></div></section>`;
 }
-function detailsHtml(id) {
+function detailsHtml(id, inline) {
   if (!id) return `<div class="card"><h2 class="sh">Position details</h2><p class="small soft">Select a cell to record its proposer, owner, condition, dissent or a "not set" entry.</p></div>`;
   const c = cellById(id); if (!c) return '';
   const did = c.did, p = getPosView(id), ed = canEdit(did), elig = eligible(did);
@@ -558,32 +560,39 @@ function detailsHtml(id) {
   const canProp = roleCanPropose(did);
   const propRoles = proposerRoles(did).map(r => ROLE_NAME[r]).join(' or ');
   const sv = startingValue(id);
-  return `<div class="card" id="details-card"><div class="row between"><h2 class="sh" style="margin:0">Position details</h2>${badge(p.status === 'set' ? 'set' : p.status === 'notSet' ? 'not set' : 'blank', p.status === 'set' ? 'b-green' : p.status === 'notSet' ? 'b-ochre' : 'b-grey')}</div>
-    <div style="font-weight:600;margin:10px 0 2px">${esc(cellLabel(id))}</div>
-    <div class="mini">value: ${esc(p.status === 'set' ? p.value + (scaleName(p.value) ? ' · ' + scaleName(p.value) : '') + (scaleDef(p.value) ? ' · ' + scaleDef(p.value) : '') : '—')} · starting: ${esc(sv || '—')}${p.source ? ' · source: ' + esc(p.source) : ''}</div>
-    ${ckOff.length ? `<div style="margin-top:8px">${ckOff.map(x => `<div class="err small">${esc(x)}</div>`).join('')}</div>` : ''}
+  const status = badge(p.status === 'set' ? 'set' : p.status === 'notSet' ? 'not set' : 'blank', p.status === 'set' ? 'b-green' : p.status === 'notSet' ? 'b-ochre' : 'b-grey');
+  const valueLine = `<div class="mini">value: ${esc(p.status === 'set' ? p.value + (scaleName(p.value) ? ' · ' + scaleName(p.value) : '') + (scaleDef(p.value) ? ' · ' + scaleDef(p.value) : '') : '—')} · starting: ${esc(sv || '—')}${p.source ? ' · source: ' + esc(p.source) : ''}</div>`;
+  const alerts = `${ckOff.length ? `<div style="margin-top:8px">${ckOff.map(x => `<div class="err small">${esc(x)}</div>`).join('')}</div>` : ''}
     ${ed ? '' : `<p class="err small" style="margin-top:8px">${esc(editBlockReason(did))} ${whyLink()}</p>`}
-    ${p.status === 'set' && !proposerOk(did, p) ? `<p class="err small" role="alert" style="margin-top:8px">Choose a ${T('proposer', 'proposer')}. This position counts as incomplete until one is recorded.</p>` : ''}
-    <fieldset ${ed ? '' : 'disabled'} style="border:0;padding:0;margin:12px 0 0" class="stack">
-      ${canProp
+    ${p.status === 'set' && !proposerOk(did, p) ? `<p class="err small" role="alert" style="margin-top:8px">Choose a ${T('proposer', 'proposer')}. This position counts as incomplete until one is recorded.</p>` : ''}`;
+  const who = `${canProp
         ? `<label class="f"><span>${T('proposer', 'Proposer')}</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`
         : `<label class="f"><span>${T('proposer', 'Proposer')}</span><input class="in" disabled value="Not available to ${esc(ROLE_NAME[UI.role])}" aria-describedby="prop-why"></label>
            <div id="prop-why" class="small soft">Only the ${esc(propRoles)} may propose on decision ${D(did).n}. ${T('proposerRule', 'Why')}</div>
            <label class="f"><span>Recording on behalf of</span><select class="in" ${fid('proposedBy')} data-pf="proposedBy" data-cell="${eid}">${pOpt(elig, p.proposedBy)}</select></label>`}
       ${!elig.length ? `<div class="small" style="color:var(--ochre)">No eligible proposer in set-up. Add a ${esc(propRoles)} person.</div>` : ''}
-      <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>
-      ${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
+      <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>`;
+  const what = `${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
         <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Testable from documents</label>` : ''}
       ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (where it differs from the existing threshold)' : ' (where above own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
-      <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>
-      <div class="panel2" style="padding:12px 14px"><div class="mini" style="margin-bottom:8px">RECORD AS NOT SET · needs an owner and a due date</div>
+      <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>`;
+  const notSet = `<div class="panel2" style="padding:12px 14px"><div class="sh" style="margin-bottom:8px">Record as not set <span class="soft" style="font-weight:400">· needs an owner and a due date</span></div>
         <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(p.notSetDue)}"></label></div>
         ${UI.err[id] ? `<p class="err" role="alert" style="margin:8px 0 0">${esc(UI.err[id])}</p>` : ''}
-        <div class="row" style="margin-top:10px"><button class="btn sm" data-act="notSet" data-cell="${eid}">Record not set</button>${p.status === 'notSet' ? `<button class="btn sm ghost" data-act="clearNotSet" data-cell="${eid}">Clear</button>` : ''}</div></div>
-    </fieldset>
-    ${p.recordedBy ? `<p class="mini" style="margin-top:10px">recorded by ${esc(ROLE_NAME[p.recordedBy] || p.recordedBy)}${p.proposedBy ? ' · proposed by ' + esc(pname(p.proposedBy)) : ''}</p>` : ''}
+        <div class="row" style="margin-top:10px"><button class="btn sm" data-act="notSet" data-cell="${eid}">Record not set</button>${p.status === 'notSet' ? `<button class="btn sm ghost" data-act="clearNotSet" data-cell="${eid}">Clear</button>` : ''}</div></div>`;
+  const trail = `${p.recordedBy ? `<p class="mini" style="margin-top:10px">recorded by ${esc(ROLE_NAME[p.recordedBy] || p.recordedBy)}${p.proposedBy ? ' · proposed by ' + esc(pname(p.proposedBy)) : ''}</p>` : ''}
     ${(() => { const h = S.history.filter(x => x.target === id).slice(-3).reverse(); return h.length ? `<div class="mini" style="margin-top:8px">${h.map(x => `${esc(fmtAt(x.at))} · ${esc(x.by)} · ${esc(x.action)} ${esc(x.from == null ? '—' : x.from)} → ${esc(x.to == null ? '—' : x.to)}`).join('<br>')}</div>` : ''; })()}
-    <div class="row" style="margin-top:12px"><button class="lnk mono" data-act="qcForCell" data-cell="${eid}">Log a question for counsel on this cell</button></div>
+    <div class="row" style="margin-top:12px"><button class="lnk" data-act="qcForCell" data-cell="${eid}">Log a question for counsel on this cell</button></div>`;
+  if (inline) return `<div class="detpanel" role="region" aria-label="Position details · ${esc(cellLabel(id))}">
+    <div class="dethead"><div><div class="row" style="gap:10px"><strong class="detlabel">${esc(cellLabel(id))}</strong>${status}</div>${valueLine}</div>
+      <button class="btn sm" data-act="closeDet" data-cell="${eid}" aria-label="Close details">Close</button></div>
+    ${alerts}
+    <fieldset ${ed ? '' : 'disabled'} class="detgrid"><div class="stack" style="gap:12px">${who}</div><div class="stack" style="gap:12px">${what}</div><div>${notSet}</div></fieldset>
+    <div class="dettrail">${trail}</div>
+  </div>`;
+  return `<div class="card" id="details-card"><div class="row between"><h2 class="sh" style="margin:0">Position details</h2>${status}</div>
+    <div style="font-weight:600;margin:10px 0 2px">${esc(cellLabel(id))}</div>${valueLine}${alerts}
+    <fieldset ${ed ? '' : 'disabled'} style="border:0;padding:0;margin:12px 0 0" class="stack">${who}${what}${notSet}</fieldset>${trail}
   </div>`;
 }
 function getPosView(id) { return P(id) || blankPos(); }
@@ -602,7 +611,7 @@ function screenDecision(did, ck) {
       ${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
     ${startPanel(d)}
     <section><h2 class="sh">Recording area</h2>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
-      ${b === 'desk' ? `<div class="split"><div style="min-width:0">${body}</div><div id="details" style="position:sticky;top:76px">${detailsHtml(details)}</div></div>` : `${body}${b === 'tab' ? `<div id="details" style="margin-top:18px">${detailsHtml(details)}</div>` : ''}`}
+      ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Owner for every set cell without one:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
     ${d.prompts.length ? `<details class="pr"><summary>Prompts for the session · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></details>` : ''}
@@ -857,9 +866,27 @@ function doRender() {
   if (!fid && fkey) { const m = [...document.querySelectorAll('#app [data-act],#app [data-cell],#app [data-path]')].find(x => dsKey(x) === fkey); if (m) m.focus({ preventScroll: true }); }
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange && /text|search|textarea/.test(el.type || el.tagName.toLowerCase())) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
   document.documentElement.classList.toggle('present', UI.present && bp() === 'desk');
+  fitCells();
 }
+/* Details open in a row under the position's row; one at a time. */
+function openDet(id) {
+  UI.open = id; UI.sel = id; render();
+  const box = document.getElementById('details'); if (!box) return;
+  /* Keep the position's own row in view just below the sticky header, with as much of the panel as fits. */
+  const hdr = document.querySelector('.hdr'), top = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 12;
+  const cell = document.getElementById(domId(id)), anchor = (cell && cell.closest('td,.cellwrap')) || box;
+  const a = anchor.getBoundingClientRect(), r = box.getBoundingClientRect();
+  if (a.top < top || r.bottom > innerHeight) window.scrollTo(0, Math.max(0, scrollY + Math.min(a.top - top, r.bottom - innerHeight + 16)));
+  const f = box.querySelector('select:not([disabled]),textarea:not([disabled]),input:not([disabled])'); if (f) f.focus({ preventScroll: true });
+}
+function closeDet(id) {
+  UI.open = null; render();
+  const el = id && document.getElementById(domId(id)); if (el) el.focus({ preventScroll: true });
+}
+/* Text cells grow with their content (where the browser cannot size them itself). */
+function fitCells(root) { (root || document).querySelectorAll('textarea.cellta').forEach(t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; }); }
 function refreshDetails() {
-  const box = document.getElementById('details'); if (box) box.innerHTML = detailsHtml(UI.sel);
+  const box = document.getElementById('details'); if (box && UI.open) box.innerHTML = detailsHtml(UI.open, true);
   document.querySelectorAll('td[data-td]').forEach(td => td.classList.toggle('sel', td.getAttribute('data-td') === UI.sel));
 }
 function toast(msg) { if (!msg) return; let t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast'; t.setAttribute('role', 'status'); clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = 'hidden'; }, 3200); }
@@ -867,13 +894,14 @@ function go(to) {
   if (AREA === 'app' && ADMIN_SCREENS.includes(to)) { if (SRV.user && SRV.user.isAdmin) location.href = '/admin/#' + to; else toast('Set-up is done by administrators in Admin.'); return; }
   if (AREA === 'admin' && !ADMIN_SCREENS.includes(to)) { location.href = '/#' + to; return; }
   if (AREA === 'admin' && to !== 'setup' && !ADM.loaded) loadAdmin();
+  if (UI.open && !UI.open.startsWith(to + '.')) UI.open = null;
   UI.screen = to; UI.drawer = false; UI.sheet = null; closePop(true); popAnchor = null; UI.showRef = false;
   try { history.replaceState(null, '', '#' + to); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 function gotoCell(id) {
   if (/^M\d+$/.test(id)) { UI.outTab = 'schedule'; go('outputs'); const el = document.getElementById('mo-' + id); if (el) { window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 140); el.focus({ preventScroll: true }); } return; }
-  const did = id.split('.')[0]; UI.sel = id; go(did);
+  const did = id.split('.')[0]; UI.sel = id; if (bp() !== 'phone' && cellById(id)) UI.open = id; go(did);
   const el = document.getElementById(domId(id));
   if (el) { const y = el.getBoundingClientRect().top + scrollY - 140; window.scrollTo(0, Math.max(0, y)); el.focus({ preventScroll: true }); }
 }
@@ -1313,7 +1341,9 @@ function onClick(e) {
     rmOp: () => { const o = S.criticalOperations.splice(+d.i, 1)[0]; log('removeCriticalOperation', 'criticalOperations', o.name, null); render(); },
     useStart: () => { const ids = []; cellsFor(d.d).forEach(c => { const sv = startingValue(c.id), p = P(c.id); if (sv && (!p || p.status === 'unset')) { setValue(c.id, sv, 'startingPosition', true); ids.push(c.id); } }); if (ids.length) log('useStartingPosition', d.d, null, ids.join(', ')); render(); toast(ids.length ? `Starting position copied into ${ids.length} ${ids.length === 1 ? 'cell' : 'cells'}. Each needs a proposer.` : 'No empty cells with a starting value.'); },
     showRef: () => { UI.showRef = !UI.showRef; if (UI.showRef) { S.decisions.d3.referenceShown.push({ at: nowISO(), by: ROLE_NAME[UI.role] }); log('referenceShown', 'd3', null, 'Appendix A shown'); } render(); },
-    details: () => { UI.sel = d.cell; if (bp() === 'phone') { UI.sheet = d.cell; renderSheet(); } else { refreshDetails(); const b = document.getElementById('details'); if (b) window.scrollTo(0, b.getBoundingClientRect().top + scrollY - 80); } },
+    details: () => { UI.sel = d.cell; if (bp() === 'phone') { UI.sheet = d.cell; renderSheet(); } else openDet(d.cell); },
+    toggleDet: () => { if (UI.open === d.cell) closeDet(d.cell); else openDet(d.cell); },
+    closeDet: () => closeDet(d.cell),
     closeSheet: () => { UI.sheet = null; renderSheet(); },
     notSet: () => { const o = document.getElementById('ns-owner'), du = document.getElementById('ns-due'); if (recordNotSet(d.cell, o && o.value, du && du.value)) { render(); toast('Recorded as not set.'); } },
     clearNotSet: () => { const p = getPos(d.cell); p.status = 'unset'; p.notSetOwner = ''; p.notSetDue = ''; log('clearNotSet', d.cell, 'not set', null); render(); },
@@ -1355,6 +1385,7 @@ function changeHandler(e) {
 }
 function onInput(e) {
   const t = e.target;
+  if (t.classList && t.classList.contains('cellta')) { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; }
   if (t.dataset.act === 'refq') { UI.refQ = t.value; render(); return; }
   if (t.dataset.path && t.type !== 'checkbox' && t.tagName !== 'SELECT') UI.dirty = true; /* state is written on change, so history keeps the true "from" */
 }
@@ -1364,12 +1395,14 @@ function onFocusIn(e) {
 }
 function onKey(e) {
   const t = e.target, typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
-  if (e.key === 'Escape') { if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
+  if (e.key === 'Escape') { if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.open && bp() !== 'phone') { closeDet(UI.open); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
   if ((e.key === 'p' || e.key === 'P') && !typing && !e.metaKey && !e.ctrlKey && S && UI.screen !== 'entry') { togglePresent(); return; }
   if (t.dataset && t.dataset.gr) {
     const isSel = t.tagName === 'SELECT', k = e.key;
     const mv = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
+    if (t.tagName === 'TEXTAREA' && k === 'Enter' && !e.shiftKey) { e.preventDefault(); t.blur(); return; }
     if (!mv || (!isSel && mv[1] !== 0) || e.altKey) return;
+    if (t.tagName === 'TEXTAREA' && ((mv[0] < 0 && t.selectionStart > 0) || (mv[0] > 0 && t.selectionEnd < t.value.length))) return;
     e.preventDefault();
     const r = +t.dataset.r + mv[0], c = +t.dataset.c + mv[1];
     const nx = document.querySelector(`[data-gr="${t.dataset.gr}"][data-r="${r}"][data-c="${c}"]`); if (nx) nx.focus();

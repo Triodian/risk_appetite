@@ -320,3 +320,27 @@ p.purpose{font:400 18px/1.55 var(--serif);max-width:66ch}
 .card.md{max-width:900px;margin-left:auto;margin-right:auto;box-shadow:0 1px 2px rgba(23,32,43,.06),0 8px 28px rgba(23,32,43,.06)}
 .md>p:first-child{font:italic 400 14.5px/1.4 var(--serif);color:var(--privilege);margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--rule-soft);max-width:none}
 @media (max-width:639px){.h1{font-size:30px}.entry .h1{font-size:28px}.sub{font-size:18px}p.purpose{font-size:16.5px}.card.md{padding:28px 18px}}
+
+/* Position details open in a row under the position, one at a time. */
+.detbtn{display:inline-flex;align-items:center;gap:5px;margin-top:2px;padding:2px 4px;min-height:24px;border:0;border-radius:4px;background:none;color:var(--ink-faint);font:500 12px/1 var(--sans);cursor:pointer;white-space:nowrap}
+.detbtn::after{content:"";width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px)}
+.detbtn[aria-expanded="true"]{background:var(--aubergine);color:#fff;padding:3px 8px}
+.detbtn[aria-expanded="true"]::after{transform:rotate(-135deg) translateY(-1px)}
+.detbtn:hover{color:var(--aubergine);text-decoration:underline;text-underline-offset:3px}
+.detbtn[aria-expanded="true"]:hover{color:#fff}
+tr.detopen>td,tr.detopen>th{border-bottom-color:transparent!important}
+tr.detrow>td{padding:0 12px 14px!important;background:var(--aubergine-bg);border-bottom:1px solid var(--rule)}
+tr.detopen>td.sel{box-shadow:inset 0 2px 0 var(--aubergine),inset 2px 0 0 var(--aubergine),inset -2px 0 0 var(--aubergine)}
+.detpanel{background:#fff;border:1px solid #CFC4D8;border-top:3px solid var(--aubergine);border-radius:0 0 8px 8px;padding:16px 18px;animation:detIn .14s ease-out}
+@keyframes detIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.detpanel{animation:none}}
+.dethead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:6px}
+.detlabel{font:600 17px/1.3 var(--serif)}
+.detgrid{border:0;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px 22px;align-items:start;min-width:0}
+.detgrid textarea.in{min-height:64px}
+.dettrail{border-top:1px solid var(--rule-soft);margin-top:14px;padding-top:2px}
+/* Text settings in tables get room now the table has the full width. */
+table.lg td .cellwrap input.in[type="text"]{min-width:220px;width:100%}
+table.lg td .cellwrap{min-width:0}
+textarea.in.cellta{resize:none;overflow:hidden;min-height:38px;line-height:1.4;padding:8px 10px;field-sizing:content}
+table.lg td .cellwrap textarea.cellta{min-width:230px;width:100%}
