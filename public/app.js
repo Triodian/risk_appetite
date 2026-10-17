@@ -365,7 +365,6 @@ function entry() {
 
 /* ---------- guides shown after choosing set-up or practice ---------- */
 const STAGES = [
-  ['Set-up', 'Administrators record the engagement details, including the privilege marking counsel directs; the people taking part and their roles; the functions in scope; the critical operations and their approved tolerance levels; and which of inputs I1 to I11 have been received. Counsel requests the inputs before the first session.'],
   ['Session 1: decisions 1 to 3', 'The board sets the authority AI may hold in each function, the thresholds at which a failure counts as a financial loss, harm to policyholders or disruption to a critical operation, and the evidence it expects for each combination of authority and consequence. Each decision starts from the insurer’s current position. Every position is recorded with the person who proposed it and an accountable owner.'],
   ['Session 2: decisions 4 to 8', 'The board sets how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval.'],
   ['Checks and challenge', 'Ten consistency checks run after every change; checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about the insurer’s legal obligations are recorded for counsel, who answers them.'],
@@ -387,12 +386,8 @@ function guideOverlay() {
   if (g === 'setup') {
     const admin = SRV.user && SRV.user.isAdmin;
     body = `<h1 id="entry-h" class="h1">How an engagement runs</h1>
-    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. Counsel leads it and Triodian records it. It runs in five stages.</p>
+    <p class="sub" style="font-size:18px">This site holds one engagement for one insurer. Counsel leads it and Triodian records it. After set-up, it runs in four stages.</p>
     <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
-    <div class="guide-box"><h2 class="sh">Before you start</h2><ul>
-      <li>The privilege marking, as counsel directs. It is printed as the first line of every output.</li>
-      <li>Everyone who will take part, added as users with their role. Only the CRO or the insurer risk function can propose positions on decisions 1 and 3.</li>
-      <li>Inputs I1 to I11, requested through counsel: for example the board risk appetite statement, the critical operations register and the accountability map.</li></ul></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
     <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#setup" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
   } else {
