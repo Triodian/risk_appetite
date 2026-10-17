@@ -12,7 +12,7 @@
   "routes": [{ "pattern": "risk-appetite.triodian.com", "custom_domain": true }],
 
   "d1_databases": [
-    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "REPLACE_WITH_DATABASE_ID" }
+    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" }
   ],
   "observability": { "enabled": true }
 }
