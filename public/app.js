@@ -514,12 +514,13 @@ function screenOverview(ck) {
 function cellCtl(c, off, nav, aria) {
   const p = P(c.id), st = p ? p.status : 'unset', v = p && st === 'set' ? p.value : '';
   const dis = canEdit(c.did) ? '' : 'disabled', cid = esc(c.id);
-  const bad = (off[c.id] || []).some(x => /^K[23]:/.test(x));
+  const bad = (off[c.id] || []).some(x => /^K[23]:/.test(x)), fl = !bad && (off[c.id] || []).some(x => !/^K[23]:/.test(x)) ? 'fails' : '';
+  const inv = bad || fl ? 'aria-invalid="true"' : '';
   const navA = nav ? `data-gr="${nav[0]}" data-r="${nav[1]}" data-c="${nav[2]}"` : '';
-  if (c.kind === 'select') return `<select id="${domId(c.id)}" class="cellsel ${st === 'notSet' ? 'notset' : !v ? 'empty' : ''} ${bad ? 'bad' : ''}" data-cell="${cid}" ${navA} ${dis} aria-label="${esc(aria)}" title="${esc(v ? scaleTip(v) : '')}">
+  if (c.kind === 'select') return `<select id="${domId(c.id)}" class="cellsel ${st === 'notSet' ? 'notset' : !v ? 'empty' : ''} ${bad ? 'bad' : fl}" data-cell="${cid}" ${navA} ${inv} ${dis} aria-label="${esc(aria)}" title="${esc(v ? scaleTip(v) : '')}">
     <option value="">${st === 'notSet' ? '—' : '—'}</option>${st === 'notSet' ? '<option value="__ns" selected>not set</option>' : ''}${c.options.map(o => scaleOption(o, v === o)).join('')}</select>`;
-  if (c.kind !== 'number') return `<textarea id="${domId(c.id)}" class="in cellta ${bad ? 'bad' : ''}" rows="1" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#EBD7A8' : ''}" data-cell="${cid}" ${navA} ${dis} placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">${esc(v)}</textarea>`;
-  return `<input id="${domId(c.id)}" class="in ${bad ? 'bad' : ''}" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#E4D6AE' : ''}" type="${c.kind === 'number' ? 'number' : 'text'}" ${c.kind === 'number' ? 'min="0" inputmode="decimal"' : ''} data-cell="${cid}" ${navA} ${dis} value="${esc(v)}" placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">`;
+  if (c.kind !== 'number') return `<textarea id="${domId(c.id)}" class="in cellta ${bad ? 'bad' : fl}" rows="1" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#EBD7A8' : ''}" data-cell="${cid}" ${navA} ${inv} ${dis} placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">${esc(v)}</textarea>`;
+  return `<input id="${domId(c.id)}" class="in ${bad ? 'bad' : fl}" style="${st === 'notSet' ? 'background:var(--ochre-bg);border-color:#E4D6AE' : ''}" type="${c.kind === 'number' ? 'number' : 'text'}" ${c.kind === 'number' ? 'min="0" inputmode="decimal"' : ''} data-cell="${cid}" ${navA} ${inv} ${dis} value="${esc(v)}" placeholder="${st === 'notSet' ? 'not set' : esc(c.hint || '')}" aria-label="${esc(aria)}">`;
 }
 function cellMarks(c, off) {
   const p = P(c.id); let h = '';
@@ -528,7 +529,7 @@ function cellMarks(c, off) {
   if (p && p.status === 'notSet') h += `<span class="mini" style="color:var(--ochre)">not set · ${esc(pname(p.notSetOwner))} · ${esc(p.notSetDue)}</span>`;
   if (p && p.condition) h += `<span class="mini">Condition: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
   const ks = [...new Set((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]))];
-  if (ks.length) h += `<span class="ckfails"><span class="mini" style="color:var(--red)">Fails</span>${ks.map(k => { const ck = C.checks.find(x => x.id === k); return `<button type="button" class="ckchip" data-term="check:${k}" aria-expanded="false" aria-controls="poproot" title="${esc(ck ? k + ' ' + ck.name + ': ' + ck.fails : k)}" aria-label="Fails check ${esc(k)}${ck ? ', ' + esc(ck.name) : ''}. Show what it checks">${k}</button>`; }).join('')}</span>`;
+  if (ks.length) h += `<span class="ckfails">${ks.map(k => { const ck = C.checks.find(x => x.id === k); return `<button type="button" class="ckchip" data-term="check:${k}" aria-expanded="false" aria-controls="poproot" title="${esc(ck ? k + ' ' + ck.name + ': ' + ck.fails : k)}" aria-label="Fails check ${esc(k)}${ck ? ', ' + esc(ck.name) : ''}. Show what it checks">${k}</button>`; }).join('')}</span>`;
   if (bp() === 'phone') h += `<button class="lnk mono" data-act="details" data-cell="${esc(c.id)}" style="min-height:28px">details</button>`;
   else { const o = UI.open === c.id; h += `<button class="detbtn" data-act="toggleDet" data-cell="${esc(c.id)}" aria-expanded="${o}" ${o ? 'aria-controls="details"' : ''} title="${o ? 'Close the details for this position' : 'Proposer, owner, condition, dissent, not set'}">${o ? 'Close' : 'Details'}</button>`; }
   return h;

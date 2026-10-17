@@ -386,3 +386,7 @@ ul.todo li::marker{color:var(--ochre)}
 .ckchip{font:600 11px/1 var(--mono);color:var(--red);background:var(--red-bg);border:1px solid #E7B9B4;border-radius:4px;padding:3px 6px;cursor:pointer;min-height:20px}
 .ckchip:hover,.ckchip[aria-expanded="true"]{background:var(--red);color:#fff;border-color:var(--red)}
 .ckchip:focus-visible{outline:2px solid var(--aubergine,#4E3A5E);outline-offset:1px}
+/* A field failing a check (K1 blank, K4-K9) is tinted; the chip below names the check. */
+.cellsel.fails,.in.fails,textarea.in.fails{background:var(--red-bg);border:1px solid #E7B9B4;border-style:solid;color:var(--ink)}
+.cellsel.fails:focus,.in.fails:focus{border-color:var(--red)}
+.ckfails{margin-top:2px}
