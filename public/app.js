@@ -356,9 +356,8 @@ function drawer() {
     ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}${it('reference','Reference')}
     ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
     <div class="grp">Engagement</div>
-    <button class="item" data-act="save">Download a copy (.json)</button>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
-    ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
+    ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
     ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
@@ -516,6 +515,7 @@ function screenSetup() {
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
     <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the insurer’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
   </fieldset>
+  ${practice() ? '' : `<section class="card" style="margin-top:18px"><h2 class="sh">Copy of the engagement</h2><p class="small soft" style="margin:4px 0 12px">The whole engagement as one file: every position, its history, the people and set-up. Keep it as a backup or to move the engagement elsewhere.</p><button class="btn sm" data-act="save">Download the engagement (.json)</button></section>`}
   <section class="card" style="margin-top:18px"><h2 class="sh">Set-up checklist</h2><p class="small soft" style="margin:4px 0 14px">Set-up is complete when each item below is done.</p><div class="stack" style="gap:6px">${g.items.map(i => gate(i[1], i[0])).join('')}</div></section>
   ${stepbar(gate(g.ok, g.ok ? 'Set-up complete' : 'Set-up incomplete'))}`;
 }
