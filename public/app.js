@@ -548,18 +548,32 @@ function cellMarks(c, off) {
   if (p && p.condition) h += `<span class="mini">Condition: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
   const ks = [...new Set((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]))];
   if (ks.length) h += `<span class="ckfails">${ks.map(k => { const ck = C.checks.find(x => x.id === k); return `<button type="button" class="ckchip" data-term="check:${k}" aria-expanded="false" aria-controls="poproot" title="${esc(ck ? k + ' ' + ck.name + ': ' + ck.fails : k)}" aria-label="Fails check ${esc(k)}${ck ? ', ' + esc(ck.name) : ''}. Show what it checks">${k}</button>`; }).join('')}</span>`;
-  if (bp() === 'phone') h += `<button class="lnk mono" data-act="details" data-cell="${esc(c.id)}" style="min-height:28px">details</button>`;
-  else { const o = UI.open === c.id; h += `<button class="detbtn" data-act="toggleDet" data-cell="${esc(c.id)}" aria-expanded="${o}" ${o ? 'aria-controls="details"' : ''} title="${o ? 'Close the details for this position' : 'Proposer, owner, condition, dissent, not set'}">${o ? 'Close' : 'Details'}</button>`; }
   return h;
 }
+/* What a position carries beyond its value, worth flagging on the cell. */
+function cellNotes(id) {
+  const p = P(id), n = [];
+  if (p && p.dissent && p.dissent.trim()) n.push('dissent recorded');
+  if (p && p.reason && p.reason.trim()) n.push('reason recorded');
+  const ch = S.challenge.filter(x => x.cell === id && x.status !== 'closed' && x.status !== 'resolved').length; if (ch) n.push(ch + ' challenge' + (ch > 1 ? 's' : ''));
+  const qc = S.questionsForCounsel.filter(x => x.cell === id && x.status !== 'answered').length; if (qc) n.push(qc + ' question' + (qc > 1 ? 's' : '') + ' for counsel');
+  return n;
+}
+/* Small details button beside each control: faint until the row is hovered or the cell is selected; marked when the position has notes. */
+function detBtn(c) {
+  if (bp() === 'phone') return `<button class="detic" data-act="details" data-cell="${esc(c.id)}" aria-label="Details">⋯</button>`;
+  const o = UI.open === c.id, notes = cellNotes(c.id), lbl = o ? 'Close the details' : 'Details: proposer, owner, condition, dissent' + (notes.length ? ' · ' + notes.join(', ') : '');
+  return `<button class="detic ${notes.length ? 'has' : ''}" data-act="toggleDet" data-cell="${esc(c.id)}" aria-expanded="${o}" ${o ? 'aria-controls="details"' : ''} title="${esc(lbl)}" aria-label="${esc(lbl)}">${o ? '✕' : '⋯'}</button>`;
+}
+const cellUnit = (c, off, nav, aria) => `<div class="ctlrow">${cellCtl(c, off, nav, aria)}${detBtn(c)}</div>${cellMarks(c, off)}`;
 /* rows: [{head, sub, items:[cell | {html}]}]; cols: header html list (first = row header) */
 function recArea(did, gr, cols, rows, off) {
   if (bp() === 'phone') return `<div class="stack" style="gap:12px">${rows.map(r => `<div class="card" style="padding:16px">
       <div style="font-weight:600;margin-bottom:${r.sub ? '2px' : '10px'}">${r.head}</div>${r.sub ? `<div class="small soft" style="margin-bottom:10px">${r.sub}</div>` : ''}
-      <div class="stack" style="gap:10px">${r.items.map((it, i) => `<div><div class="mini" style="margin-bottom:4px">${cols[i + 1]}</div>${it.id ? `<div class="cellwrap" style="align-items:stretch">${cellCtl(it, off, null, r.label + ' · ' + strip(cols[i + 1]))}${cellMarks(it, off)}</div>` : `<div class="small">${it.html}</div>`}</div>`).join('')}</div></div>`).join('')}</div>`;
+      <div class="stack" style="gap:10px">${r.items.map((it, i) => `<div><div class="mini" style="margin-bottom:4px">${cols[i + 1]}</div>${it.id ? `<div class="cellwrap" style="align-items:stretch">${cellUnit(it, off, null, r.label + ' · ' + strip(cols[i + 1]))}</div>` : `<div class="small">${it.html}</div>`}</div>`).join('')}</div></div>`).join('')}</div>`;
   return `<div class="tw"><table class="lg" data-grid="${gr}"><thead><tr>${cols.map(h => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>
     ${rows.map((r, ri) => `<tr class="${r.items.some(it => it && it.id && it.id === UI.open) ? 'detopen' : ''}"><th scope="row" style="background:none;text-transform:none;letter-spacing:0;font:400 14px/1.4 var(--sans);color:var(--ink);border-bottom:1px solid var(--rule-soft);vertical-align:top">${r.head}${r.sub ? `<div class="mini">${r.sub}</div>` : ''}</th>
-      ${r.items.map((it, ci) => it.id ? `<td data-td="${esc(it.id)}" class="${UI.sel === it.id ? 'sel' : ''}"><div class="cellwrap">${cellCtl(it, off, [gr, ri, ci], r.label + ' · ' + strip(cols[ci + 1]))}${cellMarks(it, off)}</div></td>` : `<td class="small">${it.html}</td>`).join('')}</tr>${r.items.some(it => it && it.id && it.id === UI.open) ? `<tr class="detrow"><td colspan="${cols.length}"><div id="details">${detailsHtml(UI.open, true)}</div></td></tr>` : ''}`).join('')}
+      ${r.items.map((it, ci) => it.id ? `<td data-td="${esc(it.id)}" class="${UI.sel === it.id ? 'sel' : ''}"><div class="cellwrap">${cellUnit(it, off, [gr, ri, ci], r.label + ' · ' + strip(cols[ci + 1]))}</div></td>` : `<td class="small">${it.html}</td>`).join('')}</tr>${r.items.some(it => it && it.id && it.id === UI.open) ? `<tr class="detrow"><td colspan="${cols.length}"><div id="details">${detailsHtml(UI.open, true)}</div></td></tr>` : ''}`).join('')}
   </tbody></table></div>`;
 }
 const strip = h => String(h).replace(/<[^>]+>/g, '');
@@ -593,7 +607,7 @@ function decisionBody(did, off) {
     return `${rows.length ? recArea(did, 'g6', ['Jurisdiction', 'Where the provider is established', 'Where the AI runs'], rows, off) : '<p class="soft">No jurisdictions yet. Add each one that appears in the register.</p>'}
     ${ed ? `<div class="row" style="margin-top:10px"><input class="in" id="newJur" placeholder="Jurisdiction" style="max-width:220px" aria-label="New jurisdiction"><select class="in" id="newJurStart" style="max-width:200px" aria-label="Starting marking from offshoring position"><option value="">No starting marking</option>${MARK.map(m => `<option>${m}</option>`).join('')}</select><button class="btn sm" data-act="addJur">Add jurisdiction</button></div>` : ''}
     <div class="card" style="margin-top:18px"><h3 class="sh">${T('concentration', 'Concentration')} limit</h3><p class="small soft measure">${esc(D('d6').concentrationNote)}</p>
-      <div class="cellwrap" style="max-width:260px;align-items:stretch">${cellCtl(conc, off, null, 'Concentration limit, percent')}${cellMarks(conc, off)}</div><div class="mini" style="margin-top:4px">Percent of critical operations</div>${UI.open === conc.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(conc.id, true)}</div>` : ''}</div>`;
+      <div class="cellwrap" style="max-width:260px;align-items:stretch">${cellUnit(conc, off, null, 'Concentration limit, percent')}</div><div class="mini" style="margin-top:4px">Percent of critical operations</div>${UI.open === conc.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(conc.id, true)}</div>` : ''}</div>`;
   }
   if (did === 'd7') {
     const ed = canEdit('d7');
@@ -606,7 +620,7 @@ function decisionBody(did, off) {
     const ed = canEdit('d8'), iv = by('d8.interval');
     const rows = S.decisions.d8.events.map((e, i) => ({ head: e.custom && ed ? `<input class="in" id="ev-${i}" data-path="decisions.d8.events.${i}.event" value="${esc(e.event)}" aria-label="Event">` : esc(e.event), label: e.event, sub: e.custom && ed ? `<button class="lnk mono" data-act="rmEvent" data-i="${i}">remove</button>` : '', items: [by(`d8.ev.${e.id}`)] }));
     return `${recArea(did, 'g8', ['Event', 'What is revisited'], rows, off)}${ed ? '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="addEvent">Add event</button></div>' : ''}
-      <div class="card" style="margin-top:18px"><h3 class="sh">Review interval</h3><div class="cellwrap" style="max-width:360px;align-items:stretch">${cellCtl(iv, off, null, 'Review interval')}${cellMarks(iv, off)}</div>${UI.open === iv.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(iv.id, true)}</div>` : ''}</div>`;
+      <div class="card" style="margin-top:18px"><h3 class="sh">Review interval</h3><div class="cellwrap" style="max-width:360px;align-items:stretch">${cellUnit(iv, off, null, 'Review interval')}</div>${UI.open === iv.id && bp() !== 'phone' ? `<div id="details" style="margin-top:14px">${detailsHtml(iv.id, true)}</div>` : ''}</div>`;
   }
   return '';
 }
@@ -717,12 +731,19 @@ function screenChecks(ck) {
   const bl = blocking(ck).length;
   return `${opening('Checks K1 to K10', 'Consistency checks', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
   <p class="small soft measure">The checks run after every change. A failed ${T('check', 'check')} is referred to the CRO; Triodian does not resolve it.</p>
-  <div class="stack" style="gap:12px">${ck.map(k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
-    <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.state === 'pass' ? 'b-green' : k.state === 'fail' ? 'b-red' : k.state === 'warn' ? 'b-ochre' : 'b-grey')}</div>
+  ${(() => {
+    const st = k => k.state === 'pass' ? ['passed', 'b-green'] : k.state === 'fail' ? ['failed', 'b-red'] : k.state === 'warn' ? ['warning', 'b-ochre'] : ['cannot run', 'b-grey'];
+    const open = ck.filter(k => k.state !== 'pass'), ok = ck.filter(k => k.state === 'pass');
+    const card = k => `<section class="card" id="ck-${k.id}" style="padding:18px 20px">
+    <div class="row between"><div class="row"><span class="mono" style="font-size:14px;font-weight:600">${k.id}</span><strong>${esc(k.name)}</strong></div>${badge(...st(k))}</div>
     <p style="margin:8px 0 4px">${esc(withLabels(k.result, 'C'))}</p><p class="small soft" style="margin:0">Fails when: ${esc(withLabels(k.fails, 'C'))}</p>
     ${k.id === 'K10' ? `<p class="small soft" style="margin-top:6px">${esc(C.k10Note)}</p>` : ''}
-    ${k.off.length ? `<ul style="margin:10px 0 0;padding-left:18px">${k.off.map(o => `<li class="small"><button class="lnk mono" data-act="gotoCell" data-cell="${esc(o.id)}">${esc(cellLabel(o.id))}</button> · ${esc(o.why)}</li>`).join('')}</ul>` : ''}
-  </section>`).join('')}</div>${stepbar()}`;
+    ${k.off.length ? `<ul class="cklist">${k.off.map(o => `<li class="small"><button class="lnk" data-act="gotoCell" data-cell="${esc(o.id)}">${esc(cellLabel(o.id))}</button> · ${esc(o.why)}</li>`).join('')}</ul>` : ''}
+  </section>`;
+    return `${open.length ? `<h2 class="sh">Needs attention · ${open.length}</h2><div class="stack" style="gap:12px;margin-bottom:22px">${open.map(card).join('')}</div>` : ''}
+  ${ok.length ? `<details class="pr ckpass" ${open.length ? '' : 'open'}><summary><span class="badge b-green">passed</span> ${ok.length} ${ok.length === 1 ? 'check' : 'checks'} passed: ${ok.map(k => k.id).join(', ')}</summary>
+    <table class="lg" style="margin:0"><tbody>${ok.map(k => `<tr id="ck-${k.id}"><td class="mono" style="width:56px;font-weight:600">${k.id}</td><td style="width:260px"><strong>${esc(k.name)}</strong></td><td class="small soft">Fails when: ${esc(withLabels(k.fails, 'C'))}${k.id === 'K10' ? ' ' + esc(withLabels(k.result, 'C')) : ''}</td></tr>`).join('')}</tbody></table></details>` : ''}`;
+  })()}${stepbar()}`;
 }
 
 /* ---------- S12 challenge ---------- */

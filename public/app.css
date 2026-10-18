@@ -390,3 +390,18 @@ ul.todo li::marker{color:var(--ochre)}
 .cellsel.fails,.in.fails,textarea.in.fails{background:var(--red-bg);border:1px solid #E7B9B4;border-style:solid;color:var(--ink)}
 .cellsel.fails:focus,.in.fails:focus{border-color:var(--red)}
 .ckfails{margin-top:2px}
+/* Checks screen: failed first, passed folded into one line */
+.cklist{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ckpass{background:var(--card)}
+.ckpass summary{display:flex;align-items:center;gap:10px}
+.ckpass table td{vertical-align:top}
+/* Details: an icon beside each control instead of a "Details" link under every cell */
+.ctlrow{display:flex;align-items:center;gap:4px;width:100%}
+.ctlrow>.cellsel,.ctlrow>.in,.ctlrow>textarea{flex:1 1 auto}
+.detic{position:relative;flex:0 0 auto;width:26px;height:26px;border:1px solid transparent;border-radius:6px;background:none;color:var(--ink-faint);font:600 15px/1 var(--sans);cursor:pointer;opacity:0;transition:opacity .12s}
+tr:hover .detic,td.sel .detic,.detic:focus-visible,.detic[aria-expanded="true"],.detic.has,.card:hover .detic{opacity:1}
+.detic:hover{border-color:var(--rule);color:var(--aubergine);background:#fff}
+.detic[aria-expanded="true"]{background:var(--aubergine);color:#fff;font-size:12px}
+.detic.has::after{content:"";position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--aubergine);box-shadow:0 0 0 2px var(--card)}
+@media (hover:none){.detic{opacity:1}}
+.detic[aria-expanded="true"]::after{display:none}
