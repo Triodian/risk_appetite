@@ -523,7 +523,7 @@ function nextStep(ck, sg) {
   const c = S.calibration, bl = blocking(ck), who = me(), role = who ? who.role : UI.role;
   const box = (tone, title, text, act) => `<section class="next ${tone}" aria-label="Next step"><div><div class="next-k">${esc(title)}</div><p>${text}</p></div>${act || ''}</section>`;
   const btn = (to, label, primary) => `<button class="btn sm ${primary ? 'primary' : ''}" data-act="go" data-to="${to}">${esc(label)} →</button>`;
-  if (!sg.ok) return box('warn', 'Next: finish set-up', 'Set-up must be complete before the sessions. ' + (practice() ? '' : SRV.user && SRV.user.isAdmin ? 'Complete it in Admin.' : 'An administrator completes it.'), !practice() && SRV.user && SRV.user.isAdmin ? '<a class="btn sm primary" href="/admin/#set-up">Open set-up →</a>' : '');
+  if (!sg.ok) return box('warn', 'Next: finish set-up', 'Still open: ' + esc(sg.items.filter(x => !x[1]).map(x => x[0]).join('; ')) + '. ' + (practice() ? '' : SRV.user && SRV.user.isAdmin ? 'Complete it in Admin.' : 'An administrator completes it.'), !practice() && SRV.user && SRV.user.isAdmin ? '<a class="btn sm primary" href="/admin/#set-up">Open set-up →</a>' : '');
   const open = C.decisions.map(d => ({ d, st: decisionStatus(d.id, ck) })).filter(x => x.st.un);
   if (open.length) { const x = open[0], more = open.length - 1;
     return box('', `Next: decision ${x.d.n} · ${x.d.name}`, `${x.st.un} of ${x.st.total} positions still to record${more ? `, and ${more} more ${more === 1 ? 'decision has' : 'decisions have'} blank positions` : ''}.`, btn(x.d.id, 'Open decision ' + x.d.n, true)); }
@@ -541,8 +541,7 @@ function screenOverview(ck) {
     <div class="dprog ${st.cls}" role="img" aria-label="${st.set + st.ns} of ${st.total} recorded"><i style="width:${st.total ? Math.round(100 * (st.set + st.ns) / st.total) : 0}%"></i></div>
     <div class="row between mini"><span>${st.set + st.ns} of ${st.total} recorded</span><span>${st.qc ? st.qc + ' open question' + (st.qc === 1 ? '' : 's') + ' for counsel' : ''}</span></div></button>`; }).join('');
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
-  const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#set-up">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
-  return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}${setupNote}
+  return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}
   ${nextStep(ck, sg)}
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
   <h2 class="sh">Session 2 · decisions 4 to 8</h2><div class="dgrid">${cards.split('</button>').slice(3, 8).join('</button>')}</button></div>
@@ -1574,6 +1573,7 @@ async function boot() {
   let sy0 = null; document.addEventListener('touchstart', e => { if (e.target.closest('.handle')) sy0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchmove', e => { if (sy0 != null && e.touches[0].clientY - sy0 > 60) { sy0 = null; if (UI.pop) closePop(); else if (UI.sheet) { UI.sheet = null; renderSheet(); } } }, { passive: true });
   document.addEventListener('touchend', () => { sy0 = null; });
+  window.addEventListener('hashchange', () => { const h = fromSlug(location.hash.slice(1)); if (!S || h === UI.screen) return; if ((AREA === 'admin' && ADMIN_SCREENS.includes(h)) || (AREA === 'app' && (SEQ.includes(h) || h === 'reference'))) go(h); });
   window.addEventListener('resize', () => { if (bp() !== lastBp) { closePop(true); popAnchor = null; render(); } });
   window.addEventListener('beforeunload', e => { const unsaved = savesHere() ? SRV.state !== 'saved' : (UI.dirty && S && !S.engagement.example); if (unsaved) { if (savesHere()) saveNow(); e.preventDefault(); e.returnValue = ''; } });
   const h = fromSlug((location.hash || '').slice(1));
