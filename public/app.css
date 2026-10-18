@@ -405,3 +405,25 @@ tr:hover .detic,td.sel .detic,.detic:focus-visible,.detic[aria-expanded="true"],
 .detic.has::after{content:"";position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--aubergine);box-shadow:0 0 0 2px var(--card)}
 @media (hover:none){.detic{opacity:1}}
 .detic[aria-expanded="true"]::after{display:none}
+/* One band under the header: privilege marking (wraps rather than truncates) and, in practice, the practice controls */
+.docband .priv{white-space:normal;overflow:visible;text-overflow:clip;padding:5px 0;flex:1 1 auto}
+.docband .stat{flex:0 1 auto}
+.docband.practice{background:var(--ochre-bg);border-top-color:#EBD7A8;border-bottom:1px solid #EBD7A8}
+.pr-ctl{display:flex;align-items:center;gap:12px;color:var(--ochre);font-weight:600;overflow:visible}
+.pr-ctl .pchip{text-transform:none;letter-spacing:0;padding:2px 8px;font-weight:500}
+.pr-ctl .pchip select{max-width:230px}
+.pr-ctl .lnk{color:var(--ochre);text-decoration:underline}
+/* Overview: next step and progress */
+.next{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--aubergine);border-radius:10px;padding:16px 20px;margin-bottom:26px}
+.next.bad{border-left-color:var(--red)}.next.warn{border-left-color:var(--ochre)}.next.ok{border-left-color:var(--green)}
+.next-k{font:600 17px/1.3 var(--sans);color:var(--ink)}
+.next p{margin:4px 0 0;color:var(--ink-soft);font-size:14px}
+.dprog{height:5px;border-radius:3px;background:var(--grey-bg);overflow:hidden;margin:12px 0 8px}
+.dprog i{display:block;height:100%;background:var(--ochre)}
+.dprog.b-green i{background:var(--green)}.dprog.b-red i{background:var(--red)}.dprog.b-grey i{background:var(--grey)}
+/* Decision page: purpose folded */
+details.about{background:var(--card)}
+.about-in{padding:0 20px 16px}
+.about-in .purpose{margin-top:0}
+.detic-k{display:inline-block;padding:0 5px;border:1px solid var(--rule);border-radius:5px;font-weight:600;line-height:1.2;background:#fff}
+.why{margin:8px 0 0;color:var(--ink-soft);background:var(--grey-bg);border-radius:6px;padding:6px 10px}
