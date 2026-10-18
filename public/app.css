@@ -427,3 +427,6 @@ details.about{background:var(--card)}
 .about-in .purpose{margin-top:0}
 .detic-k{display:inline-block;padding:0 5px;border:1px solid var(--rule);border-radius:5px;font-weight:600;line-height:1.2;background:#fff}
 .why{margin:8px 0 0;color:var(--ink-soft);background:var(--grey-bg);border-radius:6px;padding:6px 10px}
+.sesshead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap;margin-bottom:12px}
+.sesshead .sh{margin:0}
+.sesshead p{margin:0}

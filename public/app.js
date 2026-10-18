@@ -543,8 +543,8 @@ function screenOverview(ck) {
   const sg = setupGate(), missing = sg.items.filter(x => !x[1]).map(x => x[0]);
   return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}
   ${nextStep(ck, sg)}
-  <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
-  <h2 class="sh">Session 2 · decisions 4 to 8</h2><div class="dgrid">${cards.split('</button>').slice(3, 8).join('</button>')}</button></div>
+  <div class="sesshead"><h2 class="sh">Session 1 · decisions 1 to 3</h2><p class="small soft">CRO, General Counsel, operational risk, AI governance, function owners; independent reviewer for decision 2</p></div><div class="dgrid" style="margin-bottom:28px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
+  <div class="sesshead"><h2 class="sh">Session 2 · decisions 4 to 8</h2><p class="small soft">The same group, plus procurement or vendor management; ends by reviewing the session 1 positions</p></div><div class="dgrid">${cards.split('</button>').slice(3, 8).join('</button>')}</button></div>
   ${stepbar()}`;
 }
 
