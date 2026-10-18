@@ -14,7 +14,7 @@ const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/
 const ADMIN_SCREENS = ['setup', 'users', 'activity'];
 const SEQ = ['overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
 /* Readable URL fragments: #decision-2 instead of #d2. Old fragments (#d2, #overview, #setup) still open the right screen. */
-const SLUG = { overview: 'decisions', setup: 'set-up' }; for (let i = 1; i <= 8; i++) SLUG['d' + i] = 'decision-' + i;
+const SLUG = { overview: 'decisions', setup: 'set-up', actions: 'my-actions' }; for (let i = 1; i <= 8; i++) SLUG['d' + i] = 'decision-' + i;
 const toSlug = id => SLUG[id] || id;
 const fromSlug = h => { h = decodeURIComponent(h || '').toLowerCase(); const hit = Object.keys(SLUG).find(k => SLUG[k] === h); return hit || h; };
 
@@ -333,7 +333,8 @@ function docband() {
 }
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
-  const steps = [['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
+  const nAct = S && SRV.user || practice() ? myActions(ck).length : 0;
+  const steps = [['actions', 'My actions' + (nAct ? ` <span class="navcount">${nAct}</span>` : '')],['decisions','Decisions'],['checks','Checks'],['challenge','Challenge'],['outputs','Outputs']];
   return `<header class="hdr"><div class="hdr-in">
     <button class="brand" data-act="go" data-to="overview" aria-label="Triodian · go to decisions overview"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></button>
     ${b !== 'phone' ? '<span class="vrule" aria-hidden="true"></span>' : ''}
@@ -462,7 +463,7 @@ function seqNav() {
   const i = SEQ.indexOf(UI.screen); if (i < 0) return { prev: null, next: null };
   return { prev: SEQ[i - 1] || null, next: SEQ[i + 1] || null };
 }
-const screenName = s => ({ setup: 'Set-up', overview: 'Decisions', checks: 'Checks', challenge: 'Challenge', outputs: 'Outputs', reference: 'Reference' }[s] || (D(s) ? 'Decision ' + D(s).n : s));
+const screenName = s => ({ actions: 'My actions', setup: 'Set-up', overview: 'Decisions', checks: 'Checks', challenge: 'Challenge', outputs: 'Outputs', reference: 'Reference' }[s] || (D(s) ? 'Decision ' + D(s).n : s));
 function stepbar(g) {
   const n = seqNav();
   return `<div class="stepbar">${n.prev ? `<button class="btn" data-act="go" data-to="${n.prev}">← ${esc(screenName(n.prev))}</button>` : '<span></span>'}${g || ''}${n.next ? `<button class="btn primary" data-act="go" data-to="${n.next}">${esc(screenName(n.next))} →</button>` : '<span></span>'}</div>`;
@@ -768,6 +769,46 @@ function screenChecks(ck) {
 }
 
 /* ---------- S12 challenge ---------- */
+/* ---------- My actions: what is waiting for the signed-in person (or the person being practised as) ---------- */
+function myActions(ck) {
+  if (!S) return [];
+  const p = me(), role = UI.role, pid = p ? p.id : null, t = today(), out = [];
+  const soon = d => { if (!d) return ''; const days = Math.round((Date.parse(d) - Date.parse(t)) / 864e5); return days < 0 ? 'overdue' : days <= 7 ? 'due' : ''; };
+  const add = (key, title, detail, act, tone) => out.push({ key, title, detail, act, tone: tone || '' });
+  const cells = C.decisions.flatMap(d => cellsFor(d.id));
+  // positions recorded as not set, owned by me
+  if (pid) cells.forEach(c => { const x = P(c.id); if (x && x.status === 'notSet' && x.notSetOwner === pid) add('ns' + c.id, 'Set the position: ' + cellLabel(c.id), x.notSetDue ? (soon(x.notSetDue) === 'overdue' ? 'Overdue · was due ' : 'Due ') + dAU(x.notSetDue) : 'No due date', { cell: c.id }, soon(x.notSetDue)); });
+  // challenges
+  const canRespond = ['counsel', 'cro', 'risk'].includes(role);
+  S.challenge.filter(c => c.status === 'open').forEach(c => {
+    const own = pid && c.cell && P(c.cell) && P(c.cell).owner === pid;
+    if (own || canRespond) add('ch' + c.ref, `${own ? 'Challenge on your position' : 'Respond to challenge'} ${c.ref}`, (c.cell ? cellLabel(c.cell) + ' · ' : '') + c.point, { to: 'challenge' });
+  });
+  // questions for counsel
+  if (role === 'counsel') S.questionsForCounsel.filter(q => q.status !== 'answered').forEach(q => add('qc' + q.ref, 'Answer question ' + q.ref, (q.cell ? cellLabel(q.cell) + ' · ' : D(q.decision).name + ' · ') + q.question, { to: 'challenge', tab: 'qc' }));
+  // positions I own that fail a check
+  if (pid) { const off = offenderMap(ck); Object.keys(off).forEach(id => { const x = P(id); if (x && x.owner === pid) { const ks = [...new Set(off[id].map(v => v.split(':')[0]))]; add('ck' + id, 'Your position fails ' + ks.join(', '), cellLabel(id), { cell: id }, 'fail'); } }); }
+  // recording: blank positions and missing proposers (recorder and counsel)
+  if (['triodian', 'counsel'].includes(role)) C.decisions.forEach(d => { const st = decisionStatus(d.id, ck); if (st.un) add('rec' + d.id, `Record ${st.un} ${st.un === 1 ? 'position' : 'positions'} in decision ${d.n}`, d.name, { to: d.id }); });
+  // statement and schedule
+  if (['counsel', 'cro'].includes(role) && !(S.engagement.overallPosition || '').trim()) add('overall', 'Write the overall position for the statement', 'In the board’s words, on the Outputs screen', { to: 'outputs' });
+  if (role === 'cro') { const missing = C.measures.filter(m => !(S.measureOwners || {})[m.ref]).length; if (missing) add('measures', `Name owners for ${missing} ${missing === 1 ? 'measure' : 'measures'}`, 'Outputs → Schedule (check K8)', { to: 'outputs', tab: 'schedule' }); }
+  // agreement and approval
+  const bl = blocking(ck), blank = C.decisions.some(d => decisionStatus(d.id, ck).un);
+  if (role === 'cro' && S.calibration.status === 'default') { if (!bl.length && !blank) add('agree', 'Agree the working appetite', 'Every position is recorded and checks K1 to K9 pass', { to: 'outputs' }, 'due'); else if (bl.length) add('checks', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing`, 'The working appetite can’t be agreed until they pass', { to: 'checks' }); }
+  if (role === 'board' && S.calibration.status === 'working') add('approve', 'Record the board’s approval', 'When the board or its committee approves the working appetite', { to: 'outputs' }, 'due');
+  const rank = { overdue: 0, fail: 1, due: 2, '': 3 };
+  return out.sort((a, b) => rank[a.tone] - rank[b.tone]);
+}
+function screenActions(ck) {
+  const list = myActions(ck), p = me();
+  const who = p ? `${esc(p.name)} · ${esc(ROLE_NAME[UI.role])}` : esc(ROLE_NAME[UI.role] || '');
+  return `${opening('My actions', 'What is waiting for you', who)}
+  ${list.length ? `<div class="stack actlist" style="gap:10px">${list.map(a => `<button class="actitem ${a.tone}" ${a.act.cell ? `data-act="gotoCell" data-cell="${esc(a.act.cell)}"` : `data-act="goTab" data-to="${a.act.to}" data-tab="${a.act.tab || ''}"`}>
+      <span class="actdot" aria-hidden="true"></span><span class="acttext"><strong>${esc(a.title)}</strong><span class="small soft">${esc(withLabels(a.detail, 'C'))}</span></span>${a.tone === 'overdue' ? badge('Overdue', 'b-red') : a.tone === 'fail' ? badge('Fails a check', 'b-red') : a.tone === 'due' ? badge('Now', 'b-ochre') : ''}<span class="actgo" aria-hidden="true">→</span></button>`).join('')}</div>`
+    : `<div class="card"><p style="margin:0"><strong>Nothing is waiting for you.</strong></p><p class="small soft" style="margin:6px 0 0">Items appear here when a position you own is challenged or fails a check, when a “not set” item you own falls due, or when the engagement needs you to act.</p></div>`}
+  ${stepbar()}`;
+}
 function screenChallenge() {
   const tab = UI.chTab, f = UI.chFilter, b = bp();
   const allowed = C.decisions.filter(d => can(d.id)), chDec = allowed.some(d => d.id === UI.chDec) ? UI.chDec : (allowed[0] || {}).id;
@@ -994,6 +1035,7 @@ function doRender() {
   else if (s === 'overview') main = screenOverview(ck);
   else if (/^d\d$/.test(s)) { main = screenDecision(s, ck); const st = decisionStatus(s, ck); g = gate(st.gate, st.gate ? 'All recorded' : st.un + ' blank'); }
   else if (s === 'checks') main = screenChecks(ck);
+  else if (s === 'actions') main = screenActions(ck);
   else if (s === 'challenge') main = screenChallenge();
   else if (s === 'outputs') main = screenOutputs(ck);
   else if (s === 'reference') main = screenReference();
@@ -1535,6 +1577,7 @@ function onClick(e) {
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
     agree: () => agreeWorking(), approve: () => recordApproval(document.getElementById('ap-date').value, document.getElementById('ap-min').value.trim(), document.getElementById('ap-by').value.trim()),
+    goTab: () => { if (d.tab) { if (d.to === 'challenge') UI.chTab = d.tab; if (d.to === 'outputs') UI.outTab = d.tab; } go(d.to); },
     outTab: () => { UI.outTab = d.t; render(); }, chTab: () => { UI.chTab = d.t; render(); },
     copy: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); copyText(outputFor(d.t)[0]()); }, download: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); const [fn, sl] = outputFor(d.t); download(`RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}.md`, fn(), 'text/markdown'); },
     downloadDocx: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); if (!window.RAFExport) return toast('Word export did not load. Reload the page.'); const [fn, sl] = outputFor(d.t), name = `RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}`;
@@ -1606,13 +1649,13 @@ async function boot() {
   let sy0 = null; document.addEventListener('touchstart', e => { if (e.target.closest('.handle')) sy0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchmove', e => { if (sy0 != null && e.touches[0].clientY - sy0 > 60) { sy0 = null; if (UI.pop) closePop(); else if (UI.sheet) { UI.sheet = null; renderSheet(); } } }, { passive: true });
   document.addEventListener('touchend', () => { sy0 = null; });
-  window.addEventListener('hashchange', () => { const h = fromSlug(location.hash.slice(1)); if (!S || h === UI.screen) return; if ((AREA === 'admin' && ADMIN_SCREENS.includes(h)) || (AREA === 'app' && (SEQ.includes(h) || h === 'reference'))) go(h); });
+  window.addEventListener('hashchange', () => { const h = fromSlug(location.hash.slice(1)); if (!S || h === UI.screen) return; if ((AREA === 'admin' && ADMIN_SCREENS.includes(h)) || (AREA === 'app' && (SEQ.includes(h) || h === 'reference' || h === 'actions'))) go(h); });
   window.addEventListener('resize', () => { if (bp() !== lastBp) { closePop(true); popAnchor = null; render(); } });
   window.addEventListener('beforeunload', e => { const unsaved = savesHere() ? SRV.state !== 'saved' : (UI.dirty && S && !S.engagement.example); if (unsaved) { if (savesHere()) saveNow(); e.preventDefault(); e.returnValue = ''; } });
   const h = fromSlug((location.hash || '').slice(1));
   if (AREA === 'admin') UI.screen = ADMIN_SCREENS.includes(h) ? h : 'setup';
   else if (AREA === 'profile') UI.screen = 'profile';
-  else if (SEQ.includes(h) || h === 'reference') UI.screen = h;
+  else if (SEQ.includes(h) || h === 'reference' || h === 'actions') UI.screen = h;
   else if (h === 'worked-example') { UI.guide = 'practice'; history.replaceState(null, '', location.pathname); }
   if (location.hash && UI.screen && location.hash.slice(1) !== toSlug(UI.screen)) try { history.replaceState(null, '', '#' + toSlug(UI.screen)); } catch (e) {}
   render();
