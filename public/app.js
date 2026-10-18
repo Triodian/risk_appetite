@@ -1338,13 +1338,14 @@ function screenUsers() {
     <p class="small soft" style="margin-top:10px">Users are deactivated rather than deleted, so their names stay on the decisions they made.</p>
   </section>${perms}`;
 }
-const AUDIT_NAME = { 'user.create': 'Added user', 'user.update': 'Changed user', 'user.profile': 'Updated own profile', 'user.email_requested': 'Asked to change email', 'user.email': 'Confirmed new email', 'engagement.create': 'Started the engagement', 'engagement.save': 'Saved the engagement', 'engagement.refused': 'Save refused' };
+const AUDIT_NAME = { 'user.create': 'Added user', 'user.update': 'Changed user', 'user.profile': 'Updated own profile', 'user.email_requested': 'Asked to change email', 'user.email': 'Confirmed new email', 'engagement.create': 'Started the engagement', 'engagement.save': 'Saved the engagement', 'engagement.refused': 'Save refused', 'engagement.next_review': 'Started the next review' };
 function auditDetail(e) {
   const d = e.detail || {}, v = (k, x) => x === null || x === '' || x === undefined ? '—' : k === 'role' ? roleLong(x) : x;
   if (e.action === 'user.create') return `${d.email || ''}${d.role ? ' · ' + roleLong(d.role) : ''}${d.isAdmin ? ' · admin' : ''}${d.reason ? ' · ' + d.reason : ''}`;
   if (e.action === 'user.update' || e.action === 'user.profile') return `${d.email || ''}: ` + Object.entries(d.changed || {}).map(([k, c]) => `${k} ${v(k, c.from)} → ${v(k, c.to)}`).join('; ');
   if (e.action === 'user.email_requested' || e.action === 'user.email') return `${d.from} → ${d.to}`;
-  if (e.action === 'engagement.save' || e.action === 'engagement.create') return `revision ${d.revision}${d.changes ? ' · ' + d.changes + ' change' + (d.changes === 1 ? '' : 's') : ''}`;
+  if (e.action === 'engagement.save' || e.action === 'engagement.create') return `revision ${d.revision}${d.changes ? ' · ' + d.changes + ' change' + (d.changes === 1 ? '' : 's') : ''}${d.mergedWith ? ' · merged with changes by ' + d.mergedWith : ''}`;
+  if (e.action === 'engagement.next_review') return `${d.label || ''} kept as an earlier review; next review started`;
   if (e.action === 'engagement.refused') return d.reason || '';
   return '';
 }
