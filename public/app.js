@@ -343,6 +343,7 @@ function agreeWorking() {
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
   c.status = 'working'; c.agreedBy = who.name; c.agreedById = who.id; c.agreedOn = today();
   c.issued.push({ version: c.version, status: 'working', on: c.agreedOn, by: c.agreedBy, snapshot: snapshotNow() });
+  c.issued[c.issued.length - 1].set = calibrationSet();
   log('agreeWorking', 'calibration', from, 'working v' + c.version); render(); toast('Working appetite agreed. Version ' + c.version + '.');
 }
 function recordApproval(date, minute, by) {
@@ -351,6 +352,7 @@ function recordApproval(date, minute, by) {
   if (!date || !minute || !by) { UI.err.approval = 'Approval needs a date, a minute reference and who approved it.'; render(); return; }
   const c = S.calibration; c.status = 'approved'; c.approvedOn = date; c.minuteRef = minute; c.approvedBy = by; delete UI.err.approval;
   c.issued.push({ version: c.version, status: 'approved', on: date, minuteRef: minute, by, snapshot: snapshotNow() });
+  c.issued[c.issued.length - 1].set = calibrationSet();
   log('approve', 'calibration', 'working v' + c.version, 'approved v' + c.version + ' · ' + minute); render(); toast('Board approval recorded.');
 }
 

@@ -66,3 +66,16 @@ kept in `engagement_revisions`), the other person's version and this one, and me
 of one position, are combined. Only if both changed the same field to different values is the save
 refused, and the message names the item. Every merged save is still checked against the person's role,
 and the audit log records which save it was merged with.
+
+## Calibration set for the AI Use Assessment app
+
+`GET /api/calibration-set` returns the calibration set as it was issued: the latest version the board
+approved, or before any approval the latest the CRO agreed. It never returns positions being edited.
+The response gives `version`, `status`, `issuedOn`, `issuedBy`, `minuteRef` and `calibrationSet`
+(the same content as the downloadable calibration set file).
+
+The endpoint sits behind the same Cloudflare Access sign-in as the app. For the assessment app to call
+it from its server, create a Cloudflare Access service token, add a Service Auth policy for it on this
+application, and have the assessment app send the `CF-Access-Client-Id` and `CF-Access-Client-Secret`
+headers. Each set is stored when it is issued, so versions issued before this was added are not
+available here; the next agreement or approval makes one available.
