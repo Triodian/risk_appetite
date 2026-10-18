@@ -404,6 +404,7 @@ function drawer() {
     ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
+    <a class="item" href="${SRV.site ? 'https://use-assessment-test.triodian.com/' : 'https://use-assessment.triodian.com/'}" style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">UA</span><span>AI Use Assessment<br><span class="small soft">Register, tests and findings; reads the calibration set</span></span></a>
   </aside>`;
 }
 function footer() {
