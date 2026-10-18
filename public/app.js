@@ -184,7 +184,7 @@ function pathTarget(path) {
   const k = path.split('.');
   if (k[0] === 'decisions') return k[1];
   if (k[0] === 'current') return k[1] === 'offshoring' ? 'd6' : k[1] === 'commonPair' ? 'd3' : k[1];
-  if (path === 'engagement.overallPosition') return 'overall';
+  if (path === 'engagement.overallPosition' || path.startsWith('engagement.boardMemo')) return 'overall';
   if (k[0] === 'challenge') return 'challengeResponse';
   if (k[0] === 'questionsForCounsel') return 'qcResponse';
   if (k[0] === 'measureOwners') return 'measures';
@@ -898,6 +898,25 @@ function mdStatement() {
   return m;
 }
 function irContributed() { const ir = S.people.filter(p => p.role === 'independent').map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
+/* One board paper: cover memo, statement, schedule, check summary and glossary. */
+const bodyOf = md => { const i = md.indexOf('\n## '); return i < 0 ? '' : md.slice(i + 1); };
+function mdPack() {
+  const e = S.engagement, c = S.calibration, bm = e.boardMemo || {}, ck = runChecks(), bl = blocking(ck);
+  const cro = S.people.find(p => p.role === 'cro'), ins = e.insurer || '[insurer]', v = c.version || 1;
+  let m = mdHead('Board paper: AI risk appetite');
+  m += `- **To:** ${bm.to || 'The Board'}\n- **From:** ${bm.from || (cro ? cro.name + ', Chief Risk Officer' : 'Chief Risk Officer')}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite statement, version ${v}\n\n`;
+  m += `## Decision sought\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite statement (version ${v}) and the tolerance and trigger schedule in this paper.`}\n\n`;
+  m += `## Recommendation and summary\n\n${bm.summary || '[For counsel or the CRO to write: what the appetite allows and does not allow, in a few sentences, and any matters the board should note.]'}\n\n`;
+  m += `## How the positions were reached\n\nThe positions were proposed by ${ins}'s CRO and risk function in sessions facilitated by ${e.counselFirm || 'external counsel'}${S.people.some(p => p.role === 'independent') ? ', with the independent reviewer advising on the consequence thresholds' : ''}. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks ${bl.length ? `show ${bl.length} ${bl.length === 1 ? 'check' : 'checks'} failing (${bl.map(k => k.id).join(', ')}); these must be resolved before approval` : 'K1 to K9 pass'}. ${c.status === 'working' ? `The CRO agreed this working appetite${c.agreedOn ? ' on ' + c.agreedOn : ''}.` : c.status === 'approved' ? `It was approved${c.approvedOn ? ' on ' + c.approvedOn : ''}${c.minuteRef ? ' (minute ' + c.minuteRef + ')' : ''}.` : 'The CRO has not yet agreed the working appetite.'}\n\n`;
+  const sa = sinceApproved();
+  if (sa) m += `## Changes since the approved version\n\nThe board approved version ${sa.from.version} on ${sa.from.on}. ${sa.rows.length} ${sa.rows.length === 1 ? 'position has' : 'positions have'} changed:\n\n` + tbl(['Position', 'Approved', 'Proposed now'], sa.rows.map(r => [r[0], r[1], r[2]]));
+  m += `---\n\n# Attachment A. AI risk appetite statement\n\n` + bodyOf(mdStatement()).replace(/## Changes since the approved version[\s\S]*?(?=## Appendix)/, '');
+  m += `---\n\n# Attachment B. Tolerance and trigger schedule\n\n` + bodyOf(mdSchedule());
+  m += `---\n\n# Attachment C. Consistency checks\n\n` + tbl(['Check', 'Name', 'Result'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run']));
+  const gl = Object.values(C.glossary).sort((a, b) => a.term.localeCompare(b.term)).map(g => [g.term, String(g.def).replace(/\[\[(\w+)(?:\|([^\]]+))?\]\]/g, (x, id, t) => t || (C.glossary[id] ? C.glossary[id].term.toLowerCase() : id))]);
+  m += `# Attachment D. Glossary\n\n` + tbl(['Term', 'Meaning'], gl);
+  return m;
+}
 function mdSchedule() {
   let m = mdHead('Tolerance and trigger schedule');
   m += `The measurable parts of the statement, kept in a separate schedule so that they can be updated without the board re-approving the whole statement.\n\n## Measures\n\n` + tbl(['Ref', 'Measure', 'Limit', 'Owner', 'Counted from', 'Reported'], C.measures.map(x => [x.ref, x.measure, x.ref === 'M6' ? (val('d6.concentration') ? val('d6.concentration') + '%' : pv('d6.concentration')) : (x.limit ? (x.limit.startsWith('[') ? x.limit : `[${x.limit}]`) : '[ ]'), pname((S.measureOwners || {})[x.ref]) || `[${x.owner}]`, x.from, x.reported]));
@@ -963,10 +982,10 @@ function mdCalibration() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
+  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || who.role !== 'cro' ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' ');
@@ -983,6 +1002,7 @@ function screenOutputs(ck) {
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   ${compareCard()}
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
+  ${tab === 'pack' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Cover memo</h3><p class="small soft" style="margin:4px 0 12px">Written by counsel or the CRO. Empty fields use the wording shown in the preview.</p><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">${fld('To', 'engagement.boardMemo.to', (S.engagement.boardMemo || {}).to || '', { ph: 'The Board' })}${fld('From', 'engagement.boardMemo.from', (S.engagement.boardMemo || {}).from || '', { ph: 'Chief Risk Officer' })}${fld('Meeting', 'engagement.boardMemo.meeting', (S.engagement.boardMemo || {}).meeting || '', { ph: 'Board Risk Committee, 12 November 2026' })}</div>${fld('Decision sought', 'engagement.boardMemo.decision', (S.engagement.boardMemo || {}).decision || '', { area: true, ph: 'That the Board approve the AI risk appetite statement and the tolerance and trigger schedule in this paper.' })}${fld('Recommendation and summary', 'engagement.boardMemo.summary', (S.engagement.boardMemo || {}).summary || '', { area: true, ph: 'What the appetite allows and does not allow, and any matters the board should note.' })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
   ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(withLabels(x.measure, 'C'))}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
   <div class="row" style="margin-bottom:12px">${inFrame ? '' : `<button class="btn sm primary" id="out-docx" data-act="downloadDocx" data-t="${tab}" ${xb ? 'disabled' : ''}>Download Word</button><button class="btn sm" id="out-pdf" data-act="printPdf" data-t="${tab}" ${xb ? 'disabled' : ''} title="Opens the print dialog. Choose Save as PDF.">Download PDF</button>`}<button class="btn sm ghost" id="out-copy" data-act="copy" data-t="${tab}" ${xb ? 'disabled' : ''}>Copy markdown</button>${inFrame ? '' : `<button class="btn sm ghost" id="out-dl" data-act="download" data-t="${tab}" ${xb ? 'disabled' : ''}>Download .md</button>`}${tab === 'calibration' ? `${inFrame ? '' : `<button class="btn sm" id="out-dlj" data-act="downloadJson" ${xb ? 'disabled' : ''}>Download .json</button>`}<button class="btn sm ghost" id="out-cpj" data-act="copyJson" ${xb ? 'disabled' : ''}>Copy JSON</button>` : ''}${inFrame ? '<span class="small soft">Downloads are not available in this viewer. Use Copy, or open the file directly in a browser.</span>' : ''}${xb ? '<span class="small" style="color:var(--red)">Blocked: checks failing</span>' : ''}</div>

@@ -60,10 +60,10 @@
     const { marking, body, title } = split(md);
     meta = Object.assign({}, meta, { wide: blocks(body).some(b => b.t === 'table' && b.head.length >= 7) }); // wide tables → landscape
     const runs = (s, o = {}) => inlines(s).map(x => new D.TextRun({ text: x.text, bold: x.b || o.bold, italics: x.i || o.italics, font: x.code ? 'Consolas' : undefined, size: o.size, color: o.color }));
-    const children = [];
+    const children = []; let h1seen = false; // each later top-level heading (an attachment) starts a new page
     blocks(body).forEach(b => {
       if (b.t === 'h') {
-        if (b.n === 1) children.push(new D.Paragraph({ heading: D.HeadingLevel.TITLE, children: runs(b.text) }));
+        if (b.n === 1) { children.push(new D.Paragraph({ heading: D.HeadingLevel.TITLE, pageBreakBefore: h1seen, children: runs(b.text) })); h1seen = true; }
         else children.push(new D.Paragraph({ heading: [null, null, D.HeadingLevel.HEADING_1, D.HeadingLevel.HEADING_2, D.HeadingLevel.HEADING_3][b.n], keepNext: true, children: runs(b.text) }));
       } else if (b.t === 'p') children.push(new D.Paragraph({ children: runs(b.text) }));
       else if (b.t === 'hr') children.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: RULE, space: 4 } }, children: [] }));
@@ -130,7 +130,7 @@ html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0;font:10.5pt/1.5 'Source Serif 4',Georgia,serif;color:#17202B}
 table.frame{width:100%;border-collapse:collapse}table.frame>thead td{padding:0 0 4mm}
 .mark{font:italic 9pt/1.3 'Source Serif 4',Georgia,serif;color:#7D1D2C;border-bottom:0.5pt solid #C9CFD6;padding-bottom:2mm}
-h1{font-size:20pt;line-height:1.2;margin:0 0 4mm}h2{font-size:13.5pt;margin:7mm 0 2mm;break-after:avoid}h3{font-size:11.5pt;margin:5mm 0 2mm;color:#4F5966;break-after:avoid}h4{font-size:10.5pt;margin:4mm 0 1mm}
+h1{font-size:20pt;line-height:1.2;margin:0 0 4mm}.doc h1~h1{break-before:page}h2{font-size:13.5pt;margin:7mm 0 2mm;break-after:avoid}h3{font-size:11.5pt;margin:5mm 0 2mm;color:#4F5966;break-after:avoid}h4{font-size:10.5pt;margin:4mm 0 1mm}
 p{margin:0 0 2.5mm}hr{border:0;border-top:0.5pt solid #C9CFD6;margin:5mm 0}ul,ol{margin:0 0 3mm;padding-left:6mm}
 .doc table{width:100%;border-collapse:collapse;margin:2mm 0 4mm;font:8.5pt/1.35 'IBM Plex Sans',Arial,sans-serif}
 .doc th,.doc td{border:0.5pt solid #C9CFD6;padding:1.4mm 2mm;text-align:left;vertical-align:top}.doc th{background:#EEF0F3;font-weight:600}.doc tr{break-inside:avoid}.doc thead{display:table-header-group}
