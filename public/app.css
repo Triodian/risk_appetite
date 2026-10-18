@@ -453,3 +453,4 @@ html.testsite body::before{content:"Test site · not the live engagement";displa
 .acttext strong{font-weight:600}
 .actgo{color:var(--ink-faint)}
 .actitem.fail .actdot{background:var(--red)}
+.notebody{white-space:pre-wrap;font:12px/1.5 var(--mono);background:var(--parchment-2);padding:10px;border-radius:6px;margin:8px 0 0;max-width:640px}

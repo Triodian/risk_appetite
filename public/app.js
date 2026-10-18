@@ -11,7 +11,7 @@ const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV 
 const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 /* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
 const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
-const ADMIN_SCREENS = ['setup', 'users', 'activity'];
+const ADMIN_SCREENS = ['setup', 'users', 'activity', 'notifications'];
 const SEQ = ['overview','d1','d2','d3','d4','d5','d6','d7','d8','checks','challenge','outputs'];
 /* Readable URL fragments: #decision-2 instead of #d2. Old fragments (#d2, #overview, #setup) still open the right screen. */
 const SLUG = { overview: 'decisions', setup: 'set-up', actions: 'my-actions' }; for (let i = 1; i <= 8; i++) SLUG['d' + i] = 'decision-' + i;
@@ -1176,14 +1176,15 @@ function avatar() {
 const ADM = { loaded: false, users: [], roles: [], perms: [], requests: [], audit: [], editing: null, adding: false, draft: null, err: '' };
 const PRF = { err: '', msg: '', emailErr: '' };
 async function loadAdmin() {
-  const [u, a] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/audit')]);
+  const [u, a, n] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/audit'), api('GET', '/api/admin/notifications')]);
+  ADM.notes = n.ok ? n.body.entries : []; ADM.sending = n.ok && n.body.sending;
   if (u.ok) { ADM.users = u.body.users; ADM.roles = u.body.roles; ADM.perms = u.body.permissions; ADM.requests = u.body.accessRequests || []; }
   else ADM.err = u.error;
   ADM.audit = a.ok ? a.body.entries : []; ADM.loaded = true; render();
 }
 const roleLong = id => (ADM.roles.find(r => r.id === id) || (C.roles || []).find(r => r.id === id) || {}).name || (id || 'None');
 function areaHeader() {
-  const tabs = AREA === 'admin' && SRV.user && SRV.user.isAdmin ? [['setup', 'Set-up'], ['users', 'Users'], ['activity', 'Activity']] : [];
+  const tabs = AREA === 'admin' && SRV.user && SRV.user.isAdmin ? [['setup', 'Set-up'], ['users', 'Users'], ['activity', 'Activity'], ['notifications', 'Notifications']] : [];
   return `<header class="hdr"><div class="hdr-in">
     <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></a>
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
@@ -1203,6 +1204,7 @@ function renderArea(app) {
   else if (!SRV.user.isAdmin) main = areaMsg('Administrators only', 'Admin is for administrators. Ask an administrator if you need something set up or a user added.');
   else if (UI.screen === 'users') main = screenUsers();
   else if (UI.screen === 'activity') main = screenActivity();
+  else if (UI.screen === 'notifications') main = screenNotifications();
   else if (!S) main = screenStart();
   else { applyIdentity(); versionCheck(); main = screenSetup(); }
   app.innerHTML = areaHeader() + `<main id="main" tabindex="-1" class="area-main"><div class="wrap">${main}</div></main>`;
@@ -1277,6 +1279,15 @@ function auditDetail(e) {
   if (e.action === 'engagement.refused') return d.reason || '';
   return '';
 }
+function screenNotifications() {
+  if (!ADM.loaded) return '<p class="soft" style="padding:40px 0">Loading…</p>';
+  const st = { held: ['Held', 'b-grey'], sending: ['Sending', 'b-ochre'], sent: ['Sent', 'b-green'], failed: ['Failed', 'b-red'] };
+  return `${opening('Admin · notifications', 'Notifications', 'Emails the app sends when something needs someone: a question for counsel, a challenge on their position, a position for them to set, the appetite agreed or approved, and a daily reminder of positions due soon.')}
+    <div class="next ${ADM.sending ? 'ok' : 'warn'}" style="margin-bottom:20px"><div><div class="next-k">${ADM.sending ? 'Sending is on' : 'Sending is off'}</div><p>${ADM.sending ? 'Messages are emailed as they are created.' : 'Messages are created and listed here, but not emailed. Sending is switched on in the site’s Cloudflare settings once an email service is chosen (see wrangler.jsonc).'} People can turn emails off in their profile.</p></div></div>
+    ${(ADM.notes || []).length ? `<div class="tw"><table class="lg adm-log"><thead><tr><th>When</th><th>To</th><th>Subject</th><th>Status</th></tr></thead><tbody>
+    ${ADM.notes.map(x => `<tr><td class="when">${fmtLocal(x.created_at)}</td><td>${esc(x.to_email)}</td><td><details><summary>${esc(x.subject)}</summary><pre class="notebody">${esc(x.body)}</pre></details></td><td>${badge(...(st[x.status] || [x.status, 'b-grey']))}${x.error ? `<div class="mini" style="color:var(--red)">${esc(x.error)}</div>` : ''}</td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="soft small">None yet.</p>'}`;
+}
 function screenActivity() {
   if (!ADM.loaded) return '<p class="soft" style="padding:40px 0">Loading…</p>';
   return `${opening('Admin · activity', 'Activity', 'User changes and engagement saves, newest first. Detailed edits are in the engagement’s own history.')}
@@ -1311,6 +1322,9 @@ function screenProfile() {
     </div>
     <p class="small soft" style="margin-top:8px">Used on screens wherever a date or time is shown, for example: last saved ${esc(fmtLocal(nowISO()))}. Documents for the board always use the full form, such as ${esc(dDoc(today()))}.</p>
     ${PRF.prefMsg ? `<p class="small" style="color:var(--green)" role="status">${esc(PRF.prefMsg)}</p>` : ''}</section>
+  <section class="card"><h2 class="sh">Email notifications</h2>
+    <label class="entry-skip" style="margin:0"><input type="checkbox" id="p-notify" data-act="pref" ${u.notify !== false ? 'checked' : ''}> Email me when something needs me: a question for counsel, a challenge on my position, a position for me to set, or the appetite agreed or approved</label>
+    <p class="small soft" style="margin-top:8px">The same items are always listed under My actions.</p></section>
   <section class="card"><h2 class="sh">Introduction</h2>
     <label class="entry-skip" style="margin:0"><input type="checkbox" data-act="showIntro" ${introHidden() ? '' : 'checked'}> Show the introduction when the app opens, and the explanation before set-up and the worked example</label>
     <p class="small soft" style="margin-top:8px">This setting applies in this browser only.</p></section>
@@ -1596,7 +1610,7 @@ function changeHandler(e) {
   if (d.act === 'hideIntro') { setIntroHidden(t.checked); return; }
   if (d.act === 'showIntro') { setIntroHidden(!t.checked); PRF.msg = ''; return; }
   if (d.act === 'pref') { const df = (document.getElementById('p-df') || {}).value || 'long', tz = (document.getElementById('p-tz') || {}).value || '';
-    api('PUT', '/api/me/prefs', { dateFormat: df, timeZone: tz }).then(r => { if (r.ok) { SRV.user = r.body.user; PRF.prefMsg = 'Saved.'; } else PRF.prefMsg = r.error || 'Could not save.'; render(); }); return; }
+    api('PUT', '/api/me/prefs', { dateFormat: df, timeZone: tz, notify: (document.getElementById('p-notify') || {}).checked !== false }).then(r => { if (r.ok) { SRV.user = r.body.user; PRF.prefMsg = 'Saved.'; } else PRF.prefMsg = r.error || 'Could not save.'; render(); }); return; }
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }

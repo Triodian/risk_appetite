@@ -16,6 +16,14 @@
   ],
   "observability": { "enabled": true },
 
+  // Daily at 07:00 Brisbane time: remind people about "not set" positions due soon (see lib/core/notify.js).
+  "triggers": { "crons": ["0 21 * * *"] },
+
+  // Email notifications are built but switched off. To switch them on: onboard triodian.com in
+  // Cloudflare Email Service, add  "send_email": [{ "name": "EMAIL" }]  here, and set the variables
+  // NOTIFY_SENDING = "on" and NOTIFY_FROM = "risk-appetite@triodian.com". Until then messages are held
+  // and listed in Admin → Notifications.
+
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
   "env": {
@@ -27,7 +35,8 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "REPLACE_WITH_TEST_DATABASE_ID" }
       ],
-      "vars": { "SITE_LABEL": "Test site" },
+      "vars": { "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com" },
+      "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
     }
   }

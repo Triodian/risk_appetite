@@ -12,13 +12,21 @@ CREATE TABLE IF NOT EXISTS users (
   last_seen_at TEXT,
   pending_email TEXT,                -- new address awaiting confirmation by signing in with it
   date_format TEXT,                  -- long | short | numeric | iso (NULL = long)
-  time_zone TEXT                     -- IANA time zone (NULL = the browser's)
+  time_zone TEXT,                    -- IANA time zone (NULL = the browser's)
+  notify_email INTEGER NOT NULL DEFAULT 1  -- 0 = no notification emails
 );
 CREATE TABLE IF NOT EXISTS engagement (       -- exactly one row: this deployment's engagement
   id TEXT PRIMARY KEY CHECK (id = 'main'),
   data TEXT NOT NULL,                         -- the engagement as JSON (schema triodian.raf.v1)
   revision INTEGER NOT NULL,
   updated_at TEXT NOT NULL, updated_by TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS engagement_revisions (  -- the last 200 saved versions, used to merge two people's saves
+  revision INTEGER PRIMARY KEY, data TEXT NOT NULL, saved_at TEXT NOT NULL, saved_by TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS notifications (   -- outbox: every email the app would send; status held | sending | sent | failed
+  id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, key TEXT, to_email TEXT NOT NULL,
+  subject TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL, error TEXT NOT NULL DEFAULT '', sent_at TEXT
 );
 CREATE TABLE IF NOT EXISTS audit_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
