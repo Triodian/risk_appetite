@@ -22,12 +22,20 @@ const fromSlug = h => { h = decodeURIComponent(h || '').toLowerCase(); const hit
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 9);
 const nowISO = () => new Date().toISOString();
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-/* Display dates the Australian way: 17 October 2026 (data stays ISO). */
-const dAU = s => { if (!s) return ''; const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); if (!m) return String(s); return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }); };
-const datesAU = str => String(str).replace(/\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?Z?)?)?\b/g, (m, d, t) => dAU(d) + (t ? ', ' + t : ''));
+/* Dates. Data is stored as ISO dates and UTC timestamps. Screens follow the user's Profile choice of
+   date format and time zone; output documents always use the long form ("18 October 2026"). */
+const prefDF = () => (typeof SRV !== 'undefined' && SRV.user && SRV.user.dateFormat) || 'long';
+const prefTZ = () => (typeof SRV !== 'undefined' && SRV.user && SRV.user.timeZone) || undefined;
+const DF_OPTS = { long: { day: 'numeric', month: 'long', year: 'numeric' }, short: { day: 'numeric', month: 'short', year: 'numeric' }, numeric: { day: '2-digit', month: '2-digit', year: 'numeric' } };
+const ymdIn = (d, tz) => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d).map(x => [x.type, x.value])); return `${p.year}-${p.month}-${p.day}`; };
+const today = () => { try { return ymdIn(new Date(), prefTZ()); } catch (e) { return ymdIn(new Date()); } };
+const fmtYMD = (s, df) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); if (!m) return String(s); if (df === 'iso') return s; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)).toLocaleDateString('en-AU', Object.assign({ timeZone: 'UTC' }, DF_OPTS[df] || DF_OPTS.long)); };
+const dAU = s => s ? fmtYMD(s, prefDF()) : '';
+const dDoc = s => s ? fmtYMD(s, 'long') : '';
+const datesAU = str => String(str).replace(/\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?Z?)?)?\b/g, (m, d, t) => dDoc(d) + (t ? ', ' + t : ''));
 const fmtAt = s => s ? fmtLocal(s) : '';
-const fmtLocal = s => { if (!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const fmtLocal = s => { if (!s) return ''; const d = new Date(s); if (isNaN(d)) return s; const tz = prefTZ(), df = prefDF();
+  try { const time = d.toLocaleTimeString('en-AU', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }); return fmtYMD(ymdIn(d, tz), df === 'long' ? 'short' : df) + ', ' + time; } catch (e) { return d.toLocaleString('en-AU'); } };
 const rk = (arr, v) => arr.indexOf(v);
 const D = id => C.decisions.find(d => d.id === id) || { id: String(id), n: '?', name: 'Unknown decision', session: '', param: '', question: '', prompts: [], startingInputs: [], levels: [], gaps: [], bands: [], priorities: [], events: [], triggers: [], markings: [] };
 const sid = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -347,14 +355,10 @@ function drawer() {
     ${C.decisions.map(d => it(d.id, `<span class="mono soft" style="width:22px">${d.n}</span>${esc(d.name)}`)).join('')}
     ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}${it('reference','Reference')}
     ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
-    ${SRV.user ? `<div class="grp">Signed in</div><a class="item" href="/profile/" style="text-decoration:none">${avatarBadge()}<span>${esc(SRV.user.name || SRV.user.email)}<br><span class="small soft">${esc(ROLE_NAME[myRole()])} · your profile</span></span></a>` : ''}
     <div class="grp">Engagement</div>
     <button class="item" data-act="save">Download a copy (.json)</button>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
-    <a class="item" href="/user-guide/" style="text-decoration:none">User guide</a>
     ${SRV.on ? '<p class="small soft" style="padding:4px 10px">Changes save automatically.</p>' : '<p class="small soft" style="padding:4px 10px">The server is not reachable. Download a copy to keep your work.</p>'}
-    ${SRV.user && SRV.user.isAdmin ? '<a class="item" href="/admin/#set-up" style="text-decoration:none">Admin · set-up and users</a>' : ''}
-    <a class="item" href="/cdn-cgi/access/logout" style="text-decoration:none">Sign out</a>
     ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
@@ -1119,7 +1123,12 @@ const initials = s => { const w = String(s || '').replace(/@.*/, '').split(/[\s.
 function avatarBadge() { const u = SRV.user; return u ? `<span class="avatar" aria-hidden="true">${esc(initials(u.name || u.email))}</span>` : ''; }
 function avatar() {
   const u = SRV.user; if (!u) return '';
-  return `<a class="avatar-link" href="/profile/" title="Your profile · ${esc(u.name || u.email)} · ${esc(ROLE_NAME[myRole()])}" aria-label="Your profile" ${AREA === 'profile' ? 'aria-current="page"' : ''}>${avatarBadge()}</a>`;
+  return `<span class="acct"><button class="avatar-link" data-act="acct" aria-haspopup="menu" aria-expanded="${!!UI.acct}" title="${esc(u.name || u.email)}" aria-label="Account: ${esc(u.name || u.email)}">${avatarBadge()}</button>${UI.acct ? `<div class="acct-menu" role="menu">
+    <div class="acct-who">${avatarBadge()}<div><strong>${esc(u.name || u.email)}</strong>${u.name ? `<div class="small soft">${esc(u.email)}</div>` : ''}<div class="small soft">${esc(u.role ? ROLE_NAME[u.role] : 'No engagement role')}${u.isAdmin ? ' · administrator' : ''}</div></div></div>
+    <a role="menuitem" class="item" href="/profile/">Your profile</a>
+    ${u.isAdmin ? `<a role="menuitem" class="item" href="/admin/#set-up">Admin · set-up and users</a>` : ''}
+    <a role="menuitem" class="item" href="/user-guide/">User guide</a>
+    <a role="menuitem" class="item signout" href="/cdn-cgi/access/logout">Sign out</a></div>` : ''}</span>`;
 }
 
 /* ---------- Admin and profile areas ---------- */
@@ -1138,7 +1147,7 @@ function areaHeader() {
     <a class="brand" href="/" aria-label="Triodian · back to the app" style="text-decoration:none"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="26" style="height:26px;width:auto;display:block"></a>
     <span class="vrule" aria-hidden="true"></span><span class="apptitle">${AREA === 'admin' ? 'Admin' : 'Profile'}</span>
     ${tabs.length ? `<nav class="steps area-tabs" aria-label="Admin">${tabs.map(t => `<button data-act="go" data-to="${t[0]}" ${UI.screen === t[0] ? 'aria-current="page"' : ''}>${t[1]}</button>`).join('')}</nav>` : ''}
-    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}${bp() === 'desk' ? '<a class="lnk hdr-back" href="/user-guide/">User guide</a>' : ''}<a class="lnk hdr-back hdr-app" href="/">${backLabel()}</a>${avatar()}</div>
+    <div class="hdr-r">${AREA === 'admin' && UI.screen === 'setup' && S ? saveChip() : ''}<a class="lnk hdr-back hdr-app" href="/">${backLabel()}</a>${avatar()}</div>
   </div>${AREA === 'admin' && UI.screen === 'setup' ? docband() : ''}</header>`;
 }
 const backLabel = () => (SRV.exists ? 'Open the engagement' : 'Back to the app');
@@ -1234,6 +1243,7 @@ function screenActivity() {
     ${ADM.audit.map(e => `<tr><td class="when">${fmtLocal(e.at)}</td><td>${esc(e.actor)}</td><td>${esc(AUDIT_NAME[e.action] || e.action)}</td><td class="adm-hide-sm">${esc(auditDetail(e))}</td></tr>`).join('')}
     </tbody></table></div>` : '<p class="soft small">Nothing yet.</p>'}`;
 }
+const tzList = () => { try { return Intl.supportedValuesOf('timeZone'); } catch (e) { return ['Australia/Brisbane', 'Australia/Sydney', 'Australia/Melbourne', 'Australia/Adelaide', 'Australia/Perth', 'Australia/Hobart', 'Australia/Darwin', 'Pacific/Auckland', 'Asia/Singapore', 'Asia/Hong_Kong', 'Europe/London', 'America/New_York', 'UTC']; } };
 function screenProfile() {
   const u = SRV.user;
   return `${opening('Your profile', esc(u.name || u.email), '')}
@@ -1253,6 +1263,13 @@ function screenProfile() {
       ${PRF.emailErr ? `<p class="err acts2" role="alert">${esc(PRF.emailErr)}</p>` : ''}
       <div class="acts2"><button class="btn sm" type="submit">Change email</button><span class="small soft">You confirm it by signing in with the new address.</span></div></form>`}
   </section>
+  <section class="card"><h2 class="sh">Dates and times</h2>
+    <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+      <label class="f" for="p-df"><span>Date format</span><select class="in" id="p-df" data-act="pref">${[['long', '18 October 2026'], ['short', '18 Oct 2026'], ['numeric', '18/10/2026'], ['iso', '2026-10-18']].map(o => `<option value="${o[0]}" ${(u.dateFormat || 'long') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></label>
+      <label class="f" for="p-tz"><span>Time zone</span><select class="in" id="p-tz" data-act="pref"><option value="">Automatic · this device (${esc(Intl.DateTimeFormat().resolvedOptions().timeZone)})</option>${tzList().map(z => `<option value="${esc(z)}" ${u.timeZone === z ? 'selected' : ''}>${esc(z.replace(/_/g, ' '))}</option>`).join('')}</select></label>
+    </div>
+    <p class="small soft" style="margin-top:8px">Used on screens wherever a date or time is shown, for example: last saved ${esc(fmtLocal(nowISO()))}. Documents for the board always use the full form, such as ${esc(dDoc(today()))}.</p>
+    ${PRF.prefMsg ? `<p class="small" style="color:var(--green)" role="status">${esc(PRF.prefMsg)}</p>` : ''}</section>
   <section class="card"><h2 class="sh">Introduction</h2>
     <label class="entry-skip" style="margin:0"><input type="checkbox" data-act="showIntro" ${introHidden() ? '' : 'checked'}> Show the introduction when the app opens, and the explanation before set-up and the worked example</label>
     <p class="small soft" style="margin-top:8px">This setting applies in this browser only.</p></section>
@@ -1260,7 +1277,6 @@ function screenProfile() {
     <dl class="kv"><dt>Engagement role</dt><dd>${esc(u.role ? roleLong(u.role) : 'None. You can read the engagement but not change it.')}</dd>
     <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#set-up">open Admin</a>' : 'No'}</dd></dl>
     <p class="small soft" style="margin-top:10px">Roles are set by an administrator.</p></section>
-  <p><a class="btn" href="/cdn-cgi/access/logout">Sign out</a></p>
   </div>`;
 }
 document.addEventListener('submit', async e => {
@@ -1439,6 +1455,8 @@ function buildExample() {
 
 /* ---------- events ---------- */
 function onClick(e) {
+  if (UI.acct && !e.target.closest('.acct')) { UI.acct = false; render(); }
+  const ac = e.target.closest('[data-act="acct"]'); if (ac) { UI.acct = !UI.acct; render(); if (UI.acct) { const f = document.querySelector('.acct-menu [role=menuitem]'); if (f) f.focus(); } return; }
   const pt = e.target.closest('[data-pact]');
   if (pt) { const a = pt.dataset.pact;
     if (a === 'close') closePop(); else if (a === 'back') { UI.pop.stack.pop(); renderPop(); }
@@ -1519,6 +1537,8 @@ function changeHandler(e) {
   if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
   if (d.act === 'hideIntro') { setIntroHidden(t.checked); return; }
   if (d.act === 'showIntro') { setIntroHidden(!t.checked); PRF.msg = ''; return; }
+  if (d.act === 'pref') { const df = (document.getElementById('p-df') || {}).value || 'long', tz = (document.getElementById('p-tz') || {}).value || '';
+    api('PUT', '/api/me/prefs', { dateFormat: df, timeZone: tz }).then(r => { if (r.ok) { SRV.user = r.body.user; PRF.prefMsg = 'Saved.'; } else PRF.prefMsg = r.error || 'Could not save.'; render(); }); return; }
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
@@ -1544,6 +1564,7 @@ function onFocusIn(e) {
 }
 function onKey(e) {
   const t = e.target, typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
+  if (e.key === 'Escape' && UI.acct) { UI.acct = false; render(); const b = document.querySelector('[data-act="acct"]'); if (b) b.focus(); return; }
   if (e.key === 'Escape') { if (UI.guide) { UI.guide = null; render(); return; } if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.open && bp() !== 'phone') { closeDet(UI.open); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
   if ((e.key === 'p' || e.key === 'P') && !typing && !e.metaKey && !e.ctrlKey && S && UI.screen !== 'entry') { togglePresent(); return; }
   if (t.dataset && t.dataset.gr) {

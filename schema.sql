@@ -9,7 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL, created_by TEXT NOT NULL,
   updated_at TEXT NOT NULL, updated_by TEXT NOT NULL,
-  last_seen_at TEXT
+  last_seen_at TEXT,
+  pending_email TEXT,                -- new address awaiting confirmation by signing in with it
+  date_format TEXT,                  -- long | short | numeric | iso (NULL = long)
+  time_zone TEXT                     -- IANA time zone (NULL = the browser's)
 );
 CREATE TABLE IF NOT EXISTS engagement (       -- exactly one row: this deployment's engagement
   id TEXT PRIMARY KEY CHECK (id = 'main'),

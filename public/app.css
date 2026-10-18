@@ -430,3 +430,13 @@ details.about{background:var(--card)}
 .sesshead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap;margin-bottom:12px}
 .sesshead .sh{margin:0}
 .sesshead p{margin:0}
+/* Account menu from the avatar: who you are, profile, admin, guide, sign out */
+.avatar-link{border:0;padding:0;background:none;cursor:pointer}
+.avatar-link[aria-expanded="true"] .avatar{box-shadow:0 0 0 3px var(--aubergine-bg)}
+.acct{position:relative;display:inline-flex}
+.acct-menu{position:absolute;right:0;top:calc(100% + 10px);z-index:130;width:290px;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:0 12px 32px rgba(23,32,43,.16);padding:8px;animation:fade .12s ease}
+.acct-who{display:flex;gap:12px;align-items:flex-start;padding:10px 10px 12px;border-bottom:1px solid var(--rule-soft);margin-bottom:6px}
+.acct-who strong{font-weight:600}
+.acct-menu .item{display:flex;align-items:center;min-height:38px;padding:6px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:14px}
+.acct-menu .item:hover,.acct-menu .item:focus-visible{background:var(--parchment-2);outline:none}
+.acct-menu .signout{border-top:1px solid var(--rule-soft);border-radius:0 0 6px 6px;margin-top:6px;padding-top:10px}
