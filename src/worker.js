@@ -6,7 +6,7 @@
 //   email     → Cloudflare Email Service binding EMAIL, only when NOTIFY_SENDING is "on" (off by default)
 import { identify } from '../lib/identity/cloudflare-access.js';
 import { d1Store } from '../lib/store/d1.js';
-import { handle } from '../lib/core/api.js';
+import { handle, issuedCalibration } from '../lib/core/api.js';
 import { dueReminders, deliver } from '../lib/core/notify.js';
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
@@ -26,8 +26,16 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     const who = await identify(request, env);
+    if (!env.DB && (who.email || who.service)) return json({ error: 'The database is not connected to this site yet.' }, 503);
+    // The AI Use Assessment app's service token may read the issued calibration set, and nothing else.
+    // CALIBRATION_CLIENT_ID is that token's Client ID. Add it as a secret on this Worker (secrets survive deploys).
+    if (who.service) {
+      if (request.method !== 'GET' || url.pathname !== '/api/calibration-set') return json({ error: 'This service token may only read the calibration set.' }, 403);
+      if (!env.CALIBRATION_CLIENT_ID || who.service !== env.CALIBRATION_CLIENT_ID) return json({ error: 'This service token is not allowed to read the calibration set. Set CALIBRATION_CLIENT_ID on the Risk Appetite Worker to its Client ID.' }, 403);
+      const r = await issuedCalibration(d1Store(env.DB));
+      return json(r.body, r.status);
+    }
     if (!who.email) return json({ error: who.error }, who.status || 401);
-    if (!env.DB) return json({ error: 'The database is not connected to this site yet.' }, 503);
 
     try {
       const r = await handle({

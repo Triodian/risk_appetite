@@ -74,8 +74,9 @@ approved, or before any approval the latest the CRO agreed. It never returns pos
 The response gives `version`, `status`, `issuedOn`, `issuedBy`, `minuteRef` and `calibrationSet`
 (the same content as the downloadable calibration set file).
 
-The endpoint sits behind the same Cloudflare Access sign-in as the app. For the assessment app to call
-it from its server, create a Cloudflare Access service token, add a Service Auth policy for it on this
-application, and have the assessment app send the `CF-Access-Client-Id` and `CF-Access-Client-Secret`
-headers. Each set is stored when it is issued, so versions issued before this was added are not
-available here; the next agreement or approval makes one available.
+The endpoint sits behind the same Cloudflare Access sign-in as the app. The assessment app calls it from
+its server with a Cloudflare Access service token. A service token's sign-in has no email; its Client ID
+is in `common_name`. `src/worker.js` lets exactly one service token, the one whose Client ID is in the secret
+`CALIBRATION_CLIENT_ID`, read `GET /api/calibration-set` and nothing else (`tests/service-token.test.mjs`).
+Set-up steps are in the Use Assessment repo, `docs/calibration-link.md`. Each set is stored when it is issued, so
+versions issued before this was added are not available here; the next agreement or approval makes one available.
