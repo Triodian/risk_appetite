@@ -130,13 +130,14 @@ function cellsFor(did) {
 const allCells = () => ['d1','d2','d3','d4','d5','d6','d7','d8'].reduce((a, d) => a.concat(cellsFor(d)), []);
 function cellById(id) { return cellsFor(id.split('.')[0]).find(c => c.id === id); }
 function cellLabel(id) { if (/^M\d+$/.test(id)) { const m = C.measures.find(x => x.ref === id); return 'Schedule · ' + id + (m ? ' ' + withLabels(m.measure, 'C') : ''); } const c = cellById(id); if (!c) return id; const d = D(c.did); return `Decision ${d.n} · ${c.rowLabel}${c.colLabel && c.kind !== 'number' || c.did === 'd7' ? ' · ' + c.colLabel : ''}`; }
-const P = id => S.decisions[id.split('.')[0]].cells[id] || null;
+const P = id => { const d = S.decisions[String(id).split('.')[0]]; return (d && d.cells && d.cells[id]) || null; };
 function getPos(id) { const did = id.split('.')[0]; const cells = S.decisions[did].cells; if (!cells[id]) cells[id] = blankPos(); return cells[id]; }
 const val = id => { const p = P(id); return p && p.status === 'set' ? p.value : null; };
 
 /* ---------- starting positions ---------- */
 function startingValue(id) {
   const parts = id.split('.'), did = parts[0];
+  const prev = S.previous && S.previous.cells && S.previous.cells[id]; if (prev && prev[0] && prev[0] !== 'not set') return prev[0];
   if (did === 'd1' || did === 'd3') return S.current[did][id] || '';
   if (did === 'd2') { if (parts[1] === 'op') { const o = S.criticalOperations.find(x => x.id === parts[2]); return o ? o.tolerance : ''; } return S.current.d2[parts[1]] || ''; }
   if (did === 'd4') { const d = D('d4'); if (parts[1] === 'time') return d.priorities.find(p => p.id === parts[2]).limit; if (parts[1] === 'interim') return d.priorities.find(p => p.id === parts[2]).interim; return d.matrix[parts[1]][parts[2]]; }
@@ -155,6 +156,7 @@ const activePeople = () => S.people.filter(p => p.active !== false);
 const eligible = did => activePeople().filter(p => proposerRoles(did).includes(p.role));
 /* One gate for every editable control. target: a decision id, 'setup', 'measures', 'overall', 'challengeResponse', 'qcResponse' or 'approval'. */
 function can(target, role) {
+  if (UI.archived) return false;
   role = role || UI.role;
   if (target === 'setup' && SRV.user && !practice()) return !!SRV.user.isAdmin;
   if (role === 'none') return false;
@@ -365,9 +367,9 @@ function docband() {
   const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
   const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
-  const right = e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Practice mode</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label><button class="lnk" data-act="leavePractice">Leave practice</button></span>`
+  const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>` : e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Practice mode</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label><button class="lnk" data-act="leavePractice">Leave practice</button></span>`
     : `<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>`;
-  return `<div class="docband ${e.example ? 'practice' : ''}"><div class="docband-in">${priv}${right}</div></div>`;
+  return `<div class="docband ${e.example || UI.archived ? 'practice' : ''}"><div class="docband-in">${priv}${right}</div></div>`;
 }
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
@@ -394,6 +396,7 @@ function drawer() {
     ${C.decisions.map(d => it(d.id, `<span class="mono soft" style="width:22px">${d.n}</span>${esc(d.name)}`)).join('')}
     ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}
     ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
+    ${(SRV.archives || []).length ? `<div class="grp">Earlier reviews</div>${SRV.archives.map(a => `<button class="item" data-act="openArchive" data-id="${esc(a.id)}">${esc(a.label)}<span class="small soft" style="margin-left:auto">read only</span></button>`).join('')}` : ''}
     <div class="grp">Engagement</div>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
     ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
@@ -552,7 +555,9 @@ function screenSetup() {
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
     <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the insurer’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
   </fieldset>
-  ${practice() ? '' : `<section class="card" style="margin-top:18px"><h2 class="sh">Copy of the engagement</h2><p class="small soft" style="margin:4px 0 12px">The whole engagement as one file: every position, its history, the people and set-up. Keep it as a backup or to move the engagement elsewhere.</p><button class="btn sm" data-act="save">Download the engagement (.json)</button></section>`}
+  ${practice() ? '' : `<section class="card" style="margin-top:18px"><h2 class="sh">Copy of the engagement</h2><p class="small soft" style="margin:4px 0 12px">The whole engagement as one file: every position, its history, the people and set-up. Keep it as a backup or to move the engagement elsewhere.</p><button class="btn sm" data-act="save">Download the engagement (.json)</button></section>
+  <section class="card" style="margin-top:18px"><h2 class="sh">Next review</h2><p class="small soft" style="margin:4px 0 12px">When the board has approved the appetite and the review interval comes round, start the next review. The approved engagement is kept read-only under Earlier reviews (in the menu). The new review keeps the set-up and people, and starts each position from the approved one.</p>
+    <button class="btn sm" data-act="nextReview" ${S.calibration.status === 'approved' ? '' : 'disabled'}>Start the next review</button>${S.calibration.status === 'approved' ? '' : '<p class="why small">Available once the board has approved the current appetite.</p>'}</section>`}
   <section class="card" style="margin-top:18px"><h2 class="sh">Set-up checklist</h2><p class="small soft" style="margin:4px 0 14px">Set-up is complete when each item below is done.</p><div class="stack" style="gap:6px">${g.items.map(i => gate(i[1], i[0])).join('')}</div></section>
   ${stepbar(gate(g.ok, g.ok ? 'Set-up complete' : 'Set-up incomplete'))}`;
 }
@@ -710,6 +715,7 @@ function startPanel(d) {
   if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${scaleOpt(c)} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld(`Existing ${scaleOpt('C5')} position (no critical operations recorded in set-up)`, 'current.d2.C5', S.current.d2.C5 || '')}`;
   if (d.id === 'd6') extra = `<div style="margin-top:12px">${fld('Existing offshoring position (I6)', 'current.offshoring', S.current.offshoring, { area: true })}</div>`;
   return `<section class="panel2"><div class="row between"><h2 class="sh" style="margin:0">${T('starting', 'Starting position')}</h2><div class="row">${inputs}</div></div>
+    ${S.previous ? `<p class="small" style="margin-top:10px"><strong>This is a review.</strong> Starting positions are the positions the board approved last time (version ${esc(S.previous.version)}${S.previous.approvedOn ? ', approved ' + esc(dAU(S.previous.approvedOn)) : ''}). Where there was none, the usual starting position applies.</p>` : ''}
     <p class="small" style="margin-top:10px">${esc(withLabels(d.starting, 'C'))}</p>${extra}
     <div class="row" style="margin-top:12px"><button class="btn sm aub" data-act="useStart" data-d="${d.id}" ${canEdit(d.id) ? '' : 'disabled'}>Use starting position</button><span class="mini">Fills empty cells only. Nothing is filled in automatically.</span></div></section>`;
 }
@@ -809,7 +815,7 @@ function screenChecks(ck) {
 /* ---------- S12 challenge ---------- */
 /* ---------- My actions: what is waiting for the signed-in person (or the person being practised as) ---------- */
 function myActions(ck) {
-  if (!S) return [];
+  if (!S || UI.archived) return [];
   const p = me(), role = UI.role, pid = p ? p.id : null, t = today(), out = [];
   const soon = d => { if (!d) return ''; const days = Math.round((Date.parse(d) - Date.parse(t)) / 864e5); return days < 0 ? 'overdue' : days <= 7 ? 'due' : ''; };
   const add = (key, title, detail, act, tone) => out.push({ key, title, detail, act, tone: tone || '' });
@@ -1438,7 +1444,7 @@ async function api(method, path, body) {
   return { ok: true, status: r.status, body: j };
 }
 const practice = () => !!(S && S.engagement.example);
-const savesHere = () => SRV.on && S && !practice();
+const savesHere = () => SRV.on && S && !practice() && !UI.archived;
 const myRole = () => (SRV.user && SRV.user.role) || 'none';
 /* In the real engagement the signed-in user is the actor; only practice mode lets the role be switched. */
 function applyIdentity() { if (!SRV.user || practice()) return; UI.personId = SRV.user.id; UI.role = myRole(); }
@@ -1451,6 +1457,14 @@ function conflictNames(paths) {
   if (!Array.isArray(paths) || !paths.length) return '';
   const name = p => p[0] === 'decisions' && p[2] === 'cells' && p[3] ? cellLabel(p[3]) : p[0] === 'challenge' ? 'a challenge point' : p[0] === 'questionsForCounsel' ? 'a question for counsel' : p[0] === 'engagement' ? 'engagement details (' + p[1] + ')' : p[0] === 'calibration' ? 'the calibration status' : p.slice(0, 2).join(' · ');
   return [...new Set(paths.map(name))].slice(0, 4).join('; ');
+}
+async function loadArchives() { const r = await api('GET', '/api/archive'); SRV.archives = r.ok ? r.body.entries : []; }
+async function openArchive(id) {
+  if (savesHere() && !(await flushSave())) return toast('Your changes are not saved yet. Try again in a moment.');
+  const r = await api('GET', '/api/archive/' + encodeURIComponent(id));
+  if (!r.ok) return toast(r.error);
+  try { S = hydrate(r.body.data); } catch (e) { return toast('That earlier review could not be read: ' + e.message); }
+  UI.archived = { id: r.body.id, label: r.body.label }; UI.drawer = false; UI.role = myRole(); go('overview');
 }
 async function saveNow() {
   clearTimeout(SRV.timer); SRV.timer = null;
@@ -1481,6 +1495,7 @@ async function saveNow() {
 async function flushSave() { if (!savesHere()) return true; if (SRV.state === 'pending' || SRV.timer) await saveNow(); else if (SRV.inflight) await SRV.inflight; return SRV.state === 'saved'; }
 function saveLabel() {
   if (!S) return '';
+  if (UI.archived) return ['b-grey', 'Read only', 'An earlier review, kept as it was. Nothing can be changed.'];
   if (practice()) return ['b-ochre', 'Practice · not saved', 'The worked example is for practice. Nothing here is saved.'];
   if (!SRV.on) return ['b-ochre', 'Not saved', 'The server is not reachable. Download a copy from the menu to keep your work.'];
   return { saved: ['b-green', 'Saved', SRV.lastAt ? 'Saved ' + fmtLocal(SRV.lastAt) + ' by ' + SRV.lastBy : 'Saved'], pending: ['b-grey', 'Saving…', 'Changes will be saved in a moment'], saving: ['b-grey', 'Saving…', 'Saving'], error: ['b-red', 'Not saved', SRV.err], conflict: ['b-red', 'Changed elsewhere', SRV.err] }[SRV.state] || ['b-grey', '', ''];
@@ -1618,6 +1633,14 @@ function onClick(e) {
       if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#set-up'; return; } }
       UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
     guideBack: () => { UI.guide = null; render(); },
+    openArchive: () => openArchive(d.id),
+    leaveArchive: () => { UI.archived = null; UI.drawer = false; S = null; loadReal(); },
+    nextReview: async () => {
+      if (!confirm('Start the next review?\n\nThe current engagement (approved version ' + S.calibration.version + ') is kept as a read-only earlier review. A new review starts with the same set-up and people, and with the approved positions as starting positions. Challenge points, questions and approvals start empty.')) return;
+      const r = await api('POST', '/api/admin/next-review', { revision: SRV.rev });
+      if (!r.ok) return toast(r.error);
+      toast('Next review started. ' + r.body.label + ' is kept under Earlier reviews.'); await loadArchives(); await loadReal();
+    },
     leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
       if (SRV.state === 'error') { if (SRV.err && /cannot change|history/.test(SRV.err)) { if (confirm(SRV.err + '\n\nReload the saved engagement? Your unsaved changes here will be lost.')) loadReal(); } else saveNow(); return; }
@@ -1737,7 +1760,7 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
