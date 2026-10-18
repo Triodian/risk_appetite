@@ -1329,6 +1329,12 @@ function autosave() {
   if (!savesHere() || SRV.state === 'conflict') return;
   SRV.state = 'pending'; clearTimeout(SRV.timer); SRV.timer = setTimeout(saveNow, 1200); paintSave();
 }
+/* Plain names for the items two people changed at once (paths from the server's merge). */
+function conflictNames(paths) {
+  if (!Array.isArray(paths) || !paths.length) return '';
+  const name = p => p[0] === 'decisions' && p[2] === 'cells' && p[3] ? cellLabel(p[3]) : p[0] === 'challenge' ? 'a challenge point' : p[0] === 'questionsForCounsel' ? 'a question for counsel' : p[0] === 'engagement' ? 'engagement details (' + p[1] + ')' : p[0] === 'calibration' ? 'the calibration status' : p.slice(0, 2).join(' · ');
+  return [...new Set(paths.map(name))].slice(0, 4).join('; ');
+}
 async function saveNow() {
   clearTimeout(SRV.timer); SRV.timer = null;
   if (!savesHere() || SRV.state === 'conflict') return;
@@ -1339,8 +1345,17 @@ async function saveNow() {
     const r = await api('PUT', '/api/engagement', { revision: SRV.rev, data: text });
     SRV.inflight = null;
     if (S !== snap) return;
+    if (r.ok && r.body.merged && r.body.data) {
+      // Someone else saved meanwhile; the server merged both sets of changes. Take the merged version,
+      // keeping anything typed here while the save was on its way.
+      let next = r.body.data;
+      if (window.RAFMerge && JSON.stringify(S) !== JSON.stringify(text)) next = RAFMerge.merge3(text, JSON.parse(JSON.stringify(S)), next).data;
+      try { const keep = { screen: UI.screen, open: UI.open, sel: UI.sel }; S = hydrate(next); Object.assign(UI, keep); applyIdentity(); } catch (e) { toast('Merged, but the result could not be shown. Reload the page.'); }
+      toast('Saved, together with changes by ' + (r.body.mergedWith || 'someone else') + '.');
+      render();
+    }
     if (r.ok) { SRV.rev = r.body.revision; SRV.exists = true; document.querySelectorAll('.hdr-app').forEach(a => { a.textContent = backLabel(); }); SRV.lastAt = r.body.updatedAt; SRV.lastBy = r.body.updatedBy; SRV.err = ''; if (SRV.again) { SRV.again = false; SRV.state = 'pending'; return saveNow(); } SRV.state = 'saved'; UI.dirty = false; }
-    else if (r.status === 409) { SRV.state = 'conflict'; SRV.conflict = r.body || {}; SRV.err = r.error; toast(r.error); }
+    else if (r.status === 409) { SRV.state = 'conflict'; SRV.conflict = r.body || {}; const items = conflictNames(SRV.conflict.conflicts); SRV.err = r.error + (items ? ' Item: ' + items + '.' : ''); toast(SRV.err); }
     else { SRV.state = 'error'; SRV.err = r.error; toast('Not saved: ' + r.error); }
     SRV.again = false; paintSave();
   })();
@@ -1491,7 +1506,8 @@ function onClick(e) {
       if (SRV.state === 'error') { if (SRV.err && /cannot change|history/.test(SRV.err)) { if (confirm(SRV.err + '\n\nReload the saved engagement? Your unsaved changes here will be lost.')) loadReal(); } else saveNow(); return; }
       if (SRV.state === 'conflict') {
         const c = SRV.conflict || {};
-        if (!confirm('Someone else' + (c.updatedBy ? ' (' + c.updatedBy + ')' : '') + ' saved the engagement' + (c.updatedAt ? ' at ' + fmtLocal(c.updatedAt) : '') + ' after you opened it, so your latest changes were not saved.\n\nOK: download your version as a file, then load theirs.\nCancel: stay here without saving.')) return;
+        const items = conflictNames(c.conflicts);
+        if (!confirm((items ? 'You and ' + (c.updatedBy || 'someone else') + ' changed the same item at the same time: ' + items + '.' : 'Someone else' + (c.updatedBy ? ' (' + c.updatedBy + ')' : '') + ' saved the engagement' + (c.updatedAt ? ' at ' + fmtLocal(c.updatedAt) : '') + ' after you opened it.') + ' Your latest changes were not saved.\n\nOK: download your version as a file, then load the saved one and redo your change.\nCancel: stay here without saving.')) return;
         saveEngagement(); loadReal(); return;
       }
       toast(saveLabel()[2]);

@@ -55,3 +55,14 @@ The SQL in `lib/store/d1.js` is plain and ports to PostgreSQL with small changes
 - Security headers (Content-Security-Policy), rate limiting, and an independent penetration test.
 - ~~Self-host the web fonts~~ Done: fonts are served from `/fonts` (SIL Open Font Licence; licences included).
 - Export of the audit log to the organisation's monitoring.
+
+
+## Two people editing at once
+
+The engagement is one record with a revision number. Each save says which revision it started from.
+If someone else has saved since, the server takes the saved version it started from (the last 200 are
+kept in `engagement_revisions`), the other person's version and this one, and merges them
+(`public/shared/merge.js`, also used by the browser). Changes to different positions, or different fields
+of one position, are combined. Only if both changed the same field to different values is the save
+refused, and the message names the item. Every merged save is still checked against the person's role,
+and the audit log records which save it was merged with.
