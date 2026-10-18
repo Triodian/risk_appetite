@@ -441,3 +441,5 @@ details.about{background:var(--card)}
 .acct-menu .item:hover,.acct-menu .item:focus-visible{background:var(--parchment-2);outline:none}
 .acct-menu .signout{border-top:1px solid var(--rule-soft);border-radius:0 0 6px 6px;margin-top:6px;padding-top:10px}
 .acct-menu button.item{width:100%;border:0;background:none;text-align:left;font:inherit;font-size:14px;cursor:pointer}
+/* Test site: a stripe across the top so it is never mistaken for the live engagement */
+html.testsite body::before{content:"Test site · not the live engagement";display:block;background:repeating-linear-gradient(135deg,#7A5200 0 12px,#8A6410 12px 24px);color:#fff;font:600 12px/26px var(--sans);text-align:center;letter-spacing:.02em;position:relative;z-index:200}

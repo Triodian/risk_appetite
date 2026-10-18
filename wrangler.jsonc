@@ -14,5 +14,21 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" }
   ],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+
+  // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
+  // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
+  "env": {
+    "test": {
+      "name": "risk-appetite-test",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [{ "pattern": "risk-appetite-test.triodian.com", "custom_domain": true }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "REPLACE_WITH_TEST_DATABASE_ID" }
+      ],
+      "vars": { "SITE_LABEL": "Test site" },
+      "observability": { "enabled": true }
+    }
+  }
 }

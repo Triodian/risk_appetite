@@ -17,6 +17,10 @@ See `docs/architecture.md` for the layers and the path to AWS or Azure.
 - `schema.sql` – reference copy of the database tables (created automatically)
 - `docs/` – framework, fix specification, architecture
 
+## Test site
+
+A separate copy at `risk-appetite-test.triodian.com` with its own database. Set-up and day-to-day use: `docs/test-site.md`.
+
 ## Cloudflare set-up
 - Worker `risk-appetite`, deployed from GitHub (Workers Builds) with `npx wrangler deploy`.
 - Custom domain `risk-appetite.triodian.com`, protected by a Cloudflare Access application.

@@ -21,7 +21,7 @@ export default {
     if (!env.DB) return json({ error: 'The database is not connected to this site yet.' }, 503);
 
     try {
-      const r = await handle({ method: request.method, path: url.pathname, email: who.email, text: () => request.text() }, d1Store(env.DB));
+      const r = await handle({ method: request.method, path: url.pathname, email: who.email, text: () => request.text(), site: env.SITE_LABEL || '' }, d1Store(env.DB));
       return json(r.body, r.status);
     } catch (e) {
       console.error(e);
