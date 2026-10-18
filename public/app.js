@@ -32,7 +32,8 @@ const today = () => { try { return ymdIn(new Date(), prefTZ()); } catch (e) { re
 const fmtYMD = (s, df) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); if (!m) return String(s); if (df === 'iso') return s; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)).toLocaleDateString('en-AU', Object.assign({ timeZone: 'UTC' }, DF_OPTS[df] || DF_OPTS.long)); };
 const dAU = s => s ? fmtYMD(s, prefDF()) : '';
 const dDoc = s => s ? fmtYMD(s, 'long') : '';
-const datesAU = str => String(str).replace(/\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?Z?)?)?\b/g, (m, d, t) => dDoc(d) + (t ? ', ' + t : ''));
+// Only free-standing dates: a date inside a reference such as BRC-2026-11-12 is left as written.
+const datesAU = str => String(str).replace(/(?<![\w-])(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?Z?)?)?(?![\w-])/g, (m, d, t) => dDoc(d) + (t ? ', ' + t : ''));
 const fmtAt = s => s ? fmtLocal(s) : '';
 const fmtLocal = s => { if (!s) return ''; const d = new Date(s); if (isNaN(d)) return s; const tz = prefTZ(), df = prefDF();
   try { const time = d.toLocaleTimeString('en-AU', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }); return fmtYMD(ymdIn(d, tz), df === 'long' ? 'short' : df) + ', ' + time; } catch (e) { return d.toLocaleString('en-AU'); } };
@@ -207,7 +208,8 @@ function calSig() { const cs = calibrationSet(); return JSON.stringify([cs.param
 function versionCheck() {
   const s = calSig(), cal = S.calibration;
   if (lastSig !== null && s !== lastSig && (cal.status === 'working' || cal.status === 'approved')) {
-    const was = cal.status; cal.version += 1; cal.status = 'working';
+    // The new version waits for the CRO's agreement before the board can approve it.
+    const was = cal.status; cal.version += 1; cal.status = 'working'; cal.agreedBy = ''; cal.agreedById = ''; cal.agreedOn = '';
     const recent = S.history.slice().reverse().find(h => h.action !== 'version');
     S.history.push({ at: nowISO(), by: actor(), action: 'version', target: 'calibration', from: was + ' v' + (cal.version - 1), to: 'working v' + cal.version, version: cal.version, cause: recent ? recent.action + ' ' + recent.target : '' });
     UI.dirty = true; autosave();
@@ -291,12 +293,12 @@ function setupGate() {
 /* ---------- calibration ---------- */
 function statusMark() { const c = S.calibration, f = c.status !== 'default' && blocking(runChecks()).length ? ' · checks failing' : '';
   if (c.status === 'approved') return `Approved appetite, version ${c.version}, ${dAU(c.approvedOn)} · minute ${c.minuteRef} · approved by ${c.approvedBy || '—'}${c.agreedBy ? ' · agreed by ' + c.agreedBy + ', ' + dAU(c.agreedOn) : ''}${f}`;
-  if (c.status === 'working') return `Working appetite, version ${c.version}${c.agreedOn ? ', agreed ' + dAU(c.agreedOn) + ' by ' + c.agreedBy : ''}${f}`;
+  if (c.status === 'working') return `Working appetite, version ${c.version}${c.agreedOn ? ', agreed ' + dAU(c.agreedOn) + ' by ' + c.agreedBy : ', changed since the last agreement and waiting for the CRO'}${f}`;
   return 'Uncalibrated'; }
 /* Plain status for the working screens (outputs keep the framework's terms). */
 function statusPlain() { const c = S.calibration;
   if (c.status === 'approved') return `Approved by ${c.approvedBy || 'the board'}, ${dAU(c.approvedOn)} · version ${c.version}`;
-  if (c.status === 'working') return `Working appetite agreed${c.agreedOn ? ' ' + dAU(c.agreedOn) : ''} · version ${c.version}`;
+  if (c.status === 'working') return c.agreedById ? `Working appetite agreed${c.agreedOn ? ' ' + dAU(c.agreedOn) : ''} · version ${c.version}` : `Version ${c.version} changed since the last agreement · waiting for the CRO to agree it`;
   return 'Working appetite not yet agreed'; }
 const exportBlocked = () => S.calibration.status !== 'default' && blocking(runChecks()).length > 0;
 /* ---------- versions: what each agreed or approved version said, and what has changed since ---------- */
@@ -340,6 +342,7 @@ function compareCard() {
 function agreeWorking() {
   const who = me(); if (!who || who.role !== 'cro') return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
   if (blocking(runChecks()).length) return toast('Checks K1 to K9 must pass first.');
+  if (S.calibration.status !== 'default' && S.calibration.agreedById) return toast('Version ' + S.calibration.version + ' is already agreed.');
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
   c.status = 'working'; c.agreedBy = who.name; c.agreedById = who.id; c.agreedOn = today();
   c.issued.push({ version: c.version, status: 'working', on: c.agreedOn, by: c.agreedBy, snapshot: snapshotNow() });
@@ -348,7 +351,7 @@ function agreeWorking() {
 }
 function recordApproval(date, minute, by) {
   if (UI.role !== 'board') return toast('Only the board record role marks approval.');
-  if (S.calibration.status !== 'working') return toast('A working appetite must be agreed first.');
+  if (S.calibration.status !== 'working' || !S.calibration.agreedById) return toast('The CRO must agree this version first.');
   if (!date || !minute || !by) { UI.err.approval = 'Approval needs a date, a minute reference and who approved it.'; render(); return; }
   const c = S.calibration; c.status = 'approved'; c.approvedOn = date; c.minuteRef = minute; c.approvedBy = by; delete UI.err.approval;
   c.issued.push({ version: c.version, status: 'approved', on: date, minuteRef: minute, by, snapshot: snapshotNow() });
@@ -704,10 +707,10 @@ function curGrid(did) {
 function startPanel(d) {
   const inputs = d.startingInputs.map(r => { const i = S.inputs.find(x => x.ref === r); return `<span class="badge ${i && i.status === 'received' ? 'b-green' : 'b-grey'}">${r} · ${i && i.status ? { received: 'received', notHeld: 'not held', notRequested: 'not requested' }[i.status] : 'not marked'}</span>`; }).join(' ');
   let extra = '';
-  if (d.id === 'd1') extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')}: where a person signs off today</summary><div style="padding:0 16px 16px">${curGrid('d1')}</div></details>`;
+  if (d.id === 'd1') extra = `<details class="pr" id="cur-d1" style="margin-top:12px;background:#fff" ${UI.openCur && UI.openCur.d1 ? 'open' : ''}><summary>${T('current', 'Current state')}: where a person signs off today</summary><div style="padding:0 16px 16px">${curGrid('d1')}</div></details>`;
   if (d.id === 'd3') {
     const pr = S.current.commonPair;
-    extra = `<details class="pr" style="margin-top:12px;background:#fff"><summary>${T('current', 'Current state')}: evidence the insurer holds today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
+    extra = `<details class="pr" id="cur-d3" style="margin-top:12px;background:#fff" ${UI.openCur && UI.openCur.d3 ? 'open' : ''}><summary>${T('current', 'Current state')}: evidence the insurer holds today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
@@ -829,6 +832,7 @@ function myActions(ck) {
   const canRespond = ['counsel', 'cro', 'risk'].includes(role);
   S.challenge.filter(c => c.status === 'open').forEach(c => {
     const own = pid && c.cell && P(c.cell) && P(c.cell).owner === pid;
+    if (pid && c.raisedBy === pid && !own) return; // the person who raised it waits for the response
     if (own || canRespond) add('ch' + c.ref, `${own ? 'Challenge on your position' : 'Respond to challenge'} ${c.ref}`, (c.cell ? cellLabel(c.cell) + ' · ' : '') + c.point, { to: 'challenge' });
   });
   // questions for counsel
@@ -899,7 +903,8 @@ function mdStatement() {
   m += `### Location and concentration\n\n` + (S.decisions.d6.jurisdictions.length ? tbl(['Jurisdiction', 'Provider established', 'AI runs'], S.decisions.d6.jurisdictions.map(j => [j.name, pv(`d6.j.${j.id}.established`), pv(`d6.j.${j.id}.runs`)])) : 'No jurisdictions recorded.\n\n') + `Concentration limit: ${pv('d6.concentration')}${val('d6.concentration') ? '%' : ''} of critical operations on a single platform or model provider.\n\n`;
   m += `## 7. Triggers and escalation\n\n` + tbl(['Ref', 'Trigger', 'Measure', 'Threshold', 'Notify within', 'Notified to'], S.decisions.d7.triggers.map(t => [t.ref, t.name, t.measure, pv(`d7.${t.ref}.threshold`), val(`d7.${t.ref}.time`) ? val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`), pv(`d7.${t.ref}.to`)]));
   m += `## 8. Accountability\n\n` + tbl(['Function', 'Accountable person'], S.functions.map(f => [f.name, S.people.filter(p => (p.areas || []).includes(f.id)).map(p => p.name).join(', ') || '[ ]']));
-  if (irContributed()) m += `The independent reviewer advised on the consequence thresholds in decision 2 and separately reviews the AI Use Assessment on behalf of the CRO. The board is aware that the reviewer will review findings measured against thresholds it advised on.\n\n`;
+  if (irContributed()) { const ir = S.people.filter(p => p.role === 'independent').map(p => p.id), np = cellsFor('d2').filter(c => { const p = P(c.id); return p && p.status === 'set' && ir.includes(p.proposedBy); }).length, nc = S.challenge.filter(c => c.decision === 'd2' && ir.includes(c.raisedBy)).length;
+    m += `The independent reviewer ${[np ? `proposed ${np} of the consequence thresholds in decision 2` : '', nc ? `raised ${nc} challenge point${nc === 1 ? '' : 's'} on decision 2` : ''].filter(Boolean).join(' and ')}. If the same reviewer reviews the AI Use Assessment for the CRO, they will review findings measured against thresholds they helped set.\n\n`; }
   m += `## 9. Review\n\nReview interval: ${pv('d8.interval')}.\n\n` + tbl(['Event', 'What is revisited'], S.decisions.d8.events.map(e => [e.event, pv(`d8.ev.${e.id}`)]));
   const sa = sinceApproved();
   if (sa) m += `## Changes since the approved version\n\nThe board approved version ${sa.from.version} on ${sa.from.on}${sa.from.minuteRef ? ' (minute ' + sa.from.minuteRef + ')' : ''}. These positions have changed since then.\n\n` + tbl(['Position', 'Approved', 'Proposed now'], sa.rows.map(r => [r[0], r[1], r[2]]));
@@ -997,16 +1002,16 @@ function screenOutputs(ck) {
   const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || who.role !== 'cro' ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
-  const agreeWhy = whyAgree.join(' ');
-  const whyApprove = [UI.role !== 'board' ? (practice() ? 'Only the board record role can record approval: choose it under “Acting as” above.' : 'Only the board record role can record approval.') : '', c.status === 'default' ? 'The CRO must agree the working appetite first.' : ''].filter(Boolean).join(' '), xb = tab === 'calibration' && exportBlocked();
+  const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);
+  const whyApprove = [UI.role !== 'board' ? (practice() ? 'Only the board record role can record approval: choose it under “Acting as” above.' : 'Only the board record role can record approval.') : '', c.status === 'default' ? 'The CRO must agree the working appetite first.' : c.status === 'working' && !c.agreedById ? 'The CRO must agree version ' + c.version + ' first.' : ''].filter(Boolean).join(' '), xb = tab === 'calibration' && exportBlocked();
   return `${opening('Outputs', 'Statement, schedule and calibration set', 'The statement for board approval, the schedule, the session record and the calibration set.')}
   <section class="card" style="margin-bottom:20px"><div class="row between"><div class="row"><h2 class="sh" style="margin:0">${T('calibration', 'Calibration status')}</h2>${calBadge()}${S.calibration.status === 'default' ? '' : `<span class="soft small">${esc(statusPlain())}</span>`}</div>${c.minuteRef ? `<span class="mono soft">minute ${esc(c.minuteRef)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">${c.status === 'default' ? 'This becomes version 1.' : 'Any later change to a position raises the version number.'}</p>
-      <button class="btn primary sm" data-act="agree" ${agreeWhy || c.status !== 'default' ? 'disabled' : ''}>Agree working appetite</button> ${agreeWhy && c.status === 'default' ? `<p class="why small">${esc(agreeWhy)}${bl ? ' <button class="lnk" data-act="go" data-to="checks">Open checks</button>' : ''}</p>` : c.status !== 'default' ? `<span class="small soft">Agreed ${esc(dAU(c.agreedOn))} by ${esc(c.agreedBy)}</span>` : ''}</div>
+      <button class="btn primary sm" data-act="agree" ${agreeWhy || !needsAgree ? 'disabled' : ''}>Agree ${c.status === 'default' ? 'working appetite' : 'version ' + esc(c.version)}</button> ${agreeWhy && needsAgree ? `<p class="why small">${esc(agreeWhy)}${bl ? ' <button class="lnk" data-act="go" data-to="checks">Open checks</button>' : ''}</p>` : !needsAgree ? `<span class="small soft">Version ${esc(c.version)} agreed ${esc(dAU(c.agreedOn))} by ${esc(c.agreedBy)}</span>` : ''}</div>
     <div class="panel2"><div style="font-weight:600">Record board approval</div><p class="small soft" style="margin:4px 0 10px">Records the board’s approval. The version number does not change.</p>
       <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="f"><span>Date</span><input class="in" type="date" id="ap-date" value="${esc(c.approvedOn || today())}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Minute reference</span><input class="in" id="ap-min" value="${esc(c.minuteRef)}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Approved by (board or committee)</span><input class="in" id="ap-by" value="${esc(c.approvedBy)}" ${UI.role === 'board' ? '' : 'disabled'}></label></div>
       ${UI.err.approval ? `<p class="err" role="alert">${esc(UI.err.approval)}</p>` : ''}
-      <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
+      <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' && c.agreedById ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
     ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(dAU(x.on))}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   ${compareCard()}
@@ -1749,6 +1754,8 @@ async function boot() {
   document.addEventListener('input', onInput);
   document.addEventListener('focusin', onFocusIn);
   document.addEventListener('keydown', onKey);
+  // Keep the Current state panels open across re-renders.
+  document.addEventListener('toggle', ev => { const t = ev.target; if (t && /^cur-d\d$/.test(t.id || '')) { UI.openCur = UI.openCur || {}; UI.openCur[t.id.slice(4)] = t.open; } }, true);
   let sy0 = null; document.addEventListener('touchstart', e => { if (e.target.closest('.handle')) sy0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchmove', e => { if (sy0 != null && e.touches[0].clientY - sy0 > 60) { sy0 = null; if (UI.pop) closePop(); else if (UI.sheet) { UI.sheet = null; renderSheet(); } } }, { passive: true });
   document.addEventListener('touchend', () => { sy0 = null; });
@@ -1767,6 +1774,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
+window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU };
 boot();
 })();

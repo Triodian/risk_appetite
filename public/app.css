@@ -457,3 +457,9 @@ html.testsite body::before{content:"Test site · not the live engagement";displa
 /* Compare versions */
 table.redline del{color:var(--red);text-decoration:line-through;text-decoration-thickness:1px}
 table.redline ins{color:var(--green);text-decoration:none;font-weight:600}
+/* Admin start choices: the same cards as the start screen. */
+.acts{display:flex;flex-direction:column;gap:10px}
+.acts .act{display:flex;gap:14px;align-items:center;text-align:left;background:#fff;border:1px solid var(--rule);border-radius:10px;padding:16px 18px;cursor:pointer;color:inherit;font:inherit;min-height:44px;width:100%}
+.acts .act:hover{border-color:var(--ink-soft)}
+/* Admin and profile header on a phone: the tabs take the free width and scroll, so none is hidden behind the avatar. */
+@media (max-width:639px){body:has(.area-tabs) .hdr-in .apptitle,body:has(.area-tabs) .hdr-in .vrule,body:has(.area-tabs) #savechip{display:none}.area-tabs{flex:1 1 auto;min-width:0}.area-tabs button{padding-left:8px;padding-right:8px}}
