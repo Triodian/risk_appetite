@@ -353,15 +353,13 @@ function drawer() {
     <div class="row between"><strong>Menu</strong><button class="iconbtn" data-act="drawer" aria-label="Close menu">✕</button></div>
     <div class="grp">Steps</div>${it('overview','Decisions overview')}
     ${C.decisions.map(d => it(d.id, `<span class="mono soft" style="width:22px">${d.n}</span>${esc(d.name)}`)).join('')}
-    ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}${it('reference','Reference')}
+    ${it('checks','Checks')}${it('challenge','Challenge')}${it('outputs','Outputs')}
     ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
     <div class="grp">Engagement</div>
     ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
     ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
-    ${bp() === 'desk' ? `<button class="item" data-act="present">Present mode ${UI.present ? '· on' : ''} <span class="mono soft" style="margin-left:auto">P</span></button>` : ''}
     <div class="grp">Apps</div>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
-    <a class="item" href="AI Use Assessment.html" hidden style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">UA</span><span>AI Use Assessment<br><span class="small soft">Reads the calibration set</span></span></a>
   </aside>`;
 }
 function footer() {
@@ -1034,7 +1032,7 @@ function go(to) {
   if (AREA === 'admin' && !ADMIN_SCREENS.includes(to)) { location.href = '/#' + toSlug(to); return; }
   if (AREA === 'admin' && to !== 'setup' && !ADM.loaded) loadAdmin();
   if (UI.open && !UI.open.startsWith(to + '.')) UI.open = null;
-  UI.screen = to; UI.drawer = false; UI.sheet = null; closePop(true); popAnchor = null; UI.showRef = false;
+  UI.screen = to; UI.drawer = false; UI.acct = false; UI.sheet = null; closePop(true); popAnchor = null; UI.showRef = false;
   try { history.replaceState(null, '', '#' + toSlug(to)); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
@@ -1128,6 +1126,7 @@ function avatar() {
     <a role="menuitem" class="item" href="/profile/">Your profile</a>
     ${u.isAdmin ? `<a role="menuitem" class="item" href="/admin/#set-up">Admin · set-up and users</a>` : ''}
     <a role="menuitem" class="item" href="/user-guide/">User guide</a>
+    ${AREA === 'app' && S ? `<button role="menuitem" class="item" data-act="go" data-to="reference">Reference · scales and glossary</button>` : `<a role="menuitem" class="item" href="/#reference">Reference · scales and glossary</a>`}
     <a role="menuitem" class="item signout" href="/cdn-cgi/access/logout">Sign out</a></div>` : ''}</span>`;
 }
 
@@ -1472,7 +1471,7 @@ function onClick(e) {
   const gateOf = { addPerson: 'setup', rmPerson: 'setup', addFn: 'setup', rmFn: 'setup', addOp: 'setup', rmOp: 'setup', useStart: d.d, bulkOwner: d.d, addQC: d.d, addJur: 'd6', rmJur: 'd6', addTrig: 'd7', rmTrig: 'd7', addEvent: 'd8', rmEvent: 'd8', loadExtract: 'd3', notSet: (d.cell || '').split('.')[0], clearNotSet: (d.cell || '').split('.')[0] }[a];
   if (gateOf && !can(gateOf)) return toast(blockReason(gateOf));
   const A = {
-    go: () => go(d.to), drawer: () => { UI.drawer = !UI.drawer; render(); }, present: () => togglePresent(),
+    go: () => go(d.to), drawer: () => { UI.drawer = !UI.drawer; render(); },
     save: () => saveEngagement(),
     open: () => { if (SRV.exists) return toast('The engagement has already been started.'); if (AREA !== 'admin') return; document.getElementById('fileIn').click(); },
     admAdd: () => { ADM.adding = true; ADM.editing = null; ADM.err = ''; ADM.draft = null; render(); },
@@ -1566,7 +1565,6 @@ function onKey(e) {
   const t = e.target, typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
   if (e.key === 'Escape' && UI.acct) { UI.acct = false; render(); const b = document.querySelector('[data-act="acct"]'); if (b) b.focus(); return; }
   if (e.key === 'Escape') { if (UI.guide) { UI.guide = null; render(); return; } if (UI.pop) { closePop(); return; } if (UI.sheet) { UI.sheet = null; renderSheet(); return; } if (UI.open && bp() !== 'phone') { closeDet(UI.open); return; } if (UI.drawer) { UI.drawer = false; render(); return; } }
-  if ((e.key === 'p' || e.key === 'P') && !typing && !e.metaKey && !e.ctrlKey && S && UI.screen !== 'entry') { togglePresent(); return; }
   if (t.dataset && t.dataset.gr) {
     const isSel = t.tagName === 'SELECT', k = e.key;
     const mv = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
@@ -1578,7 +1576,6 @@ function onKey(e) {
     const nx = document.querySelector(`[data-gr="${t.dataset.gr}"][data-r="${r}"][data-c="${c}"]`); if (nx) nx.focus();
   }
 }
-function togglePresent() { if (bp() !== 'desk') return toast('Present mode needs a wider screen (at least 1,024 pixels).'); UI.present = !UI.present; render(); }
 
 /* ---------- boot ---------- */
 async function boot() {
