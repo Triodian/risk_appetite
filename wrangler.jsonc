@@ -34,7 +34,7 @@
       "preview_urls": false,
       "routes": [{ "pattern": "risk-appetite-test.triodian.com", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "REPLACE_WITH_TEST_DATABASE_ID" }
+        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
       ],
       "vars": { "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "off" },
       "triggers": { "crons": ["0 21 * * *"] },
