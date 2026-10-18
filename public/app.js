@@ -22,9 +22,12 @@ const fromSlug = h => { h = decodeURIComponent(h || '').toLowerCase(); const hit
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 9);
 const nowISO = () => new Date().toISOString();
-const today = () => new Date().toISOString().slice(0, 10);
-const fmtAt = s => s ? s.replace('T', ' ').slice(0, 16) : '';
-const fmtLocal = s => { if (!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+/* Display dates the Australian way: 17 October 2026 (data stays ISO). */
+const dAU = s => { if (!s) return ''; const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); if (!m) return String(s); return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }); };
+const datesAU = str => String(str).replace(/\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?Z?)?)?\b/g, (m, d, t) => dAU(d) + (t ? ', ' + t : ''));
+const fmtAt = s => s ? fmtLocal(s) : '';
+const fmtLocal = s => { if (!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
 const rk = (arr, v) => arr.indexOf(v);
 const D = id => C.decisions.find(d => d.id === id) || { id: String(id), n: '?', name: 'Unknown decision', session: '', param: '', question: '', prompts: [], startingInputs: [], levels: [], gaps: [], bands: [], priorities: [], events: [], triggers: [], markings: [] };
 const sid = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -277,8 +280,8 @@ function setupGate() {
 
 /* ---------- calibration ---------- */
 function statusMark() { const c = S.calibration, f = c.status !== 'default' && blocking(runChecks()).length ? ' · checks failing' : '';
-  if (c.status === 'approved') return `Approved appetite, version ${c.version}, ${c.approvedOn} · minute ${c.minuteRef} · approved by ${c.approvedBy || '—'}${c.agreedBy ? ' · agreed by ' + c.agreedBy + ', ' + c.agreedOn : ''}${f}`;
-  if (c.status === 'working') return `Working appetite, version ${c.version}${c.agreedOn ? ', agreed ' + c.agreedOn + ' by ' + c.agreedBy : ''}${f}`;
+  if (c.status === 'approved') return `Approved appetite, version ${c.version}, ${dAU(c.approvedOn)} · minute ${c.minuteRef} · approved by ${c.approvedBy || '—'}${c.agreedBy ? ' · agreed by ' + c.agreedBy + ', ' + dAU(c.agreedOn) : ''}${f}`;
+  if (c.status === 'working') return `Working appetite, version ${c.version}${c.agreedOn ? ', agreed ' + dAU(c.agreedOn) + ' by ' + c.agreedBy : ''}${f}`;
   return 'Uncalibrated'; }
 const exportBlocked = () => S.calibration.status !== 'default' && blocking(runChecks()).length > 0;
 function agreeWorking() {
@@ -519,7 +522,7 @@ function screenOverview(ck) {
   const setupNote = sg.ok ? '' : `<div class="scope" role="note" style="margin-bottom:22px"><span aria-hidden="true">⚠</span><span><strong>Set-up is not complete.</strong> Still open: ${esc(missing.join('; '))}. ${practice() ? '' : SRV.user && SRV.user.isAdmin ? '<a href="/admin/#set-up">Complete set-up in Admin</a>.' : 'An administrator completes set-up.'}</span></div>`;
   return `${opening('Decisions', 'Eight appetite decisions', 'Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.')}${setupNote}
   <div class="calstrip"><div class="row"><span class="sh" style="margin:0">${T('calibration', 'Calibration set')}</span>${calBadge()}<span class="mono soft">${esc(S.calibration.status === 'default' ? 'The working appetite has not yet been agreed' : statusMark())}</span></div>
-    <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(c.agreedOn)} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
+    <div class="row">${c.agreedOn ? `<span class="mono soft">agreed ${esc(dAU(c.agreedOn))} · ${esc(c.agreedBy)}</span>` : ''}<button class="btn sm" data-act="go" data-to="outputs">Outputs →</button></div></div>
   <h2 class="sh">Session 1 · decisions 1 to 3</h2><div class="dgrid" style="margin-bottom:24px">${cards.split('</button>').slice(0, 3).join('</button>')}</button></div>
   <h2 class="sh">Session 2 · decisions 4 to 8</h2><div class="dgrid">${cards.split('</button>').slice(3, 8).join('</button>')}</button></div>
   ${stepbar()}`;
@@ -541,7 +544,7 @@ function cellMarks(c, off) {
   const p = P(c.id); let h = '';
   (off[c.id] || []).filter(x => /^K[23]:/.test(x)).forEach(x => h += `<span class="flag">${esc(x)}</span>`);
   if (p && p.status === 'set' && !proposerOk(c.did, p)) h += `<span class="mini" style="color:var(--red)">choose a proposer</span>`;
-  if (p && p.status === 'notSet') h += `<span class="mini" style="color:var(--ochre)">not set · ${esc(pname(p.notSetOwner))} · ${esc(p.notSetDue)}</span>`;
+  if (p && p.status === 'notSet') h += `<span class="mini" style="color:var(--ochre)">not set · ${esc(pname(p.notSetOwner))} · ${esc(dAU(p.notSetDue))}</span>`;
   if (p && p.condition) h += `<span class="mini">Condition: ${esc(p.condition)}${p.testable ? ' ✓' : ''}</span>`;
   const ks = [...new Set((off[c.id] || []).filter(x => !/^K[23]:/.test(x)).map(x => x.split(':')[0]))];
   if (ks.length) h += `<span class="ckfails">${ks.map(k => { const ck = C.checks.find(x => x.id === k); return `<button type="button" class="ckchip" data-term="check:${k}" aria-expanded="false" aria-controls="poproot" title="${esc(ck ? k + ' ' + ck.name + ': ' + ck.fails : k)}" aria-label="Fails check ${esc(k)}${ck ? ', ' + esc(ck.name) : ''}. Show what it checks">${k}</button>`; }).join('')}</span>`;
@@ -626,7 +629,7 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
-      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + S.current.register.on + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
@@ -663,7 +666,7 @@ function detailsHtml(id, inline) {
       ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (if it differs from the existing threshold)' : ' (if higher than for own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
       <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>`;
   const notSet = `<div class="panel2" style="padding:12px 14px"><div class="sh" style="margin-bottom:8px">Record as not set <span class="soft" style="font-weight:400">· needs an owner and a due date</span></div>
-        <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(p.notSetDue)}"></label></div>
+        <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(dAU(p.notSetDue))}"></label></div>
         ${UI.err[id] ? `<p class="err" role="alert" style="margin:8px 0 0">${esc(UI.err[id])}</p>` : ''}
         <div class="row" style="margin-top:10px"><button class="btn sm" data-act="notSet" data-cell="${eid}">Record not set</button>${p.status === 'notSet' ? `<button class="btn sm ghost" data-act="clearNotSet" data-cell="${eid}">Clear</button>` : ''}</div></div>`;
   const trail = `${p.recordedBy ? `<p class="mini" style="margin-top:10px">recorded by ${esc(ROLE_NAME[p.recordedBy] || p.recordedBy)}${p.proposedBy ? ' · proposed by ' + esc(pname(p.proposedBy)) : ''}</p>` : ''}
@@ -751,7 +754,7 @@ function screenChallenge() {
 
 /* ---------- outputs ---------- */
 const tbl = (h, rows) => '| ' + h.join(' | ') + ' |\n| ' + h.map(() => '---').join(' | ') + ' |\n' + rows.map(r => '| ' + r.map(x => String(x == null ? '' : x).replace(/\|/g, '\\|').replace(/\n/g, ' ')).join(' | ') + ' |').join('\n') + '\n\n';
-const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'; if (p.status === 'notSet') return `not set (${pname(p.notSetOwner)}, by ${p.notSetDue})`; return String(p.value); };
+const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'; if (p.status === 'notSet') return `not set (${pname(p.notSetOwner)}, by ${dAU(p.notSetDue)})`; return String(p.value); };
 function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[Insurer]'} · ${e.reference || '[reference]'} · generated ${today()}\n\n`; }
 function mdStatement() {
   const e = S.engagement, ins = e.insurer || '[insurer]'; let m = mdHead('AI risk appetite statement');
@@ -837,7 +840,7 @@ function mdCalibration() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => withLabels(fn(), 'C'); return { statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
   const tabs = [['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
@@ -850,7 +853,7 @@ function screenOutputs(ck) {
       <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="f"><span>Date</span><input class="in" type="date" id="ap-date" value="${esc(c.approvedOn || today())}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Minute reference</span><input class="in" id="ap-min" value="${esc(c.minuteRef)}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Approved by (board or committee)</span><input class="in" id="ap-by" value="${esc(c.approvedBy)}" ${UI.role === 'board' ? '' : 'disabled'}></label></div>
       ${UI.err.approval ? `<p class="err" role="alert">${esc(UI.err.approval)}</p>` : ''}
       <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' ? '' : 'disabled'}>Record approval</button> ${UI.role !== 'board' ? '<span class="small soft">Board record role only</span>' : c.status !== 'working' ? '<span class="small soft">Needs a working appetite</span>' : ''}</div></div>
-    ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(x.on)}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
+    ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(dAU(x.on))}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
