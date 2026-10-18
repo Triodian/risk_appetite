@@ -19,11 +19,12 @@
   // Daily at 07:00 Brisbane time: remind people about "not set" positions due soon (see lib/core/notify.js).
   "triggers": { "crons": ["0 21 * * *"] },
 
-  // Email notifications are built but switched off. They will be sent from notifications@triodian.com
-  // (a Google Workspace mailbox, so replies arrive there). To switch them on: onboard triodian.com in
-  // Cloudflare Email Service, add  "send_email": [{ "name": "EMAIL" }]  here, and set NOTIFY_SENDING to "on".
-  // Until then messages are held and listed in Admin → Notifications.
-  "vars": { "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "off" },
+  // Email notifications are switched on. They are sent from notifications@triodian.com (a Google Workspace
+  // mailbox, so replies arrive there) through Cloudflare Email Service, which needs triodian.com onboarded in
+  // Email Service (Email Sending). Until it is, each send fails and is listed as Failed, with the reason, in
+  // Admin → Notifications; saves are never affected. To stop sending, set NOTIFY_SENDING to "off".
+  "send_email": [{ "name": "EMAIL" }],
+  "vars": { "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
 
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
@@ -36,7 +37,8 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
       ],
-      "vars": { "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "off" },
+      "vars": { "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
     }
