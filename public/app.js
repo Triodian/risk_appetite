@@ -297,12 +297,50 @@ function statusPlain() { const c = S.calibration;
   if (c.status === 'working') return `Working appetite agreed${c.agreedOn ? ' ' + dAU(c.agreedOn) : ''} · version ${c.version}`;
   return 'Working appetite not yet agreed'; }
 const exportBlocked = () => S.calibration.status !== 'default' && blocking(runChecks()).length > 0;
+/* ---------- versions: what each agreed or approved version said, and what has changed since ---------- */
+function posText(id) { const p = P(id); if (!p || p.status === 'unset') return ''; if (p.status === 'notSet') return 'not set'; return p.value == null ? '' : String(p.value); }
+function snapshotNow() {
+  const cells = {};
+  C.decisions.forEach(d => cellsFor(d.id).forEach(c => { const p = P(c.id), t = posText(c.id); if (t || (p && p.condition)) cells[c.id] = [t, (p && p.condition) || '', (p && p.owner) || '', cellLabel(c.id)]; }));
+  return { at: nowISO(), cells, overall: S.engagement.overallPosition || '' };
+}
+const issuedSnaps = () => (S.calibration.issued || []).map((x, i) => ({ i, x })).filter(o => o.x.snapshot);
+const snapLabel = x => `Version ${x.version} · ${x.status === 'approved' ? 'approved' : 'agreed'} ${dDoc(x.on)}`;
+/* Rows that differ between two snapshots: [label, before, after, id]. */
+function snapDiff(a, b) {
+  const ids = [...new Set([...Object.keys(a.cells || {}), ...Object.keys(b.cells || {})])], rows = [];
+  const show = v => v ? (v[0] || '—') + (v[1] ? ` (${v[1]})` : '') : '—';
+  ids.forEach(id => { const x = (a.cells || {})[id], y = (b.cells || {})[id]; if (show(x) !== show(y)) rows.push([(y || x)[3] || cellLabel(id), show(x), show(y), id]); });
+  if ((a.overall || '') !== (b.overall || '')) rows.push(['Overall position', a.overall || '—', b.overall || '—', '']);
+  const order = id => { const m = /^d(\d)/.exec(id || ''); return m ? +m[1] : 9; };
+  return rows.sort((p, q) => order(p[3]) - order(q[3]));
+}
+/* The last version the board approved, and what has changed since (for the redline in the outputs). */
+function sinceApproved() {
+  const ap = issuedSnaps().filter(o => o.x.status === 'approved').pop();
+  if (!ap || S.calibration.version <= ap.x.version && S.calibration.status === 'approved') return null;
+  const rows = snapDiff(ap.x.snapshot, snapshotNow());
+  return rows.length ? { from: ap.x, rows } : null;
+}
+function lastChange(id, sinceISO) { const h = S.history.filter(x => x.target === id && (!sinceISO || x.at > sinceISO)).pop(); return h ? `${h.by || ''}, ${fmtLocal(h.at)}` : ''; }
+function compareCard() {
+  const snaps = issuedSnaps();
+  if (!snaps.length) return `<section class="card" style="margin-bottom:20px"><h2 class="sh">Compare versions</h2><p class="small soft" style="margin:6px 0 0">Each time the CRO agrees the working appetite or the board approves it, the positions are kept as that version. Once there is one, you can compare it with any later version or with the positions now.</p></section>`;
+  const from = UI.cmpFrom != null && snaps.some(o => o.i === UI.cmpFrom) ? UI.cmpFrom : snaps[snaps.length - 1].i, to = UI.cmpTo == null ? 'now' : UI.cmpTo;
+  const A = S.calibration.issued[from], B = to === 'now' ? { snapshot: snapshotNow() } : S.calibration.issued[to];
+  const rows = snapDiff(A.snapshot, (B || {}).snapshot || snapshotNow());
+  const opt = (sel, incNow) => snaps.map(o => `<option value="${o.i}" ${sel === o.i ? 'selected' : ''}>${esc(snapLabel(o.x))}</option>`).join('') + (incNow ? `<option value="now" ${sel === 'now' ? 'selected' : ''}>The positions now</option>` : '');
+  return `<section class="card" style="margin-bottom:20px"><div class="row between"><h2 class="sh" style="margin:0">Compare versions</h2><span class="small soft">${rows.length ? rows.length + ' ' + (rows.length === 1 ? 'change' : 'changes') : 'No changes'}</span></div>
+    <div class="row" style="margin:12px 0"><label class="f" style="flex-direction:row;align-items:center;gap:8px"><span>From</span><select class="in" style="width:auto" data-act="cmp" data-k="from">${opt(from, false)}</select></label><label class="f" style="flex-direction:row;align-items:center;gap:8px"><span>to</span><select class="in" style="width:auto" data-act="cmp" data-k="to">${opt(to, true)}</select></label></div>
+    ${rows.length ? `<div class="tw"><table class="lg redline"><thead><tr><th>Position</th><th>Was</th><th>Now</th><th>Last changed</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r[3] ? `<button class="lnk" data-act="gotoCell" data-cell="${esc(r[3])}">${esc(withLabels(r[0], 'C'))}</button>` : esc(r[0])}</td><td><del>${esc(withLabels(r[1]))}</del></td><td><ins>${esc(withLabels(r[2]))}</ins></td><td class="small soft">${esc(r[3] ? lastChange(r[3], A.snapshot.at) : '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small soft" style="margin:0">The two are the same.</p>'}
+  </section>`;
+}
 function agreeWorking() {
   const who = me(); if (!who || who.role !== 'cro') return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
   if (blocking(runChecks()).length) return toast('Checks K1 to K9 must pass first.');
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
   c.status = 'working'; c.agreedBy = who.name; c.agreedById = who.id; c.agreedOn = today();
-  c.issued.push({ version: c.version, status: 'working', on: c.agreedOn, by: c.agreedBy });
+  c.issued.push({ version: c.version, status: 'working', on: c.agreedOn, by: c.agreedBy, snapshot: snapshotNow() });
   log('agreeWorking', 'calibration', from, 'working v' + c.version); render(); toast('Working appetite agreed. Version ' + c.version + '.');
 }
 function recordApproval(date, minute, by) {
@@ -310,7 +348,7 @@ function recordApproval(date, minute, by) {
   if (S.calibration.status !== 'working') return toast('A working appetite must be agreed first.');
   if (!date || !minute || !by) { UI.err.approval = 'Approval needs a date, a minute reference and who approved it.'; render(); return; }
   const c = S.calibration; c.status = 'approved'; c.approvedOn = date; c.minuteRef = minute; c.approvedBy = by; delete UI.err.approval;
-  c.issued.push({ version: c.version, status: 'approved', on: date, minuteRef: minute, by });
+  c.issued.push({ version: c.version, status: 'approved', on: date, minuteRef: minute, by, snapshot: snapshotNow() });
   log('approve', 'calibration', 'working v' + c.version, 'approved v' + c.version + ' · ' + minute); render(); toast('Board approval recorded.');
 }
 
@@ -854,6 +892,8 @@ function mdStatement() {
   m += `## 8. Accountability\n\n` + tbl(['Function', 'Accountable person'], S.functions.map(f => [f.name, S.people.filter(p => (p.areas || []).includes(f.id)).map(p => p.name).join(', ') || '[ ]']));
   if (irContributed()) m += `The independent reviewer advised on the consequence thresholds in decision 2 and separately reviews the AI Use Assessment on behalf of the CRO. The board is aware that the reviewer will review findings measured against thresholds it advised on.\n\n`;
   m += `## 9. Review\n\nReview interval: ${pv('d8.interval')}.\n\n` + tbl(['Event', 'What is revisited'], S.decisions.d8.events.map(e => [e.event, pv(`d8.ev.${e.id}`)]));
+  const sa = sinceApproved();
+  if (sa) m += `## Changes since the approved version\n\nThe board approved version ${sa.from.version} on ${sa.from.on}${sa.from.minuteRef ? ' (minute ' + sa.from.minuteRef + ')' : ''}. These positions have changed since then.\n\n` + tbl(['Position', 'Approved', 'Proposed now'], sa.rows.map(r => [r[0], r[1], r[2]]));
   m += `## Appendix. Definitions\n\n${C.scales.note}\n\n` + tbl(['Code', 'Authority tier', 'Definition'], C.scales.authority.map(s => [s.code, s.name, s.def])) + tbl(['Code', 'Consequence level', 'Generic definition'], C.scales.consequence.map(s => [s.code, s.name, s.def])) + tbl(['Code', 'Evidence rung', 'Definition'], C.scales.evidence.map(s => [s.code, s.name, s.def]));
   return m;
 }
@@ -941,6 +981,7 @@ function screenOutputs(ck) {
       <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
     ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(dAU(x.on))}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
+  ${compareCard()}
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'statement' ? `<div class="card" style="margin-bottom:16px">${fld('Overall position · in the board\u2019s words, written by counsel', 'engagement.overallPosition', S.engagement.overallPosition, { area: true, ph: C.overallExample })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
   ${tab === 'schedule' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Measure owners · check K8</h3><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${C.measures.map(x => `<label class="f" for="mo-${x.ref}"><span>${x.ref} · ${esc(withLabels(x.measure, 'C'))}</span><select class="in" id="mo-${x.ref}" data-path="measureOwners.${x.ref}" ${can('measures') ? '' : 'disabled'}><option value="">— ${esc(x.owner)}</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${(S.measureOwners || {})[x.ref] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`).join('')}</div></div>` : ''}
@@ -1609,6 +1650,7 @@ function changeHandler(e) {
   if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
   if (d.act === 'hideIntro') { setIntroHidden(t.checked); return; }
   if (d.act === 'showIntro') { setIntroHidden(!t.checked); PRF.msg = ''; return; }
+  if (d.act === 'cmp') { const v = t.value === 'now' ? 'now' : +t.value; if (d.k === 'from') UI.cmpFrom = v; else UI.cmpTo = v; render(); return; }
   if (d.act === 'pref') { const df = (document.getElementById('p-df') || {}).value || 'long', tz = (document.getElementById('p-tz') || {}).value || '';
     api('PUT', '/api/me/prefs', { dateFormat: df, timeZone: tz, notify: (document.getElementById('p-notify') || {}).checked !== false }).then(r => { if (r.ok) { SRV.user = r.body.user; PRF.prefMsg = 'Saved.'; } else PRF.prefMsg = r.error || 'Could not save.'; render(); }); return; }
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
@@ -1678,6 +1720,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else await loadReal(); } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { get state() { return S; }, validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
+window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go };
 boot();
 })();
