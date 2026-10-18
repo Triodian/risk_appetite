@@ -363,7 +363,6 @@ function drawer() {
 }
 function footer() {
   return `<footer class="ft"><div class="wrap">
-    <div class="scope" role="note"><span><strong>About this app.</strong> ${esc(C.banner)}</span></div>
     <div class="ftrow"><span class="row" style="gap:8px;color:var(--aubergine)"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="20" style="height:20px;width:auto;display:block"><span class="mono soft">RAF-01 · framework ${esc(C.frameworkDate)}</span></span>
     <span class="row"><a class="lnk" href="/user-guide/">User guide</a><button class="lnk" data-act="go" data-to="reference">Reference</button><span class="mono">${esc(statusPlain())}</span></span></div>
   </div></footer>`;
