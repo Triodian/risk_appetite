@@ -3,7 +3,8 @@
   "name": "risk-appetite",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./public", "binding": "ASSETS" },
+  // run_worker_first: every request reaches src/worker.js first, so pages can require sign-in (lib/identity/session.js).
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
 
   // Only reachable at the custom domain (behind Cloudflare Access sign-in).
   // The default workers.dev address and preview addresses are switched off.
@@ -26,7 +27,10 @@
   "send_email": [{ "name": "EMAIL" }],
   // DEMO_ADMINS (demo addition): comma-separated emails made active administrators when they sign in.
   // Empty it ("") on a client deployment. See lib/core/api.js.
-  "vars": { "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+  // DEMO_LOGIN (demo addition): username sign-in for the shared demo account, password held only as a PBKDF2 hash.
+  // DEMO_SESSION_KEY signs the demo sign-in cookie, shared across triodian.com; it must be the same in both apps and
+  // is only ever accepted for the demo account's own email. See lib/identity/session.js.
+  "vars": { "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$TL8f1AXvNSf_IOFhS_lshA$Vr472_oB002rXFcdynXU4ChILoNAc47lpVXtInI4jNs\"}]", "DEMO_SESSION_KEY": "Whrq7Fk0ZTbydyKV_pwzm3bO9lxn9-AfRmwGXnPpd3Q", "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
 
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
@@ -39,7 +43,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
       ],
-      "vars": { "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "vars": { "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$TL8f1AXvNSf_IOFhS_lshA$Vr472_oB002rXFcdynXU4ChILoNAc47lpVXtInI4jNs\"}]", "DEMO_SESSION_KEY": "Whrq7Fk0ZTbydyKV_pwzm3bO9lxn9-AfRmwGXnPpd3Q", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }

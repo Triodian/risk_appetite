@@ -429,13 +429,13 @@ function entry() {
   const opt = (attrs, title, text) => `<${attrs.startsWith('href') ? 'a' : 'button'} class="act" ${attrs} ${attrs.startsWith('href') ? 'style="text-decoration:none"' : ''}><span><strong>${title}</strong><br><span class="small soft">${text}</span></span><span class="act-go" aria-hidden="true"></span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
   const practice = opt(quick ? 'data-act="example"' : 'data-act="guide" data-g="practice"', 'Practise with the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
   if (!SRV.checked) note = 'Connecting…';
-  else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/cdn-cgi/access/logout">Sign out</a>`;
+  else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/auth/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
   else if (!SRV.exists) {
     if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt(quick ? 'href="/admin/#set-up"' : 'data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
     else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + (quick ? '' : `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`); }
   } else note = 'Opening the engagement…';
-  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/cdn-cgi/access/logout">Sign out</a></span></div>` : '';
+  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/auth/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="30" style="height:30px;width:auto;display:block"><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
@@ -1245,7 +1245,7 @@ function avatar() {
     ${u.isAdmin ? `<a role="menuitem" class="item" href="/admin/#set-up">Admin · set-up and users</a>` : ''}
     <a role="menuitem" class="item" href="/user-guide/">User guide</a>
     ${AREA === 'app' && S ? `<button role="menuitem" class="item" data-act="go" data-to="reference">Reference · scales and glossary</button>` : `<a role="menuitem" class="item" href="/#reference">Reference · scales and glossary</a>`}
-    <a role="menuitem" class="item signout" href="/cdn-cgi/access/logout">Sign out</a></div>` : ''}</span>`;
+    <a role="menuitem" class="item signout" href="/auth/logout">Sign out</a></div>` : ''}</span>`;
 }
 
 /* ---------- Admin and profile areas ---------- */
@@ -1275,7 +1275,7 @@ function renderArea(app) {
   try { if (ae && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
   let main;
   if (!SRV.checked) main = '<p class="soft" style="padding:40px 0">Loading…</p>';
-  else if (!SRV.on) main = areaMsg(SRV.code === 'no_access' ? 'No access' : 'Could not connect', esc(SRV.reason) + (SRV.code === 'no_access' ? ' <a href="/cdn-cgi/access/logout">Sign out</a>' : ''));
+  else if (!SRV.on) main = areaMsg(SRV.code === 'no_access' ? 'No access' : 'Could not connect', esc(SRV.reason) + (SRV.code === 'no_access' ? ' <a href="/auth/logout">Sign out</a>' : ''));
   else if (AREA === 'profile') main = screenProfile();
   else if (!SRV.user.isAdmin) main = areaMsg('Administrators only', 'Admin is for administrators. Ask an administrator if you need something set up or a user added.');
   else if (UI.screen === 'users') main = screenUsers();
@@ -1386,7 +1386,7 @@ function screenProfile() {
     </form></section>
   <section class="card"><h2 class="sh">Email address</h2>
     <p>You sign in as <strong>${esc(u.email)}</strong>.</p>
-    ${u.pendingEmail ? `<div class="scope" style="margin-top:12px"><span aria-hidden="true">✉</span><span>You asked to change your email to <strong>${esc(u.pendingEmail)}</strong>. To confirm, <a href="/cdn-cgi/access/logout">sign out</a> and sign in again with the new address; a code is sent there. Until then, keep using ${esc(u.email)}. <button class="lnk" data-act="cancelEmail">Cancel the change</button></span></div>`
+    ${u.pendingEmail ? `<div class="scope" style="margin-top:12px"><span aria-hidden="true">✉</span><span>You asked to change your email to <strong>${esc(u.pendingEmail)}</strong>. To confirm, <a href="/auth/logout">sign out</a> and sign in again with the new address; a code is sent there. Until then, keep using ${esc(u.email)}. <button class="lnk" data-act="cancelEmail">Cancel the change</button></span></div>`
     : `<form id="emailForm" class="adm-form" novalidate style="margin-top:12px">
       <label class="f">New email address<input class="in" id="p-email" type="email" autocomplete="email"></label>
       ${PRF.emailErr ? `<p class="err acts2" role="alert">${esc(PRF.emailErr)}</p>` : ''}

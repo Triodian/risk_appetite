@@ -4,7 +4,7 @@
 //   identity  → lib/identity/cloudflare-access.js (Cloudflare Access sign-in)
 //   storage   → lib/store/d1.js (Cloudflare D1)
 //   email     → Cloudflare Email Service binding EMAIL, only when NOTIFY_SENDING is "on" (off by default)
-import { identify } from '../lib/identity/cloudflare-access.js';
+import { whoIs, handleAuth, gate } from '../lib/identity/session.js';
 import { d1Store } from '../lib/store/d1.js';
 import { handle, issuedCalibration } from '../lib/core/api.js';
 import { dueReminders, deliver } from '../lib/core/notify.js';
@@ -26,9 +26,11 @@ const demoAdmins = env => String(env.DEMO_ADMINS || '').split(',').map(e => e.tr
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    // Sign-in: /login (a static page), /auth/* (lib/identity/session.js). Pages need a session; assets do not.
+    if (url.pathname.startsWith('/auth/')) return (await handleAuth(request, env)) || new Response('Not found', { status: 404 });
+    if (!url.pathname.startsWith('/api/')) return (await gate(request, env)) || env.ASSETS.fetch(request);
 
-    const who = await identify(request, env);
+    const who = await whoIs(request, env);
     if (!env.DB && (who.email || who.service)) return json({ error: 'The database is not connected to this site yet.' }, 503);
     // The AI Use Assessment app's service token may read the issued calibration set, and nothing else.
     // CALIBRATION_CLIENT_ID is that token's Client ID. Add it as a secret on this Worker (secrets survive deploys).
