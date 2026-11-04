@@ -21,3 +21,15 @@ test('admin, profile and user guide pages load', async ({ browser }) => {
     await p.context().close();
   }
 });
+
+test('demo: the three-app introduction opens first, and Switch app reopens it', async ({ browser }) => {
+  const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': U.counsel }, viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage(); await page.goto('/'); await page.waitForTimeout(800);
+  const dlg = page.getByRole('dialog', { name: 'From what the law expects to evidence each AI use fits' });
+  await expect(dlg).toBeVisible();
+  await expect(dlg.getByRole('link', { name: /Open Obligations Atlas/ })).toHaveAttribute('href', /obligations-atlas\.triodian\.com\/\?suite=1/);
+  await page.keyboard.press('Escape'); await expect(dlg).toBeHidden();
+  await page.reload(); await page.waitForTimeout(500); await expect(dlg).toBeHidden();
+  await page.getByRole('button', { name: /Switch app/ }).click(); await expect(dlg).toBeVisible();
+  await ctx.close();
+});

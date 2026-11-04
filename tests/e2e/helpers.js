@@ -22,6 +22,8 @@ export async function editAs(as, change) {
 /** A page signed in as `as`, collecting script errors in page._errors. */
 export async function pageAs(browser, as, path = '/') {
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': as }, viewport: { width: 1280, height: 900 } });
+  // The demo introduction (public/suite.js) opens once per session; mark it seen so it doesn't cover the app under test.
+  await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const page = await ctx.newPage();
   page._errors = [];
   page.on('pageerror', e => page._errors.push(String(e)));

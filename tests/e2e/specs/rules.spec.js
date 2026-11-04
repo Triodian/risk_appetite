@@ -119,6 +119,8 @@ test('outputs keep a date inside a minute reference as written', async ({ browse
 
 test('on a phone, every admin tab can be reached and none sits under the avatar', async ({ browser }) => {
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 390, height: 844 } });
+  // The demo introduction (public/suite.js) opens once per session; mark it seen so it doesn't cover the app under test.
+  await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const page = await ctx.newPage(); await page.goto('/admin/'); await page.waitForTimeout(800);
   const tab = page.locator('.area-tabs button', { hasText: 'Notifications' });
   await tab.scrollIntoViewIfNeeded();
