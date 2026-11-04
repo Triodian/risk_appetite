@@ -44,6 +44,14 @@ const forged = Buffer.from(JSON.stringify({ e: 'damian.hickey@triodian.com', x: 
 check('a tampered cookie naming someone else is refused', !(await whoIs(new Request(HOST + '/', { headers: { Cookie: 'tri_demo=' + forged } }), env)).email);
 check('a cookie signed with another key is refused', !(await whoIs(new Request(HOST + '/', { headers: { Cookie: cookie } }), { ...env, DEMO_SESSION_KEY: 'other' })).email);
 
+for (const c of ['#', 'L', '3', '$', 'e', '€', ' ']) {
+  r = await login('trio_demo', 'C4b' + c + '1Jh*12');
+  check(`any character in place of the £ works: "${c}"`, r.headers.get('Location') === '/' && /^tri_demo=/.test(r.headers.get('Set-Cookie') || ''));
+}
+for (const [pw, why] of [['C4b1Jh*12', 'the £ left out'], ['C4b££1Jh*12', 'two characters there'], ['C4b£1Jh*13', 'another character wrong'], ['c4b£1Jh*12', 'a letter in the wrong case']]) {
+  r = await login('trio_demo', pw);
+  check('still refused with ' + why, r.headers.get('Location').startsWith('/login?failed=1'));
+}
 r = await login('trio_demo', 'C4b£1Jh*12', 'https://evil.example/');
 check('the way back can only be a page on this site', r.headers.get('Location') === '/');
 
