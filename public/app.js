@@ -1099,7 +1099,8 @@ const dsKey = el => el && el !== document.body && el.dataset && Object.keys(el.d
 function doRender() {
   const app = document.getElementById('app'); lastBp = bp();
   if (AREA !== 'app') return renderArea(app);
-  if (!S) { app.innerHTML = entry(); return; }
+  // Until start-up has finished, show a quiet line rather than the welcome screen, so it doesn't flash before the engagement opens.
+  if (!S) { app.innerHTML = (UI.guide || SRV.started || (SRV.checked && !SRV.on)) ? entry() : `<p class="small soft" role="status" style="text-align:center;padding:30vh 16px 0">Opening AI Risk Appetite…</p>`; return; }
   applyIdentity();
   if (UI.personId) { const p = person(UI.personId); if (p) UI.role = p.role; else UI.personId = ''; }
   versionCheck();
@@ -1772,7 +1773,7 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (!SRV.started) { SRV.started = true; render(); } } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU };
