@@ -20,6 +20,9 @@ function emailSender(env) {
 }
 const siteUrl = (env, request) => env.SITE_URL || (request ? new URL(request.url).origin : 'https://risk-appetite.triodian.com');
 
+/** DEMO ADDITION: emails in DEMO_ADMINS (comma-separated) are made administrators when they sign in. */
+const demoAdmins = env => String(env.DEMO_ADMINS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -40,6 +43,7 @@ export default {
     try {
       const r = await handle({
         method: request.method, path: url.pathname, email: who.email, text: () => request.text(),
+        demoAdmins: demoAdmins(env),
         site: env.SITE_LABEL || '', origin: siteUrl(env, request), sender: emailSender(env), defer: p => ctx.waitUntil(p),
       }, d1Store(env.DB));
       return json(r.body, r.status);

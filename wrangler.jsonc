@@ -24,7 +24,9 @@
   // Email Service (Email Sending). Until it is, each send fails and is listed as Failed, with the reason, in
   // Admin → Notifications; saves are never affected. To stop sending, set NOTIFY_SENDING to "off".
   "send_email": [{ "name": "EMAIL" }],
-  "vars": { "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+  // DEMO_ADMINS (demo addition): comma-separated emails made active administrators when they sign in.
+  // Empty it ("") on a client deployment. See lib/core/api.js.
+  "vars": { "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
 
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
@@ -37,7 +39,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
       ],
-      "vars": { "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "vars": { "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
