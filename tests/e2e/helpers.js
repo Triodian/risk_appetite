@@ -23,7 +23,8 @@ export async function editAs(as, change) {
 export async function pageAs(browser, as, path = '/') {
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': as }, viewport: { width: 1280, height: 900 } });
   // The demo introduction (public/suite.js) opens once per session; mark it seen so it doesn't cover the app under test.
-  await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
+  // The worked example opens by default; mark it left so tests start in the real engagement (they open it when they need it).
+  await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); if (!window.__keepExample) sessionStorage.setItem('triodian.example.left', '1'); } catch (e) {} });
   const page = await ctx.newPage();
   page._errors = [];
   page.on('pageerror', e => page._errors.push(String(e)));
