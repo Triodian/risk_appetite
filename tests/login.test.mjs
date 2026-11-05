@@ -10,7 +10,7 @@ const sessions = new Map();
 const DB = { prepare(sql) { let args = []; return { bind(...a) { args = a; return this; },
   async run() { if (/^INSERT INTO sessions/.test(sql)) sessions.set(args[0], { email: args[1], expires_at: args[3] }); if (/^DELETE FROM sessions WHERE token_hash/.test(sql)) sessions.delete(args[0]); return {}; },
   async first() { return /FROM sessions/.test(sql) ? sessions.get(args[0]) || null : null; } }; } };
-const env = { ...cfg.vars, DB, ACCESS_TEAM_DOMAIN: 'x.cloudflareaccess.com', ACCESS_AUD: 'aud', ASSETS: { fetch: r => new Response('asset ' + new URL(r.url).pathname) } };
+const env = { DEMO_SESSION_KEY: 'unit-test-key-not-used-anywhere-else', ...cfg.vars, DB, ACCESS_TEAM_DOMAIN: 'x.cloudflareaccess.com', ACCESS_AUD: 'aud', ASSETS: { fetch: r => new Response('asset ' + new URL(r.url).pathname) } };
 const HOST = 'https://' + cfg.routes[0].pattern;
 const go = (path, init = {}) => worker.fetch(new Request(HOST + path, { redirect: 'manual', ...init }), env, { waitUntil() {} });
 const login = (u, p, next = '/') => go('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username: u, password: p, next }).toString() });
