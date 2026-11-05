@@ -409,6 +409,7 @@ function drawer() {
     <a class="item" href="${SRV.site ? 'https://obligations-atlas-test.triodian.com/?suite=1' : 'https://obligations-atlas.triodian.com/?suite=1'}" style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">OA</span><span>AI Obligations Atlas<br><span class="small soft">Obligations by jurisdiction, tier and use case</span></span></a>
     <div class="item" aria-current="page"><span class="appic" style="background:var(--aubergine-bg);color:var(--aubergine)">RA</span><span>AI Risk Appetite<br><span class="small soft">Board positions and calibration set</span></span><span class="badge b-green" style="margin-left:auto">now</span></div>
     <a class="item" href="${SRV.site ? 'https://use-assessment-test.triodian.com/?suite=1' : 'https://use-assessment.triodian.com/?suite=1'}" style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">UA</span><span>AI Use Assessment<br><span class="small soft">Register, tests and findings; reads the calibration set</span></span></a>
+    <a class="item" href="${SRV.site ? 'https://confidentiality-test.triodian.com/' : 'https://confidentiality.triodian.com/'}" style="text-decoration:none"><span class="appic" style="background:#F1E6DD;color:#8A5A3B">CE</span><span>AI Confidentiality Exposure Assessment<br><span class="small soft">For unregulated entities: where deal information can reach an external AI model, for one transaction</span></span></a>
   </aside>`;
 }
 function footer() {
