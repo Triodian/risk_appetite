@@ -372,7 +372,7 @@ function docband() {
   const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
   const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
-  const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>` : e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Practice mode</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label><button class="lnk" data-act="leavePractice">Leave practice</button></span>`
+  const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>` : e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Worked example</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label></span>`
     : `<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>`;
   return `<div class="docband ${e.example || UI.archived ? 'practice' : ''}"><div class="docband-in">${priv}${right}</div></div>`;
 }
@@ -390,7 +390,8 @@ function header(ck) {
       ${b !== 'phone' ? `<button class="checkcount ${fails ? 'b-red' : 'b-green'}" data-act="go" data-to="checks">${b === 'phone' ? (fails ? fails + ' failing' : 'K ✓') : (fails ? fails + (fails === 1 ? ' check failing' : ' checks failing') : 'checks pass')}</button>` : ''}
       ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
-    </div></div>${docband()}</header>`;
+    </div></div>${docband()}</header>
+    ${S && S.engagement.example ? '<div class="examplebar">Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved. <button class="lnk" data-act="leavePractice">Leave the worked example</button></div>' : ''}`;
 }
 function drawer() {
   if (!UI.drawer) return '';
@@ -403,7 +404,10 @@ function drawer() {
     ${practice() ? `<div class="grp">Acting as · practice</div><label class="chip" style="width:100%"><span aria-hidden="true">⌾</span>${roleSelect('role-drw')}</label>` : ''}
     ${(SRV.archives || []).length ? `<div class="grp">Earlier reviews</div>${SRV.archives.map(a => `<button class="item" data-act="openArchive" data-id="${esc(a.id)}">${esc(a.label)}<span class="small soft" style="margin-left:auto">read only</span></button>`).join('')}` : ''}
     <div class="grp">Engagement</div>
-    ${practice() ? '<button class="item" data-act="leavePractice">Leave practice mode</button>' : '<button class="item" data-act="guide" data-g="practice">Practise with the worked example</button><button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>'}
+    <button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>
+    <div class="grp">Practice</div>
+    ${practice() ? '<button class="item" data-act="leavePractice">Leave the worked example</button>' : '<button class="item" data-act="example">Open the worked example</button>'}
+    <p class="small soft" style="padding:0 10px">The worked example is fictional and runs in this browser only. Nothing in it is saved.</p>
     ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
     <div class="grp">Apps</div>
     <a class="item" href="${SRV.site ? 'https://obligations-atlas-test.triodian.com/?suite=1' : 'https://obligations-atlas.triodian.com/?suite=1'}" style="text-decoration:none"><span class="appic" style="background:#E3E9EF;color:var(--navy)">OA</span><span>AI Obligations Atlas<br><span class="small soft">Obligations by jurisdiction, tier and use case</span></span></a>
@@ -429,7 +433,7 @@ function entry() {
   const u = SRV.user;
   let acts = '', note = '';
   const opt = (attrs, title, text) => `<${attrs.startsWith('href') ? 'a' : 'button'} class="act" ${attrs} ${attrs.startsWith('href') ? 'style="text-decoration:none"' : ''}><span><strong>${title}</strong><br><span class="small soft">${text}</span></span><span class="act-go" aria-hidden="true"></span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
-  const practice = opt(quick ? 'data-act="example"' : 'data-act="guide" data-g="practice"', 'Practise with the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
+  const practice = opt('data-act="example"', 'Open the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/auth/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
@@ -1543,6 +1547,12 @@ async function leave(what) {
   if (UI.dirty) return confirm('Your changes are not saved anywhere. Discard them and ' + what + '?');
   return true;
 }
+/* The worked example opens by default. Leaving it is remembered for this browser session, so a reload stays out.
+   A link to My actions (from an email) opens the real engagement. Same in all Triodian apps. */
+const EX_LEFT = 'triodian.example.left';
+const exampleLeft = () => { try { return sessionStorage.getItem(EX_LEFT) === '1'; } catch (e) { return false; } };
+const markExampleLeft = left => { try { if (left) sessionStorage.setItem(EX_LEFT, '1'); else sessionStorage.removeItem(EX_LEFT); } catch (e) {} };
+const openExampleByDefault = () => !exampleLeft() && location.hash !== '#actions';
 function startPractice() { S = buildExample(); UI.personId = ''; UI.role = 'triodian'; UI.dirty = false; UI.sel = null; lastSig = null; go('overview'); }
 function startEngagement(state) {
   S = state; S.engagement.example = false; S.engagement.autosave = false; S.people = SRV.people.map(p => ({ ...p, areas: [] }));
@@ -1641,7 +1651,7 @@ function onClick(e) {
     admDismiss: async () => { await api('POST', '/api/admin/access-requests/dismiss', { email: d.email }); loadAdmin(); },
     cancelEmail: async () => { const r = await api('DELETE', '/api/me/email'); if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Email change cancelled.'; } else PRF.err = r.error; render(); },
     new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
-    example: () => leave('open practice mode').then(ok => { if (ok) { UI.guide = null; startPractice(); toast('Practice mode. Corvane General is fictional. Nothing is saved.'); } }),
+    example: () => leave('open the worked example').then(ok => { if (ok) { UI.guide = null; markExampleLeft(false); startPractice(); } }),
     guide: () => {
       if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#set-up'; return; } }
       UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
@@ -1654,7 +1664,7 @@ function onClick(e) {
       if (!r.ok) return toast(r.error);
       toast('Next review started. ' + r.body.label + ' is kept under Earlier reviews.'); await loadArchives(); await loadReal();
     },
-    leavePractice: () => { UI.drawer = false; S = null; if (SRV.on) loadReal(); else render(); },
+    leavePractice: () => { UI.drawer = false; S = null; markExampleLeft(true); if (SRV.on) loadReal(); else render(); },
     saveChip: () => {
       if (SRV.state === 'error') { if (SRV.err && /cannot change|history/.test(SRV.err)) { if (confirm(SRV.err + '\n\nReload the saved engagement? Your unsaved changes here will be lost.')) loadReal(); } else saveNow(); return; }
       if (SRV.state === 'conflict') {
@@ -1775,7 +1785,7 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (!SRV.started) { SRV.started = true; render(); } } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU };
