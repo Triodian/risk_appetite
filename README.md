@@ -41,3 +41,8 @@ npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@
 3. Single engagement, admin at /admin with users and role-based access, enforced on the server ✓
 4. Set-up moved to Admin; profile page with self-service email change ✓
 5. Next: UI refinements; enterprise items in `docs/architecture.md`
+
+## Licence
+
+AI Risk Appetite is open source under the [Apache License, Version 2.0](LICENSE). Copyright 2026 Triodian Pty Ltd.
+Third-party components bundled with it keep their own licences; see [`NOTICE`](NOTICE).

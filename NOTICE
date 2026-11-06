@@ -1,0 +1,10 @@
+AI Risk Appetite
+Copyright 2026 Triodian Pty Ltd
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes third-party components, each under its own licence:
+
+- IBM Plex Sans (`public/fonts/`), Copyright 2019 IBM Corp., under the SIL Open Font License 1.1. See `public/fonts/LICENSE-ibm-plex-sans.txt`.
+- Source Serif 4 (`public/fonts/`), Copyright Google Inc., under the SIL Open Font License 1.1. See `public/fonts/LICENSE-source-serif-4.txt`.
+- docx (`public/vendor/docx.min.js`), under the MIT License, bundling JSZip (MIT or GPLv3) and pako (MIT). See `public/vendor/LICENSE-docx.txt`.
