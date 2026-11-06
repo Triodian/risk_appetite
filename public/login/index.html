@@ -60,6 +60,12 @@
   if (next.charAt(0) !== '/' || next.indexOf('//') === 0) next = '/';
   document.getElementById('next').value = next;
   document.getElementById('email-link').href = '/auth/email?next=' + encodeURIComponent(next);
+  // No demo account on this deployment (a client deployment): offer email sign-in only.
+  if (document.documentElement.getAttribute('data-demo-login') === 'off') {
+    var f = document.querySelector('form[action="/auth/login"]'), or = document.querySelector('.or'), hint = document.querySelector('.hint'), el = document.getElementById('email-link');
+    if (f) f.style.display = 'none'; if (or) or.style.display = 'none'; if (hint) hint.textContent = 'Sign in with your work email address.';
+    if (el) { el.classList.add('primary'); el.textContent = 'Sign in with your work email'; }
+  }
   if (q.has('failed')) document.getElementById('m-failed').hidden = false;
   if (q.get('email') === '0') document.getElementById('m-email').hidden = false;
   if (q.has('out')) document.getElementById('m-out').hidden = false;

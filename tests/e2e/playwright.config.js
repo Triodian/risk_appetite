@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 
 const PORT = 8797;
 export const BASE = `http://localhost:${PORT}`;
+// The client deployment profile (task 0.2): the same Worker with the demo parts switched off, on its own port.
+export const CLIENT_BASE = `http://localhost:${PORT + 100}`;
 
 export default defineConfig({
   testDir: './specs',
@@ -15,7 +17,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['github']] : 'list',
   // CHROME_PATH lets a machine without Playwright's own browser use an installed Chromium.
   use: { baseURL: BASE, viewport: { width: 1280, height: 900 }, trace: 'retain-on-failure', launchOptions: { executablePath: process.env.CHROME_PATH || undefined } },
-  webServer: {
+  webServer: [{
     cwd: '../..',
     command: [
       'node tests/e2e/node_modules/wrangler/bin/wrangler.js dev',
@@ -29,5 +31,20 @@ export default defineConfig({
     url: `${BASE}/`,
     timeout: 120_000,
     reuseExistingServer: false,
-  },
+  }, {
+    cwd: '../..',
+    command: [
+      'node tests/e2e/node_modules/wrangler/bin/wrangler.js dev',
+      `--port ${PORT + 100} --ip 127.0.0.1 --local-upstream localhost --inspector-port ${PORT + 1100}`,
+      '--persist-to tests/e2e/.state-client',
+      '--var LOCAL_DEV_NO_SIGNIN_EMAIL:damian.hickey@triodian.com',
+      '--var NOTIFY_SENDING:off',
+      '--var SUITE_DEMO:off',
+      "--var DEMO_LOGIN:''",
+      '--show-interactive-dev-session=false',
+    ].join(' '),
+    url: `${CLIENT_BASE}/login`,
+    timeout: 120_000,
+    reuseExistingServer: false,
+  }],
 });

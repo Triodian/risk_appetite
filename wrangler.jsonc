@@ -31,7 +31,7 @@
   // anyCharAt [3] accepts any character in place of the £ in trio_demo's password.
   // DEMO_SESSION_KEY (a Worker secret, not set here) signs the demo sign-in cookie, shared across triodian.com; it
   // must be the same in every Triodian app and is only ever accepted for the demo account's own email. See lib/identity/session.js.
-  "vars": { "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$ae_ndll6YbjpSddRDhFBLg$HAVf7tKSohiJck-ohKQ1KYft_e1YpCuWF8xcJgmjNqM\", \"anyCharAt\": [3]}]", "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+  "vars": { "SUITE_DEMO": "on", "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$ae_ndll6YbjpSddRDhFBLg$HAVf7tKSohiJck-ohKQ1KYft_e1YpCuWF8xcJgmjNqM\", \"anyCharAt\": [3]}]", "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
 
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
@@ -44,7 +44,27 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
       ],
-      "vars": { "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$ae_ndll6YbjpSddRDhFBLg$HAVf7tKSohiJck-ohKQ1KYft_e1YpCuWF8xcJgmjNqM\", \"anyCharAt\": [3]}]", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "vars": { "SUITE_DEMO": "on", "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$ae_ndll6YbjpSddRDhFBLg$HAVf7tKSohiJck-ohKQ1KYft_e1YpCuWF8xcJgmjNqM\", \"anyCharAt\": [3]}]", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "send_email": [{ "name": "EMAIL" }],
+      "triggers": { "crons": ["0 21 * * *"] },
+      "observability": { "enabled": true }
+    },
+
+    // CLIENT DEPLOYMENT PROFILE (development plan task 0.2): a copy of AI Risk Appetite for one client, with no demonstration
+    // parts. No demo sign-in (DEMO_LOGIN empty), no demo administrators, no demo band or app switcher (SUITE_DEMO off),
+    // and DEMO_SESSION_KEY is not set as a secret. To deploy one: replace the CLIENT placeholders, create the client's
+    // D1 database and put its id below, create the client's Access application for /auth/email and set its tag as
+    // the ACCESS_AUD secret (the team domain is in lib/config.js), then run `npx wrangler deploy --env client`.
+    // Email stays held (NOTIFY_SENDING off) until the client's sender is set up.
+    "client": {
+      "name": "risk-appetite-client",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [{ "pattern": "risk-appetite.CLIENT-DOMAIN.example", "custom_domain": true }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "risk-appetite-client-db", "database_id": "REPLACE-WITH-THE-CLIENT-DATABASE-ID" }
+      ],
+      "vars": { "SUITE_DEMO": "off", "DEMO_LOGIN": "", "DEMO_ADMINS": "", "SITE_URL": "https://risk-appetite.CLIENT-DOMAIN.example", "NOTIFY_SENDING": "off", "NOTIFY_FROM": "" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
