@@ -374,7 +374,7 @@ function docband() {
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
   const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>` : e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Worked example</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label></span>`
     : `<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>`;
-  return `<div class="docband ${e.example || UI.archived ? 'practice' : ''}"><div class="docband-in">${priv}${right}</div></div>`;
+  return `<div class="docband ${e.example || UI.archived ? 'practice' : ''}"><div class="docband-in"><span style="display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap">${priv}${TriodianBrand.chip(e.practitioner)}</span>${right}</div></div>`;
 }
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
@@ -554,6 +554,9 @@ function screenSetup() {
     ${fld('Insurer', 'engagement.insurer', e.insurer)}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
   </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
+  <section class="card"><h2 class="sh">Practitioner</h2><p class="small soft" style="margin:4px 0 14px">The GC’s or advisory firm’s name, a line under it and a logo. They appear in the header and above the privilege marking on every Word and PDF output.</p><div class="fgrid">
+    ${fld('Firm', 'engagement.practitioner.firm', (e.practitioner || {}).firm || '')}${fld('Line under the name', 'engagement.practitioner.line', (e.practitioner || {}).line || '', { ph: 'Prepared by [firm] using the Triodian method' })}
+  </div><div style="margin-top:14px">${TriodianBrand.logoControl(e.practitioner, can(pathTarget('engagement.practitioner.logo')) ? '' : 'disabled')}</div></section>
   <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People taking part</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
     <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the insurer risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
     ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
@@ -1562,7 +1565,7 @@ function startEngagement(state) {
 /* ---------- worked example (fictional) ---------- */
 function buildExample() {
   const X = newEngagement();
-  Object.assign(X.engagement, { insurer: 'Corvane General Insurance (fictional)', reference: 'RAF-CGI-2026-01', counselFirm: 'Askew Lane Partners (fictional)', privilegeMarking: 'Privileged and confidential · prepared at the direction of counsel · worked example', sessionDates: ['2026-10-15', '2026-10-22'], example: true, notificationHours: '72' });
+  Object.assign(X.engagement, { insurer: 'Corvane General Insurance (fictional)', reference: 'RAF-CGI-2026-01', counselFirm: 'Askew Lane Partners (fictional)', practitioner: { firm: 'Askew Lane Partners (fictional)', line: 'Prepared by Askew Lane Partners using the Triodian method', logo: TriodianBrand.EXAMPLE_LOGO }, privilegeMarking: 'Privileged and confidential · prepared at the direction of counsel · worked example', sessionDates: ['2026-10-15', '2026-10-22'], example: true, notificationHours: '72' });
   X.people = [
     { id: 'p1', name: 'Priya Natarajan', organisation: 'Corvane General', role: 'cro', areas: ['fi', 'lc'] },
     { id: 'p2', name: 'Tom Ellery', organisation: 'Corvane General · operational risk', role: 'risk', areas: ['fr', 'to'] },
@@ -1702,8 +1705,8 @@ function onClick(e) {
     outTab: () => { UI.outTab = d.t; render(); }, chTab: () => { UI.chTab = d.t; render(); },
     copy: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); copyText(outputFor(d.t)[0]()); }, download: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); const [fn, sl] = outputFor(d.t); download(`RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}.md`, fn(), 'text/markdown'); },
     downloadDocx: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); if (!window.RAFExport) return toast('Word export did not load. Reload the page.'); const [fn, sl] = outputFor(d.t), name = `RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}`;
-      toast('Preparing the Word document…'); RAFExport.toDocx(fn(), { insurer: S.engagement.insurer, reference: S.engagement.reference }).then(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.docx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Word document downloaded'); }, () => toast('The Word document could not be made. Try again, or use Download PDF.')); },
-    printPdf: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); if (!window.RAFExport) return toast('PDF export did not load. Reload the page.'); const [fn, sl] = outputFor(d.t); RAFExport.printPdf(fn(), { insurer: S.engagement.insurer, reference: S.engagement.reference, fileBase: `RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}` }, mdToHtml); toast('In the print dialog, choose Save as PDF'); },
+      toast('Preparing the Word document…'); RAFExport.toDocx(fn(), { insurer: S.engagement.insurer, reference: S.engagement.reference, creator: 'Triodian AI Risk Appetite', brand: S.engagement.practitioner }).then(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.docx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Word document downloaded'); }, () => toast('The Word document could not be made. Try again, or use Download PDF.')); },
+    printPdf: () => { if (d.t === 'calibration' && exportBlocked()) return toast('Export blocked: checks failing.'); if (!window.RAFExport) return toast('PDF export did not load. Reload the page.'); const [fn, sl] = outputFor(d.t); RAFExport.printPdf(fn(), { insurer: S.engagement.insurer, reference: S.engagement.reference, brand: S.engagement.practitioner, fileBase: `RAF-${slug(S.engagement.insurer)}-${sl}-v${S.calibration.version}` }, mdToHtml); toast('In the print dialog, choose Save as PDF'); },
     downloadJson: () => exportBlocked() ? toast('Export blocked: checks failing.') : download(`RAF-${slug(S.engagement.insurer)}-calibration-v${S.calibration.version}.json`, JSON.stringify(calibrationSet(), null, 2), 'application/json'),
     copyJson: () => exportBlocked() ? toast('Export blocked: checks failing.') : copyText(JSON.stringify(calibrationSet(), null, 2)),
     addCH: () => { const by = document.getElementById('ch-by').value, pt = document.getElementById('ch-point').value.trim(), dc = document.getElementById('ch-dec').value; if (!can(dc)) return toast(blockReason(dc)); if (!by || !pt) return toast('Choose who raised it and write the point.'); const ref = 'CH-' + String(S.challenge.length + 1).padStart(2, '0'); S.challenge.push({ ref, raisedBy: by, decision: dc, cell: document.getElementById('ch-cell').value, point: pt, response: '', status: 'open' }); log('challenge', ref, null, 'raised'); render(); }
@@ -1765,6 +1768,7 @@ async function boot() {
 
   document.addEventListener('click', onClick);
   document.addEventListener('change', onChange);
+  TriodianBrand.bind(v => { setPath('engagement.practitioner.logo', v); render(); }, toast);
   document.addEventListener('input', onInput);
   document.addEventListener('focusin', onFocusIn);
   document.addEventListener('keydown', onKey);
