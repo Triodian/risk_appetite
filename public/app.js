@@ -1002,11 +1002,47 @@ function mdCalibration() {
   m += `**Parameters with default values:** ${cs.fellBackToDefault.length ? cs.fellBackToDefault.join('; ') : 'none'}.\n\n`;
   return m;
 }
+/* ---------- engagement plan (development plan task 0.7) ----------
+   The steps come from the framework's own process (section 7.2), so the plan says what the method says. Sessions are the
+   two decision sessions with the dates set-up records, then the challenge and the approval; attendees by role come from
+   the people list; inputs are I1 to I11 with their status; sign-off points are the CRO's agreement and the board's. */
+function fwTable(heading) {
+  const m = C.frameworkMarkdown || '', i = m.indexOf(heading); if (i < 0) return [];
+  const rows = []; for (const l of m.slice(i).split('\n').slice(1)) { if (!l.startsWith('|')) { if (rows.length) break; continue; } rows.push(l.replace(/^\|\s*|\s*\|$/g, '').split(/\s*\|\s*/)); }
+  return rows.filter(r => !r.every(c => /^-+$/.test(c))).slice(1);
+}
+function mdPlan() {
+  const e = S.engagement, c = S.calibration, ck = runChecks(), pass = ck.filter(k => k.state === 'pass').length, sd = e.sessionDates || [];
+  const holds = (p, r) => (Array.isArray(p.roles) && p.roles.length ? p.roles : [p.role]).includes(r);
+  const named = r => activePeople().filter(p => holds(p, r)).map(p => p.name + (p.organisation ? ' (' + p.organisation + ')' : '')).join('; ');
+  const recv = S.inputs.filter(i => i.status === 'received' || i.status === 'notHeld').length;
+  const stands = [`${recv} of ${S.inputs.length} inputs received or recorded as not held`, sd[0] ? 'Dated ' + dAU(sd[0]) : 'Date to be set', sd[1] ? 'Dated ' + dAU(sd[1]) : 'Date to be set',
+    `${pass} of ${ck.length} checks pass`, c.agreedById ? 'Agreed ' + dAU(c.agreedOn) + (c.agreedBy ? ' by ' + c.agreedBy : '') : 'Not yet', '', '', c.status === 'approved' ? 'Approved ' + dAU(c.approvedOn) + (c.minuteRef ? ', ' + c.minuteRef : '') : 'Not yet'];
+  let m = mdHead('Engagement plan');
+  m += `This plan follows the framework’s process. It is for everyone taking part: what happens when, who attends, what the insurer is asked to provide, and where each sign-off stands.\n\n`;
+  m += `## Steps\n\n` + tbl(['Step', 'When', 'Activity', 'Output', 'Where it stands'], fwTable('### 7.2 Steps').map((r, i) => [r[0], r[1], r[2], r[3], stands[i] || ''])) + '\n';
+  const dec = s => C.decisions.filter(d => d.session === s).map(d => d.n + ' ' + d.name).join(', ');
+  m += `## Sessions and who attends\n\n` + tbl(['Session', 'When', 'Covers', 'Attends'], [
+    ['Session 1', sd[0] ? dAU(sd[0]) + ', two hours' : 'Week 1, day 4 or 5, two hours', 'Decisions ' + dec(1), 'The CRO and the insurer risk function, who propose positions; counsel, who facilitates; Triodian, who records'],
+    ['Session 2', sd[1] ? dAU(sd[1]) + ', two hours' : 'Week 2, two hours', 'Decisions ' + dec(2) + '; session 1 positions reviewed in their light', 'As session 1'],
+    ['Challenge', 'Week 3', 'Each area’s positions', 'Second line and each accountable person, with the CRO'],
+    ['Approval', 'Next risk committee or board meeting', 'The statement and schedule', 'The board; the CRO presents, counsel settles the wording'],
+  ]) + '\n';
+  m += `## Attendees by role\n\n` + tbl(['Role', 'Named'], C.roles.map(r => [r.name, named(r.id) || 'Not yet named'])) + '\n';
+  const st = { received: 'Received', requested: 'Requested', notHeld: 'Not held' };
+  m += `## Inputs needed from the insurer\n\nRequested through external counsel before session 1.\n\n` + tbl(['Ref', 'Input', 'Used in', 'Status'], C.inputs.map((x, i) => { const s = S.inputs[i] || {}; return [x.ref, x.name, x.usedIn, (st[s.status] || 'Not yet requested') + (s.date ? ' ' + dAU(s.date) : '')]; })) + '\n';
+  m += `## Sign-off points\n\n` + tbl(['Sign-off', 'By', 'Where it stands'], [
+    ['Working appetite agreed (the calibration set issued to the assessment, marked working)', 'The CRO, once checks K1 to K9 pass', c.agreedById ? `Agreed ${dAU(c.agreedOn)}, version ${c.version}` : 'Not yet'],
+    ['Statement and schedule settled for the board', 'External counsel', c.status === 'approved' ? 'Done' : 'Before approval'],
+    ['Board approval (the calibration set re-issued, marked approved)', 'The board, recorded with the minute reference', c.status === 'approved' ? `Approved ${dAU(c.approvedOn)}${c.minuteRef ? ', ' + c.minuteRef : ''}` : 'Not yet'],
+  ]);
+  return m;
+}
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
+  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || who.role !== 'cro' ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);
