@@ -8,7 +8,7 @@ let C = null;            // content.json
 let S = null;            // engagement
 const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, open: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
-const ROLE_NAME = { counsel: 'Counsel', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
+const ROLE_NAME = { counsel: 'Counsel', gc: 'GC', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 /* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
 const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
 const ADMIN_SCREENS = ['setup', 'users', 'activity', 'notifications'];
@@ -42,7 +42,7 @@ const D = id => C.decisions.find(d => d.id === id) || { id: String(id), n: '?', 
 const sid = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
 const scaleDef = code => { const s = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence).find(x => x.code === code); return s ? s.def : ''; };
 const me = () => UI.personId && S ? person(UI.personId) : null;
-const actor = () => { const p = me(); return p ? p.name + ' (' + ROLE_NAME[p.role] + ')' : ROLE_NAME[UI.role]; };
+const actor = () => { const p = me(); return p ? p.name + ' (' + rolesText(p) + ')' : ROLE_NAME[UI.role]; };
 const bp = () => innerWidth >= 1024 ? 'desk' : innerWidth >= 640 ? 'tab' : 'phone';
 const person = id => S.people.find(p => p.id === id);
 const pname = id => { const p = person(id); return p ? p.name : ''; };
@@ -151,33 +151,50 @@ function startingValue(id) {
 const existingValue = id => id.startsWith('d2.') ? startingValue(id) : '';
 
 /* ---------- permissions ---------- */
+/* Several roles per person (development plan task 0.6). A person record holds roles (a list); older records hold one role. */
+const rolesOf = p => !p ? [] : Array.isArray(p.roles) && p.roles.length ? p.roles : p.role && p.role !== 'none' ? [p.role] : [];
+const rolesText = p => rolesOf(p).map(r => ROLE_NAME[r] || r).join(', ') || ROLE_NAME.none;
+/* The roles the screen acts with: the signed-in person's, or in practice the chosen person's, or the chosen role. */
+function actingRoles() {
+  if (UI.forceRole) return [UI.role];   // the worked example is built and summarised under a fixed role
+  const p = UI.personId ? person(UI.personId) : null; if (p) return rolesOf(p);
+  if (!practice() && SRV.user) return rolesOf(SRV.user);
+  return UI.role && UI.role !== 'none' ? [UI.role] : [];
+}
+const hasRole = r => actingRoles().includes(r);
+const onlyRoles = list => { const rs = actingRoles(); return rs.length > 0 && rs.every(r => list.includes(r)); };
 const proposerRoles = did => did === 'd2' ? ['cro','risk','independent'] : ['cro','risk'];
-const roleCanPropose = did => proposerRoles(did).includes(UI.role);
+const roleCanPropose = did => proposerRoles(did).some(hasRole);
 const activePeople = () => S.people.filter(p => p.active !== false);
-const eligible = did => activePeople().filter(p => proposerRoles(did).includes(p.role));
+const eligible = did => activePeople().filter(p => rolesOf(p).some(r => proposerRoles(did).includes(r)));
 /* One gate for every editable control. target: a decision id, 'setup', 'measures', 'overall', 'challengeResponse', 'qcResponse' or 'approval'. */
-function can(target, role) {
-  if (UI.archived) return false;
-  role = role || UI.role;
-  if (target === 'setup' && SRV.user && !practice()) return !!SRV.user.isAdmin;
-  if (role === 'none') return false;
+/* What one role may change: the same rule as lib/core/roles.js (canRole). */
+function canRole(target, role) {
+  if (!role || role === 'none') return false;
   if (target === 'approval') return role === 'board';
+  if (target === 'agree') return role === 'cro';
   if (role === 'board') return false;
-  if (target === 'overall') return role === 'counsel' || role === 'cro';
-  if (target === 'challengeResponse') return ['counsel', 'cro', 'risk'].includes(role);
-  if (target === 'qcResponse') return role === 'counsel';
+  if (target === 'overall') return ['counsel', 'gc', 'cro'].includes(role);
+  if (target === 'challengeResponse') return ['counsel', 'gc', 'cro', 'risk'].includes(role);
+  if (target === 'qcResponse') return role === 'counsel' || role === 'gc';
   if (role === 'independent') return target === 'd2';
   return true;
 }
+/* One gate for every editable control. Any one of the acting roles that allows the change is enough. */
+function can(target, role) {
+  if (UI.archived) return false;
+  if (target === 'setup' && SRV.user && !practice()) return !!SRV.user.isAdmin;
+  return (role ? [role] : actingRoles()).some(r => canRole(target, r));
+}
 function blockReason(target) {
   if (target === 'setup' && SRV.user && !practice()) return 'Set-up is done by administrators.';
-  if (UI.role === 'none') return 'You have no engagement role, so you can read the engagement but not change it. An administrator can give you a role.';
+  if (!actingRoles().length) return 'You have no engagement role, so you can read the engagement but not change it. An administrator can give you a role.';
   if (target === 'approval') return 'Only the board record role records approval.';
-  if (UI.role === 'board') return 'The board record role records approval only. It does not edit anything else.';
-  if (target === 'overall') return 'The overall position is written by counsel or the CRO.';
-  if (target === 'challengeResponse') return 'Challenge responses and status are recorded by counsel, the CRO or the risk function.';
-  if (target === 'qcResponse') return 'Responses to questions for counsel are recorded by counsel.';
-  if (UI.role === 'independent') return 'The independent reviewer advises on decision 2 only, including its starting data, questions and challenge.';
+  if (onlyRoles(['board'])) return 'The board record role records approval only. It does not edit anything else.';
+  if (target === 'overall') return 'The overall position is written by counsel, the GC or the CRO.';
+  if (target === 'challengeResponse') return 'Challenge responses and status are recorded by counsel, the GC, the CRO or the risk function.';
+  if (target === 'qcResponse') return 'Responses to questions for counsel are recorded by counsel or the GC.';
+  if (onlyRoles(['independent', 'board'])) return 'The independent reviewer advises on decision 2 only, including its starting data, questions and challenge.';
   return '';
 }
 const canEdit = did => can(did);
@@ -193,11 +210,11 @@ function pathTarget(path) {
   if (k[0] === 'measureOwners') return 'measures';
   return 'setup';
 }
-const proposerOk = (did, p) => { const x = p && p.proposedBy ? person(p.proposedBy) : null; return !!(x && proposerRoles(did).includes(x.role)); };
+const proposerOk = (did, p) => { const x = p && p.proposedBy ? person(p.proposedBy) : null; return !!(x && rolesOf(x).some(r => proposerRoles(did).includes(r))); };
 function defaultOwner(id) { /* used by the worked example only */
   const parts = id.split('.');
   if (parts[0] === 'd1') { const ap = S.people.find(p => (p.areas || []).includes(parts[1])); if (ap) return ap.id; }
-  const cro = S.people.find(p => p.role === 'cro'); return cro ? cro.id : '';
+  const cro = S.people.find(p => rolesOf(p).includes('cro')); return cro ? cro.id : '';
 }
 
 /* ---------- history, versioning ---------- */
@@ -284,7 +301,7 @@ function decisionStatus(did, ck) {
   return bad ? { label: 'Fails checks', cls: 'b-red', set, ns, un, total: cells.length, qc, gate: true } : { label: 'Complete', cls: 'b-green', set, ns, un, total: cells.length, qc, gate: true };
 }
 function setupGate() {
-  const hasCro = S.people.some(p => p.role === 'cro'), hasCounsel = S.people.some(p => p.role === 'counsel');
+  const hasCro = S.people.some(p => rolesOf(p).includes('cro')), hasCounsel = S.people.some(p => rolesOf(p).some(r => r === 'counsel' || r === 'gc'));
   const inp = r => { const i = S.inputs.find(x => x.ref === r); return i && (i.status === 'received' || i.status === 'notHeld'); };
   const items = [ ['At least one CRO recorded', hasCro], ['At least one counsel person recorded', hasCounsel], ['Function list confirmed', S.functionsConfirmed], ['I1 marked received or not held', inp('I1')], ['I4 marked received or not held', inp('I4')] ];
   return { ok: items.every(i => i[1]), items };
@@ -340,7 +357,7 @@ function compareCard() {
   </section>`;
 }
 function agreeWorking() {
-  const who = me(); if (!who || who.role !== 'cro') return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
+  const who = me(); if (!who || !rolesOf(who).includes('cro')) return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
   if (blocking(runChecks()).length) return toast('Checks K1 to K9 must pass first.');
   if (S.calibration.status !== 'default' && S.calibration.agreedById) return toast('Version ' + S.calibration.version + ' is already agreed.');
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
@@ -350,7 +367,7 @@ function agreeWorking() {
   log('agreeWorking', 'calibration', from, 'working v' + c.version); render(); toast('Working appetite agreed. Version ' + c.version + '.');
 }
 function recordApproval(date, minute, by) {
-  if (UI.role !== 'board') return toast('Only the board record role marks approval.');
+  if (!hasRole('board')) return toast('Only the board record role marks approval.');
   if (S.calibration.status !== 'working' || !S.calibration.agreedById) return toast('The CRO must agree this version first.');
   if (!date || !minute || !by) { UI.err.approval = 'Approval needs a date, a minute reference and who approved it.'; render(); return; }
   const c = S.calibration; c.status = 'approved'; c.approvedOn = date; c.minuteRef = minute; c.approvedBy = by; delete UI.err.approval;
@@ -364,7 +381,7 @@ function badge(label, cls) { return `<span class="badge ${cls}">${esc(label)}</s
 function gate(ok, text) { return `<span class="gate ${ok ? 'ok' : 'no'}" role="status"><i></i>${esc(text)}</span>`; }
 function calBadge() { const s = S.calibration.status; if (s !== 'default' && blocking(runChecks()).length) return badge(`${s === 'approved' ? 'Approved' : 'Working'}, version ${S.calibration.version}, checks failing`, 'b-red'); return badge(s === 'default' ? 'Not yet agreed' : s === 'working' ? 'Working · version ' + S.calibration.version : 'Approved · version ' + S.calibration.version, s === 'approved' ? 'b-green' : s === 'working' ? 'b-ochre' : 'b-grey'); }
 function roleSelect(id) { const cur = UI.personId ? 'p:' + UI.personId : 'r:' + UI.role;
-  return `<select id="${id}" data-act="role" aria-label="Acting as">${S.people.length ? `<optgroup label="People">${S.people.map(p => `<option value="p:${esc(p.id)}" ${cur === 'p:' + p.id ? 'selected' : ''}>${esc(p.name || 'Unnamed')} · ${esc(ROLE_NAME[p.role] || p.role)}</option>`).join('')}</optgroup>` : ''}<optgroup label="Role only">${C.roles.map(r => `<option value="r:${r.id}" ${cur === 'r:' + r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup></select>`; }
+  return `<select id="${id}" data-act="role" aria-label="Acting as">${S.people.length ? `<optgroup label="People">${S.people.map(p => `<option value="p:${esc(p.id)}" ${cur === 'p:' + p.id ? 'selected' : ''}>${esc(p.name || 'Unnamed')} · ${esc(rolesText(p))}</option>`).join('')}</optgroup>` : ''}<optgroup label="Role only">${C.roles.map(r => `<option value="r:${r.id}" ${cur === 'r:' + r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup></select>`; }
 const stepOf = s => s === 'overview' || /^d\d$/.test(s) ? 'decisions' : s;
 /* Privilege marking and the appetite's status, shown under the header on every engagement screen. */
 function docband() {
@@ -441,7 +458,7 @@ function entry() {
     if (u && u.isAdmin) { note = 'No engagement has been set up yet.'; acts = opt(quick ? 'href="/admin/#set-up"' : 'data-act="guide" data-g="setup"', 'Set up the engagement', 'Record the engagement details, people, functions, critical operations and inputs.') + practice; }
     else { note = 'The engagement has not been set up yet. An administrator will set it up; you can then open it here.'; acts = practice + (quick ? '' : `<p class="small" style="margin:6px 0 0"><button class="lnk" data-act="guide" data-g="setup">How an engagement runs</button></p>`); }
   } else note = 'Opening the engagement…';
-  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${u.role ? ', ' + esc(ROLE_NAME[u.role]) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/auth/logout">Sign out</a></span></div>` : '';
+  const who = u ? `<div class="entry-foot"><span>Signed in as <strong>${esc(u.name || u.email)}</strong>${rolesOf(u).length ? ', ' + esc(rolesText(u)) : ''}</span><span class="row" style="gap:14px">${u.isAdmin ? '<a href="/admin/#set-up">Admin</a>' : ''}<a href="/user-guide/">User guide</a><a href="/profile/">Profile</a><a href="/auth/logout">Sign out</a></span></div>` : '';
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="30" style="height:30px;width:auto;display:block"><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
@@ -461,14 +478,14 @@ const STAGES = [
   ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. Counsel drafts the AI risk appetite statement in a form the board can approve, and the CRO recommends it to the board or its risk committee. When the board approves it, the date, minute reference and approving body are recorded.'],
 ];
 function exampleSummary() {
-  const X = buildExample(), old = S, oldRole = UI.role; S = X; UI.role = 'triodian';
+  const X = buildExample(), old = S, oldRole = UI.role, oldForce = UI.forceRole; S = X; UI.role = 'triodian'; UI.forceRole = true;
   try {
     const ck = runChecks(), failing = blocking(ck);
     const decs = C.decisions.map(d => ({ d, st: decisionStatus(d.id, ck) }));
     return { X, ck, failing, decs, people: X.people.length, inputs: X.inputs.filter(i => i.status === 'received').length,
       chOpen: X.challenge.filter(c => c.status === 'open').length, chAll: X.challenge.length,
       qcOpen: X.questionsForCounsel.filter(q => q.status !== 'answered').length, qcAll: X.questionsForCounsel.length };
-  } finally { S = old; UI.role = oldRole; }
+  } finally { S = old; UI.role = oldRole; UI.forceRole = oldForce; }
 }
 function guideOverlay() {
   const g = UI.guide, close = `<span class="row" style="gap:16px"><button class="btn" data-act="guideBack">Back</button><a href="/user-guide/${g === 'setup' ? '#fit' : '#start'}">Read the full user guide</a></span>`;
@@ -541,7 +558,7 @@ function screenSetup() {
   const e = S.engagement, g = setupGate(), b = bp(), ro = !can('setup');
   const roleOpts = C.roles.map(r => [r.id, r.name]);
   const people = S.people.length ? `<div class="tw"><table class="lg ppl"><thead><tr><th class="who">Person and role</th>${S.functions.map(f => `<th class="fn" scope="col">${esc(f.name)}</th>`).join('')}</tr></thead><tbody>
-    ${S.people.map((p, i) => `<tr class="${p.active === false ? 'off' : ''}"><th scope="row" class="who"><strong>${esc(p.name || 'Unnamed')}</strong>${p.active === false ? ' <span class="badge b-grey">inactive</span>' : ''}<div class="small soft">${esc(ROLE_NAME[p.role] || p.role)}${p.organisation ? ' · ' + esc(p.organisation) : ''}</div></th>
+    ${S.people.map((p, i) => `<tr class="${p.active === false ? 'off' : ''}"><th scope="row" class="who"><strong>${esc(p.name || 'Unnamed')}</strong>${p.active === false ? ' <span class="badge b-grey">inactive</span>' : ''}<div class="small soft">${esc(rolesText(p))}${p.organisation ? ' · ' + esc(p.organisation) : ''}</div></th>
       ${S.functions.map(f => `<td class="tick"><input type="checkbox" id="area-${i}-${sid(f.id)}" data-area="${i}" value="${esc(f.id)}" ${(p.areas || []).includes(f.id) ? 'checked' : ''} aria-label="${esc(p.name)} accountable for ${esc(f.name)}"></td>`).join('')}</tr>`).join('')}
     </tbody></table></div><p class="mini" style="margin-top:8px">Tick the functions each person is ${T('ap', 'accountable')} for.</p>` : '';
   const inputs = S.inputs.map((x, i) => { const c = C.inputs[i]; return b === 'phone'
@@ -578,7 +595,7 @@ function screenSetup() {
 /* ---------- S2 overview ---------- */
 /* One line at the top of the overview: what has to happen next, and who does it. */
 function nextStep(ck, sg) {
-  const c = S.calibration, bl = blocking(ck), who = me(), role = who ? who.role : UI.role;
+  const c = S.calibration, bl = blocking(ck), who = me(), role = who ? (rolesOf(who).includes('cro') ? 'cro' : rolesOf(who)[0] || 'none') : UI.role;
   const box = (tone, title, text, act) => `<section class="next ${tone}" aria-label="Next step"><div><div class="next-k">${esc(title)}</div><p>${text}</p></div>${act || ''}</section>`;
   const btn = (to, label, primary) => `<button class="btn sm ${primary ? 'primary' : ''}" data-act="go" data-to="${to}">${esc(label)} →</button>`;
   if (!sg.ok) return box('warn', 'Next: finish set-up', 'Still open: ' + esc(sg.items.filter(x => !x[1]).map(x => x[0]).join('; ')) + '. ' + (practice() ? '' : SRV.user && SRV.user.isAdmin ? 'Complete it in Admin.' : 'An administrator completes it.'), !practice() && SRV.user && SRV.user.isAdmin ? '<a class="btn sm primary" href="/admin/#set-up">Open set-up →</a>' : '');
@@ -736,7 +753,7 @@ function detailsHtml(id, inline) {
   if (!id) return `<div class="card"><h2 class="sh">Position details</h2><p class="small soft">Select a cell to record its proposer, owner, condition or dissent, or to record it as not set.</p></div>`;
   const c = cellById(id); if (!c) return '';
   const did = c.did, p = getPosView(id), ed = canEdit(did), elig = eligible(did);
-  const pOpt = (list, v) => `<option value="">—</option>` + list.map(x => `<option value="${esc(x.id)}" ${v === x.id ? 'selected' : ''}>${esc(x.name)} · ${esc(ROLE_NAME[x.role])}</option>`).join('');
+  const pOpt = (list, v) => `<option value="">—</option>` + list.map(x => `<option value="${esc(x.id)}" ${v === x.id ? 'selected' : ''}>${esc(x.name)} · ${esc(rolesText(x))}</option>`).join('');
   const eid = esc(id), fid = f => `id="pf-${sid(id)}-${f}"`;
   const ckOff = offenderMap(runChecks())[id] || [];
   const canProp = roleCanPropose(did);
@@ -829,38 +846,38 @@ function screenChecks(ck) {
 /* ---------- My actions: what is waiting for the signed-in person (or the person being practised as) ---------- */
 function myActions(ck) {
   if (!S || UI.archived) return [];
-  const p = me(), role = UI.role, pid = p ? p.id : null, t = today(), out = [];
+  const p = me(), pid = p ? p.id : null, t = today(), out = [];
   const soon = d => { if (!d) return ''; const days = Math.round((Date.parse(d) - Date.parse(t)) / 864e5); return days < 0 ? 'overdue' : days <= 7 ? 'due' : ''; };
   const add = (key, title, detail, act, tone) => out.push({ key, title, detail, act, tone: tone || '' });
   const cells = C.decisions.flatMap(d => cellsFor(d.id));
   // positions recorded as not set, owned by me
   if (pid) cells.forEach(c => { const x = P(c.id); if (x && x.status === 'notSet' && x.notSetOwner === pid) add('ns' + c.id, 'Set the position: ' + cellLabel(c.id), x.notSetDue ? (soon(x.notSetDue) === 'overdue' ? 'Overdue · was due ' : 'Due ') + dAU(x.notSetDue) : 'No due date', { cell: c.id }, soon(x.notSetDue)); });
   // challenges
-  const canRespond = ['counsel', 'cro', 'risk'].includes(role);
+  const canRespond = can('challengeResponse');
   S.challenge.filter(c => c.status === 'open').forEach(c => {
     const own = pid && c.cell && P(c.cell) && P(c.cell).owner === pid;
     if (pid && c.raisedBy === pid && !own) return; // the person who raised it waits for the response
     if (own || canRespond) add('ch' + c.ref, `${own ? 'Challenge on your position' : 'Respond to challenge'} ${c.ref}`, (c.cell ? cellLabel(c.cell) + ' · ' : '') + c.point, { to: 'challenge' });
   });
   // questions for counsel
-  if (role === 'counsel') S.questionsForCounsel.filter(q => q.status !== 'answered').forEach(q => add('qc' + q.ref, 'Answer question ' + q.ref, (q.cell ? cellLabel(q.cell) + ' · ' : D(q.decision).name + ' · ') + q.question, { to: 'challenge', tab: 'qc' }));
+  if (hasRole('counsel') || hasRole('gc')) S.questionsForCounsel.filter(q => q.status !== 'answered').forEach(q => add('qc' + q.ref, 'Answer question ' + q.ref, (q.cell ? cellLabel(q.cell) + ' · ' : D(q.decision).name + ' · ') + q.question, { to: 'challenge', tab: 'qc' }));
   // positions I own that fail a check
   if (pid) { const off = offenderMap(ck); Object.keys(off).forEach(id => { const x = P(id); if (x && x.owner === pid) { const ks = [...new Set(off[id].map(v => v.split(':')[0]))]; add('ck' + id, 'Your position fails ' + ks.join(', '), cellLabel(id), { cell: id }, 'fail'); } }); }
   // recording: blank positions and missing proposers (recorder and counsel)
-  if (['triodian', 'counsel'].includes(role)) C.decisions.forEach(d => { const st = decisionStatus(d.id, ck); if (st.un) add('rec' + d.id, `Record ${st.un} ${st.un === 1 ? 'position' : 'positions'} in decision ${d.n}`, d.name, { to: d.id }); });
+  if (hasRole('triodian') || hasRole('counsel')) C.decisions.forEach(d => { const st = decisionStatus(d.id, ck); if (st.un) add('rec' + d.id, `Record ${st.un} ${st.un === 1 ? 'position' : 'positions'} in decision ${d.n}`, d.name, { to: d.id }); });
   // statement and schedule
-  if (['counsel', 'cro'].includes(role) && !(S.engagement.overallPosition || '').trim()) add('overall', 'Write the overall position for the statement', 'In the board’s words, on the Outputs screen', { to: 'outputs' });
-  if (role === 'cro') { const missing = C.measures.filter(m => !(S.measureOwners || {})[m.ref]).length; if (missing) add('measures', `Name owners for ${missing} ${missing === 1 ? 'measure' : 'measures'}`, 'Outputs → Schedule (check K8)', { to: 'outputs', tab: 'schedule' }); }
+  if ((hasRole('counsel') || hasRole('gc') || hasRole('cro')) && !(S.engagement.overallPosition || '').trim()) add('overall', 'Write the overall position for the statement', 'In the board’s words, on the Outputs screen', { to: 'outputs' });
+  if (hasRole('cro')) { const missing = C.measures.filter(m => !(S.measureOwners || {})[m.ref]).length; if (missing) add('measures', `Name owners for ${missing} ${missing === 1 ? 'measure' : 'measures'}`, 'Outputs → Schedule (check K8)', { to: 'outputs', tab: 'schedule' }); }
   // agreement and approval
   const bl = blocking(ck), blank = C.decisions.some(d => decisionStatus(d.id, ck).un);
-  if (role === 'cro' && S.calibration.status === 'default') { if (!bl.length && !blank) add('agree', 'Agree the working appetite', 'Every position is recorded and checks K1 to K9 pass', { to: 'outputs' }, 'due'); else if (bl.length) add('checks', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing`, 'The working appetite can’t be agreed until they pass', { to: 'checks' }); }
-  if (role === 'board' && S.calibration.status === 'working') add('approve', 'Record the board’s approval', 'When the board or its committee approves the working appetite', { to: 'outputs' }, 'due');
+  if (hasRole('cro') && S.calibration.status === 'default') { if (!bl.length && !blank) add('agree', 'Agree the working appetite', 'Every position is recorded and checks K1 to K9 pass', { to: 'outputs' }, 'due'); else if (bl.length) add('checks', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing`, 'The working appetite can’t be agreed until they pass', { to: 'checks' }); }
+  if (hasRole('board') && S.calibration.status === 'working') add('approve', 'Record the board’s approval', 'When the board or its committee approves the working appetite', { to: 'outputs' }, 'due');
   const rank = { overdue: 0, fail: 1, due: 2, '': 3 };
   return out.sort((a, b) => rank[a.tone] - rank[b.tone]);
 }
 function screenActions(ck) {
   const list = myActions(ck), p = me();
-  const who = p ? `${esc(p.name)} · ${esc(ROLE_NAME[UI.role])}` : esc(ROLE_NAME[UI.role] || '');
+  const who = p ? `${esc(p.name)} · ${esc(rolesText(p))}` : esc(ROLE_NAME[UI.role] || '');
   return `${opening('My actions', 'What is waiting for you', who)}
   ${list.length ? `<div class="stack actlist" style="gap:10px">${list.map(a => `<button class="actitem ${a.tone}" ${a.act.cell ? `data-act="gotoCell" data-cell="${esc(a.act.cell)}"` : `data-act="goTab" data-to="${a.act.to}" data-tab="${a.act.tab || ''}"`}>
       <span class="actdot" aria-hidden="true"></span><span class="acttext"><strong>${esc(a.title)}</strong><span class="small soft">${esc(withLabels(a.detail, 'C'))}</span></span>${a.tone === 'overdue' ? badge('Overdue', 'b-red') : a.tone === 'fail' ? badge('Fails a check', 'b-red') : a.tone === 'due' ? badge('Now', 'b-ochre') : ''}<span class="actgo" aria-hidden="true">→</span></button>`).join('')}</div>`
@@ -879,13 +896,13 @@ function screenChallenge() {
     body = `<div class="row" style="margin-bottom:12px"><label class="f" style="flex-direction:row;align-items:center;gap:8px"><span>Filter by ${T('ap', 'accountable person')}</span><select class="in" style="width:auto" id="chFilter" data-act="chFilter"><option value="">Everyone</option>${S.people.map(p => `<option value="${esc(p.id)}" ${f === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label></div>
     ${list.length ? (b === 'phone' ? `<div class="stack" style="gap:10px">${list.map(({ c, i }) => `<div class="card" style="padding:14px"><div class="row between"><span class="mono">${esc(c.ref)}</span>${badge(c.status, c.status === 'open' ? 'b-ochre' : 'b-green')}</div><div class="small soft">${esc(pname(c.raisedBy))}${c.cell ? ` · <button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : ''}</div><p style="margin:8px 0">${esc(c.point)}</p><label class="f"><span>Response</span><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" ${rdis}></label><div style="margin-top:8px">${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</div></div>`).join('')}</div>`
       : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Raised by</th><th>Decision and cell</th><th>Point</th><th>Response</th><th style="width:130px">Status</th></tr></thead><tbody>${list.map(({ c, i }) => `<tr><td class="code">${esc(c.ref)}</td><td class="small">${esc(pname(c.raisedBy))}</td><td class="small">${c.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(c.cell)}">${esc(cellLabel(c.cell))}</button>` : c.decision ? 'Decision ' + esc(D(c.decision).n) : ''}${c.status === 'accepted' && c.cell ? '<div class="mini">changed this position</div>' : ''}</td><td class="small">${esc(c.point)}</td><td><input class="in" id="chr-${i}" data-path="challenge.${i}.response" value="${esc(c.response)}" aria-label="Response ${esc(c.ref)}" ${rdis}></td><td>${st(`challenge.${i}.status`, c.status, ['open', 'accepted', 'answered'], rdis)}</td></tr>`).join('')}</tbody></table></div>`) : '<p class="soft">No challenge points have been recorded.</p>'}
-    ${allowed.length ? `<section class="card" style="margin-top:18px"><h2 class="sh">Record a challenge point</h2>${UI.role === 'independent' ? `<p class="small soft">${esc(blockReason('d1'))} ${whyLink()}</p>` : ''}<div class="fgrid">
+    ${allowed.length ? `<section class="card" style="margin-top:18px"><h2 class="sh">Record a challenge point</h2>${hasRole('independent') ? `<p class="small soft">${esc(blockReason('d1'))} ${whyLink()}</p>` : ''}<div class="fgrid">
       <label class="f"><span>Raised by</span><select class="in" id="ch-by"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}" ${UI.personId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
       <label class="f"><span>Decision</span><select class="in" id="ch-dec" data-act="chDec">${decOpts}</select></label>
       <label class="f"><span>Cell</span><select class="in" id="ch-cell"><option value="">Whole decision</option>${cellsFor(chDec).map(c => `<option value="${esc(c.id)}">${esc(cellLabel(c.id))}</option>`).join('')}</select></label></div>
       <label class="f" style="margin-top:12px"><span>Point</span><textarea class="in" id="ch-point"></textarea></label><button class="btn sm" style="margin-top:10px" data-act="addCH">Add to log</button></section>` : ''}`;
   } else {
-    const ed = UI.role === 'counsel';
+    const ed = hasRole('counsel') || hasRole('gc');
     body = S.questionsForCounsel.length ? `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Decision and cell</th><th>Question</th><th>Response · counsel</th><th style="width:130px">Status</th></tr></thead><tbody>${S.questionsForCounsel.map((q, i) => `<tr><td class="code">${esc(q.ref)}</td><td class="small">${q.cell ? `<button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : 'Decision ' + esc(D(q.decision).n)}</td><td class="small">${esc(q.question)}</td><td><input class="in" id="qcr-${i}" data-path="questionsForCounsel.${i}.response" value="${esc(q.response)}" ${ed ? '' : 'disabled'} aria-label="Response ${esc(q.ref)}"></td><td>${ed ? st(`questionsForCounsel.${i}.status`, q.status, ['open', 'answered']) : badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</td></tr>`).join('')}</tbody></table></div>${ed ? '' : '<p class="small soft" style="margin-top:8px">Responses are recorded by counsel.</p>'}` : '<p class="soft">No questions recorded. Questions are added from each decision screen.</p>';
   }
   return `${opening('Challenge', 'Challenge round', 'The second line and each accountable person review the positions in their area. Each point raised is either accepted or answered.')}
@@ -910,7 +927,7 @@ function mdStatement() {
   m += `### Location and concentration\n\n` + (S.decisions.d6.jurisdictions.length ? tbl(['Jurisdiction', 'Provider established', 'AI runs'], S.decisions.d6.jurisdictions.map(j => [j.name, pv(`d6.j.${j.id}.established`), pv(`d6.j.${j.id}.runs`)])) : 'No jurisdictions recorded.\n\n') + `Concentration limit: ${pv('d6.concentration')}${val('d6.concentration') ? '%' : ''} of critical operations on a single platform or model provider.\n\n`;
   m += `## 7. Triggers and escalation\n\n` + tbl(['Ref', 'Trigger', 'Measure', 'Threshold', 'Notify within', 'Notified to'], S.decisions.d7.triggers.map(t => [t.ref, t.name, t.measure, pv(`d7.${t.ref}.threshold`), val(`d7.${t.ref}.time`) ? val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`), pv(`d7.${t.ref}.to`)]));
   m += `## 8. Accountability\n\n` + tbl(['Function', 'Accountable person'], S.functions.map(f => [f.name, S.people.filter(p => (p.areas || []).includes(f.id)).map(p => p.name).join(', ') || '[ ]']));
-  if (irContributed()) { const ir = S.people.filter(p => p.role === 'independent').map(p => p.id), np = cellsFor('d2').filter(c => { const p = P(c.id); return p && p.status === 'set' && ir.includes(p.proposedBy); }).length, nc = S.challenge.filter(c => c.decision === 'd2' && ir.includes(c.raisedBy)).length;
+  if (irContributed()) { const ir = S.people.filter(p => rolesOf(p).includes('independent')).map(p => p.id), np = cellsFor('d2').filter(c => { const p = P(c.id); return p && p.status === 'set' && ir.includes(p.proposedBy); }).length, nc = S.challenge.filter(c => c.decision === 'd2' && ir.includes(c.raisedBy)).length;
     m += `The independent reviewer ${[np ? `proposed ${np} of the consequence thresholds in decision 2` : '', nc ? `raised ${nc} challenge point${nc === 1 ? '' : 's'} on decision 2` : ''].filter(Boolean).join(' and ')}. If the same reviewer reviews the AI Use Assessment for the CRO, they will review findings measured against thresholds they helped set.\n\n`; }
   m += `## 9. Review\n\nReview interval: ${pv('d8.interval')}.\n\n` + tbl(['Event', 'What is revisited'], S.decisions.d8.events.map(e => [e.event, pv(`d8.ev.${e.id}`)]));
   const sa = sinceApproved();
@@ -918,17 +935,17 @@ function mdStatement() {
   m += `## Appendix. Definitions\n\n${C.scales.note}\n\n` + tbl(['Code', 'Authority tier', 'Definition'], C.scales.authority.map(s => [s.code, s.name, s.def])) + tbl(['Code', 'Consequence level', 'Generic definition'], C.scales.consequence.map(s => [s.code, s.name, s.def])) + tbl(['Code', 'Evidence rung', 'Definition'], C.scales.evidence.map(s => [s.code, s.name, s.def]));
   return m;
 }
-function irContributed() { const ir = S.people.filter(p => p.role === 'independent').map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
+function irContributed() { const ir = S.people.filter(p => rolesOf(p).includes('independent')).map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
 /* One board paper: cover memo, statement, schedule, check summary and glossary. */
 const bodyOf = md => { const i = md.indexOf('\n## '); return i < 0 ? '' : md.slice(i + 1); };
 function mdPack() {
   const e = S.engagement, c = S.calibration, bm = e.boardMemo || {}, ck = runChecks(), bl = blocking(ck);
-  const cro = S.people.find(p => p.role === 'cro'), ins = e.insurer || '[insurer]', v = c.version || 1;
+  const cro = S.people.find(p => rolesOf(p).includes('cro')), ins = e.insurer || '[insurer]', v = c.version || 1;
   let m = mdHead('Board paper: AI risk appetite');
   m += `- **To:** ${bm.to || 'The Board'}\n- **From:** ${bm.from || (cro ? cro.name + ', Chief Risk Officer' : 'Chief Risk Officer')}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite statement, version ${v}\n\n`;
   m += `## Decision sought\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite statement (version ${v}) and the tolerance and trigger schedule in this paper.`}\n\n`;
   m += `## Recommendation and summary\n\n${bm.summary || '[For counsel or the CRO to write: what the appetite allows and does not allow, in a few sentences, and any matters the board should note.]'}\n\n`;
-  m += `## How the positions were reached\n\nThe positions were proposed by ${ins}'s CRO and risk function in sessions facilitated by ${e.counselFirm || 'external counsel'}${S.people.some(p => p.role === 'independent') ? ', with the independent reviewer advising on the consequence thresholds' : ''}. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks ${bl.length ? `show ${bl.length} ${bl.length === 1 ? 'check' : 'checks'} failing (${bl.map(k => k.id).join(', ')}); these must be resolved before approval` : 'K1 to K9 pass'}. ${c.status === 'working' ? `The CRO agreed this working appetite${c.agreedOn ? ' on ' + c.agreedOn : ''}.` : c.status === 'approved' ? `It was approved${c.approvedOn ? ' on ' + c.approvedOn : ''}${c.minuteRef ? ' (minute ' + c.minuteRef + ')' : ''}.` : 'The CRO has not yet agreed the working appetite.'}\n\n`;
+  m += `## How the positions were reached\n\nThe positions were proposed by ${ins}'s CRO and risk function in sessions facilitated by ${e.counselFirm || 'external counsel'}${S.people.some(p => rolesOf(p).includes('independent')) ? ', with the independent reviewer advising on the consequence thresholds' : ''}. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks ${bl.length ? `show ${bl.length} ${bl.length === 1 ? 'check' : 'checks'} failing (${bl.map(k => k.id).join(', ')}); these must be resolved before approval` : 'K1 to K9 pass'}. ${c.status === 'working' ? `The CRO agreed this working appetite${c.agreedOn ? ' on ' + c.agreedOn : ''}.` : c.status === 'approved' ? `It was approved${c.approvedOn ? ' on ' + c.approvedOn : ''}${c.minuteRef ? ' (minute ' + c.minuteRef + ')' : ''}.` : 'The CRO has not yet agreed the working appetite.'}\n\n`;
   const sa = sinceApproved();
   if (sa) m += `## Changes since the approved version\n\nThe board approved version ${sa.from.version} on ${sa.from.on}. ${sa.rows.length} ${sa.rows.length === 1 ? 'position has' : 'positions have'} changed:\n\n` + tbl(['Position', 'Approved', 'Proposed now'], sa.rows.map(r => [r[0], r[1], r[2]]));
   m += `---\n\n# Attachment A. AI risk appetite statement\n\n` + bodyOf(mdStatement()).replace(/## Changes since the approved version[\s\S]*?(?=## Appendix)/, '');
@@ -1002,23 +1019,59 @@ function mdCalibration() {
   m += `**Parameters with default values:** ${cs.fellBackToDefault.length ? cs.fellBackToDefault.join('; ') : 'none'}.\n\n`;
   return m;
 }
+/* ---------- engagement plan (development plan task 0.7) ----------
+   The steps come from the framework's own process (section 7.2), so the plan says what the method says. Sessions are the
+   two decision sessions with the dates set-up records, then the challenge and the approval; attendees by role come from
+   the people list; inputs are I1 to I11 with their status; sign-off points are the CRO's agreement and the board's. */
+function fwTable(heading) {
+  const m = C.frameworkMarkdown || '', i = m.indexOf(heading); if (i < 0) return [];
+  const rows = []; for (const l of m.slice(i).split('\n').slice(1)) { if (!l.startsWith('|')) { if (rows.length) break; continue; } rows.push(l.replace(/^\|\s*|\s*\|$/g, '').split(/\s*\|\s*/)); }
+  return rows.filter(r => !r.every(c => /^-+$/.test(c))).slice(1);
+}
+function mdPlan() {
+  const e = S.engagement, c = S.calibration, ck = runChecks(), pass = ck.filter(k => k.state === 'pass').length, sd = e.sessionDates || [];
+  const holds = (p, r) => (Array.isArray(p.roles) && p.roles.length ? p.roles : [p.role]).includes(r);
+  const named = r => activePeople().filter(p => holds(p, r)).map(p => p.name + (p.organisation ? ' (' + p.organisation + ')' : '')).join('; ');
+  const recv = S.inputs.filter(i => i.status === 'received' || i.status === 'notHeld').length;
+  const stands = [`${recv} of ${S.inputs.length} inputs received or recorded as not held`, sd[0] ? 'Dated ' + dAU(sd[0]) : 'Date to be set', sd[1] ? 'Dated ' + dAU(sd[1]) : 'Date to be set',
+    `${pass} of ${ck.length} checks pass`, c.agreedById ? 'Agreed ' + dAU(c.agreedOn) + (c.agreedBy ? ' by ' + c.agreedBy : '') : 'Not yet', '', '', c.status === 'approved' ? 'Approved ' + dAU(c.approvedOn) + (c.minuteRef ? ', ' + c.minuteRef : '') : 'Not yet'];
+  let m = mdHead('Engagement plan');
+  m += `This plan follows the framework’s process. It is for everyone taking part: what happens when, who attends, what the insurer is asked to provide, and where each sign-off stands.\n\n`;
+  m += `## Steps\n\n` + tbl(['Step', 'When', 'Activity', 'Output', 'Where it stands'], fwTable('### 7.2 Steps').map((r, i) => [r[0], r[1], r[2], r[3], stands[i] || ''])) + '\n';
+  const dec = s => C.decisions.filter(d => d.session === s).map(d => d.n + ' ' + d.name).join(', ');
+  m += `## Sessions and who attends\n\n` + tbl(['Session', 'When', 'Covers', 'Attends'], [
+    ['Session 1', sd[0] ? dAU(sd[0]) + ', two hours' : 'Week 1, day 4 or 5, two hours', 'Decisions ' + dec(1), 'The CRO and the insurer risk function, who propose positions; counsel, who facilitates; Triodian, who records'],
+    ['Session 2', sd[1] ? dAU(sd[1]) + ', two hours' : 'Week 2, two hours', 'Decisions ' + dec(2) + '; session 1 positions reviewed in their light', 'As session 1'],
+    ['Challenge', 'Week 3', 'Each area’s positions', 'Second line and each accountable person, with the CRO'],
+    ['Approval', 'Next risk committee or board meeting', 'The statement and schedule', 'The board; the CRO presents, counsel settles the wording'],
+  ]) + '\n';
+  m += `## Attendees by role\n\n` + tbl(['Role', 'Named'], C.roles.map(r => [r.name, named(r.id) || 'Not yet named'])) + '\n';
+  const st = { received: 'Received', requested: 'Requested', notHeld: 'Not held' };
+  m += `## Inputs needed from the insurer\n\nRequested through external counsel before session 1.\n\n` + tbl(['Ref', 'Input', 'Used in', 'Status'], C.inputs.map((x, i) => { const s = S.inputs[i] || {}; return [x.ref, x.name, x.usedIn, (st[s.status] || 'Not yet requested') + (s.date ? ' ' + dAU(s.date) : '')]; })) + '\n';
+  m += `## Sign-off points\n\n` + tbl(['Sign-off', 'By', 'Where it stands'], [
+    ['Working appetite agreed (the calibration set issued to the assessment, marked working)', 'The CRO, once checks K1 to K9 pass', c.agreedById ? `Agreed ${dAU(c.agreedOn)}, version ${c.version}` : 'Not yet'],
+    ['Statement and schedule settled for the board', 'External counsel', c.status === 'approved' ? 'Done' : 'Before approval'],
+    ['Board approval (the calibration set re-issued, marked approved)', 'The board, recorded with the minute reference', c.status === 'approved' ? `Approved ${dAU(c.approvedOn)}${c.minuteRef ? ', ' + c.minuteRef : ''}` : 'Not yet'],
+  ]);
+  return m;
+}
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report']];
+  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
-  const whyAgree = [!who || who.role !== 'cro' ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
+  const whyAgree = [!who || !rolesOf(who).includes('cro') ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);
-  const whyApprove = [UI.role !== 'board' ? (practice() ? 'Only the board record role can record approval: choose it under “Acting as” above.' : 'Only the board record role can record approval.') : '', c.status === 'default' ? 'The CRO must agree the working appetite first.' : c.status === 'working' && !c.agreedById ? 'The CRO must agree version ' + c.version + ' first.' : ''].filter(Boolean).join(' '), xb = tab === 'calibration' && exportBlocked();
+  const whyApprove = [!hasRole('board') ? (practice() ? 'Only the board record role can record approval: choose it under “Acting as” above.' : 'Only the board record role can record approval.') : '', c.status === 'default' ? 'The CRO must agree the working appetite first.' : c.status === 'working' && !c.agreedById ? 'The CRO must agree version ' + c.version + ' first.' : ''].filter(Boolean).join(' '), xb = tab === 'calibration' && exportBlocked();
   return `${opening('Outputs', 'Statement, schedule and calibration set', 'The statement for board approval, the schedule, the session record and the calibration set.')}
   <section class="card" style="margin-bottom:20px"><div class="row between"><div class="row"><h2 class="sh" style="margin:0">${T('calibration', 'Calibration status')}</h2>${calBadge()}${S.calibration.status === 'default' ? '' : `<span class="soft small">${esc(statusPlain())}</span>`}</div>${c.minuteRef ? `<span class="mono soft">minute ${esc(c.minuteRef)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:14px"><div class="panel2"><div style="font-weight:600">Agree ${T('working', 'working appetite')}</div><p class="small soft" style="margin:4px 0 10px">${c.status === 'default' ? 'This becomes version 1.' : 'Any later change to a position raises the version number.'}</p>
       <button class="btn primary sm" data-act="agree" ${agreeWhy || !needsAgree ? 'disabled' : ''}>Agree ${c.status === 'default' ? 'working appetite' : 'version ' + esc(c.version)}</button> ${agreeWhy && needsAgree ? `<p class="why small">${esc(agreeWhy)}${bl ? ' <button class="lnk" data-act="go" data-to="checks">Open checks</button>' : ''}</p>` : !needsAgree ? `<span class="small soft">Version ${esc(c.version)} agreed ${esc(dAU(c.agreedOn))} by ${esc(c.agreedBy)}</span>` : ''}</div>
     <div class="panel2"><div style="font-weight:600">Record board approval</div><p class="small soft" style="margin:4px 0 10px">Records the board’s approval. The version number does not change.</p>
-      <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="f"><span>Date</span><input class="in" type="date" id="ap-date" value="${esc(c.approvedOn || today())}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Minute reference</span><input class="in" id="ap-min" value="${esc(c.minuteRef)}" ${UI.role === 'board' ? '' : 'disabled'}></label><label class="f"><span>Approved by (board or committee)</span><input class="in" id="ap-by" value="${esc(c.approvedBy)}" ${UI.role === 'board' ? '' : 'disabled'}></label></div>
+      <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="f"><span>Date</span><input class="in" type="date" id="ap-date" value="${esc(c.approvedOn || today())}" ${hasRole('board') ? '' : 'disabled'}></label><label class="f"><span>Minute reference</span><input class="in" id="ap-min" value="${esc(c.minuteRef)}" ${hasRole('board') ? '' : 'disabled'}></label><label class="f"><span>Approved by (board or committee)</span><input class="in" id="ap-by" value="${esc(c.approvedBy)}" ${hasRole('board') ? '' : 'disabled'}></label></div>
       ${UI.err.approval ? `<p class="err" role="alert">${esc(UI.err.approval)}</p>` : ''}
-      <button class="btn sm" style="margin-top:10px" data-act="approve" ${UI.role === 'board' && c.status === 'working' && c.agreedById ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
+      <button class="btn sm" style="margin-top:10px" data-act="approve" ${hasRole('board') && c.status === 'working' && c.agreedById ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
     ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(dAU(x.on))}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
     ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   ${compareCard()}
@@ -1108,7 +1161,7 @@ function doRender() {
   // Until start-up has finished, show a quiet line rather than the welcome screen, so it doesn't flash before the engagement opens.
   if (!S) { app.innerHTML = (UI.guide || SRV.started || (SRV.checked && !SRV.on)) ? entry() : `<p class="small soft" role="status" style="text-align:center;padding:30vh 16px 0">Opening AI Risk Appetite…</p>`; return; }
   applyIdentity();
-  if (UI.personId) { const p = person(UI.personId); if (p) UI.role = p.role; else UI.personId = ''; }
+  if (UI.personId) { const p = person(UI.personId); if (p) UI.role = rolesOf(p)[0] || 'none'; else UI.personId = ''; }
   versionCheck();
   const ck = runChecks(), ae = document.activeElement, fid = ae && ae.id, fkey = !fid ? dsKey(ae) : null; let sel = null;
   try { if (ae && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
@@ -1201,7 +1254,7 @@ function validateFile(o) {
   const walk = (v, p, depth) => { if (depth > 12) return E('the file is nested too deeply'); if (typeof v === 'string') { if (v.length > 10000) E(p + ' is longer than 10,000 characters'); } else if (v && typeof v === 'object') Object.keys(v).forEach(k => { if (k.length > 200) E('a key is longer than 200 characters'); walk(v[k], p + '.' + k, depth + 1); }); };
   walk(o, 'file', 0);
   const id = (v, what) => { if (v == null || v === '') return; if (typeof v !== 'string' || !IDRE.test(v)) E(what + ' is not a valid id'); };
-  (o.people || []).forEach(p => { id(p.id, 'a person id'); if (!roles.includes(p.role)) E('a person has an unknown role'); (p.areas || []).forEach(x => id(x, 'an area')); });
+  (o.people || []).forEach(p => { id(p.id, 'a person id'); if (!rolesOf(p).every(r => roles.includes(r))) E('a person has an unknown role'); (p.areas || []).forEach(x => id(x, 'an area')); });
   (o.functions || []).forEach(f => id(f.id, 'a function id'));
   (o.criticalOperations || []).forEach(x => id(x.id, 'a critical operation id'));
   (o.inputs || []).forEach(x => { if (!C.inputs.some(c => c.ref === x.ref)) E('an input ref is not one of I1 to I11'); if (x.status && !['received', 'notHeld', 'notRequested'].includes(x.status)) E('an input has an unknown status'); });
@@ -1247,7 +1300,7 @@ function avatarBadge() { const u = SRV.user; return u ? `<span class="avatar" ar
 function avatar() {
   const u = SRV.user; if (!u) return '';
   return `<span class="acct"><button class="avatar-link" data-act="acct" aria-haspopup="menu" aria-expanded="${!!UI.acct}" title="${esc(u.name || u.email)}" aria-label="Account: ${esc(u.name || u.email)}">${avatarBadge()}</button>${UI.acct ? `<div class="acct-menu" role="menu">
-    <div class="acct-who">${avatarBadge()}<div><strong>${esc(u.name || u.email)}</strong>${u.name ? `<div class="small soft">${esc(u.email)}</div>` : ''}<div class="small soft">${esc(u.role ? ROLE_NAME[u.role] : 'No engagement role')}${u.isAdmin ? ' · administrator' : ''}</div></div></div>
+    <div class="acct-who">${avatarBadge()}<div><strong>${esc(u.name || u.email)}</strong>${u.name ? `<div class="small soft">${esc(u.email)}</div>` : ''}<div class="small soft">${esc(rolesOf(u).length ? rolesText(u) : 'No engagement role')}${u.isAdmin ? ' · administrator' : ''}</div></div></div>
     <a role="menuitem" class="item" href="/profile/">Your profile</a>
     ${u.isAdmin ? `<a role="menuitem" class="item" href="/admin/#set-up">Admin · set-up and users</a>` : ''}
     <a role="menuitem" class="item" href="/user-guide/">User guide</a>
@@ -1301,13 +1354,14 @@ function screenStart() {
     <button class="act" data-act="open"><span class="mono" style="color:var(--aubergine)">02</span><span><strong>Start from an engagement file</strong><br><span class="small soft">A .json file saved from this app. People are taken from the user list, so check owners and proposers afterwards.</span></span></button>
   </div>`;
 }
-function roleOptions(cur) { return `<option value="" ${!cur ? 'selected' : ''}>None (no engagement role)</option>` + ADM.roles.map(r => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join(''); }
+/* Several roles per person (task 0.6): one checkbox per role, as in AI Use Assessment's Admin. None ticked = no engagement role. */
+function roleChecks(u) { const cur = rolesOf(u); return `<fieldset class="acts2" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Engagement roles <span class="soft" style="font-weight:400">· one person may hold more than one</span></legend><div class="row" style="gap:4px 16px;flex-wrap:wrap">${ADM.roles.map(r => `<label class="cb small"><input type="checkbox" name="f-roles" value="${esc(r.id)}" ${cur.includes(r.id) ? 'checked' : ''}> ${esc(r.name)}</label>`).join('')}</div></fieldset>`; }
 function userForm(u, isNew) {
   return `<form class="adm-form" id="userForm" data-id="${esc(u.id || '')}" novalidate>
     <label class="f">Email<input class="in" id="f-email" type="email" autocomplete="off" value="${esc(u.email || '')}"></label>
     <label class="f">Name<input class="in" id="f-name" value="${esc(u.name || '')}"></label>
     <label class="f">Organisation<input class="in" id="f-org" value="${esc(u.organisation || '')}"></label>
-    <label class="f">Engagement role<select class="in" id="f-role">${roleOptions(u.role)}</select></label>
+    ${roleChecks(u)}
     <div class="acts2"><label class="cb"><input type="checkbox" id="f-admin" ${u.isAdmin ? 'checked' : ''}> Administrator (set-up and users)</label>
       ${isNew ? '' : `<label class="cb"><input type="checkbox" id="f-active" ${u.active !== false ? 'checked' : ''}> Active (can sign in)</label>`}</div>
     ${u.pendingEmail ? `<p class="small soft acts2">Has asked to change their email to ${esc(u.pendingEmail)} (not yet confirmed).</p>` : ''}
@@ -1323,7 +1377,7 @@ function screenUsers() {
     return `<tr class="${u.active ? '' : 'off'}">
       <td><strong>${esc(u.name || '—')}</strong>${u.id === me.id ? ' <span class="badge b-aub">you</span>' : ''}<div class="em">${esc(u.email)}</div></td>
       <td class="adm-hide-sm">${esc(u.organisation)}</td>
-      <td>${u.role ? esc(roleLong(u.role)) : '<span class="soft">None</span>'}</td>
+      <td>${rolesOf(u).length ? rolesOf(u).map(r => esc(roleLong(r))).join('<br>') : '<span class="soft">None</span>'}</td>
       <td>${u.isAdmin ? '<span class="badge b-aub">Admin</span>' : ''}</td>
       <td>${u.active ? '<span class="badge b-green">Active</span>' : '<span class="badge b-grey">Inactive</span>'}</td>
       <td class="adm-hide-sm small soft">${u.lastSeenAt ? fmtLocal(u.lastSeenAt) : 'Never'}</td>
@@ -1354,8 +1408,8 @@ function screenUsers() {
 }
 const AUDIT_NAME = { 'user.create': 'Added user', 'user.update': 'Changed user', 'user.profile': 'Updated own profile', 'user.email_requested': 'Asked to change email', 'user.email': 'Confirmed new email', 'engagement.create': 'Started the engagement', 'engagement.save': 'Saved the engagement', 'engagement.refused': 'Save refused', 'engagement.next_review': 'Started the next review' };
 function auditDetail(e) {
-  const d = e.detail || {}, v = (k, x) => x === null || x === '' || x === undefined ? '—' : k === 'role' ? roleLong(x) : x;
-  if (e.action === 'user.create') return `${d.email || ''}${d.role ? ' · ' + roleLong(d.role) : ''}${d.isAdmin ? ' · admin' : ''}${d.reason ? ' · ' + d.reason : ''}`;
+  const d = e.detail || {}, v = (k, x) => x === null || x === '' || x === undefined || (Array.isArray(x) && !x.length) ? '—' : k === 'role' ? roleLong(x) : k === 'roles' ? x.map(roleLong).join(', ') : x;
+  if (e.action === 'user.create') return `${d.email || ''}${(d.roles || (d.role ? [d.role] : [])).length ? ' · ' + (d.roles || [d.role]).map(roleLong).join(', ') : ''}${d.isAdmin ? ' · admin' : ''}${d.reason ? ' · ' + d.reason : ''}`;
   if (e.action === 'user.update' || e.action === 'user.profile') return `${d.email || ''}: ` + Object.entries(d.changed || {}).map(([k, c]) => `${k} ${v(k, c.from)} → ${v(k, c.to)}`).join('; ');
   if (e.action === 'user.email_requested' || e.action === 'user.email') return `${d.from} → ${d.to}`;
   if (e.action === 'engagement.save' || e.action === 'engagement.create') return `revision ${d.revision}${d.changes ? ' · ' + d.changes + ' change' + (d.changes === 1 ? '' : 's') : ''}${d.mergedWith ? ' · merged with changes by ' + d.mergedWith : ''}`;
@@ -1413,7 +1467,7 @@ function screenProfile() {
     <label class="entry-skip" style="margin:0"><input type="checkbox" data-act="showIntro" ${introHidden() ? '' : 'checked'}> Show the introduction when the app opens, and the explanation before set-up and the worked example</label>
     <p class="small soft" style="margin-top:8px">This setting applies in this browser only.</p></section>
   <section class="card"><h2 class="sh">Access</h2>
-    <dl class="kv"><dt>Engagement role</dt><dd>${esc(u.role ? roleLong(u.role) : 'None. You can read the engagement but not change it.')}</dd>
+    <dl class="kv"><dt>Engagement ${rolesOf(u).length > 1 ? 'roles' : 'role'}</dt><dd>${esc(rolesOf(u).length ? rolesOf(u).map(roleLong).join(', ') : 'None. You can read the engagement but not change it.')}</dd>
     <dt>Administrator</dt><dd>${u.isAdmin ? 'Yes · <a href="/admin/#set-up">open Admin</a>' : 'No'}</dd></dl>
     <p class="small soft" style="margin-top:10px">Roles are set by an administrator.</p></section>
   </div>`;
@@ -1435,7 +1489,7 @@ document.addEventListener('submit', async e => {
     return render();
   }
   const id = f.dataset.id;
-  const v = { email: val('f-email'), name: val('f-name'), organisation: val('f-org'), role: val('f-role') || null, isAdmin: !!(document.getElementById('f-admin') || {}).checked, active: document.getElementById('f-active') ? document.getElementById('f-active').checked : true };
+  const v = { email: val('f-email'), name: val('f-name'), organisation: val('f-org'), roles: [...document.querySelectorAll('input[name="f-roles"]:checked')].map(x => x.value), isAdmin: !!(document.getElementById('f-admin') || {}).checked, active: document.getElementById('f-active') ? document.getElementById('f-active').checked : true };
   ADM.draft = Object.assign({ id }, v);
   if (!v.email || !v.name) { ADM.err = 'Enter an email address and a name.'; return render(); }
   const r = id ? await api('PUT', '/api/admin/users/' + encodeURIComponent(id), v) : await api('POST', '/api/admin/users', v);
@@ -1462,7 +1516,7 @@ async function api(method, path, body) {
 }
 const practice = () => !!(S && S.engagement.example);
 const savesHere = () => SRV.on && S && !practice() && !UI.archived;
-const myRole = () => (SRV.user && SRV.user.role) || 'none';
+const myRole = () => (SRV.user && rolesOf(SRV.user)[0]) || 'none';
 /* In the real engagement the signed-in user is the actor; only practice mode lets the role be switched. */
 function applyIdentity() { if (!SRV.user || practice()) return; UI.personId = SRV.user.id; UI.role = myRole(); }
 function autosave() {
@@ -1589,7 +1643,7 @@ function buildExample() {
   X.current.d2 = { C2: 'Breach of a material outsourcing term', C3: '$250,000 single event; $1m in a quarter', C4: '10 or more policyholders affected, or any single case of serious financial hardship' };
   X.current.offshoring = 'Material outsourcing to Australia and New Zealand accepted. Any other jurisdiction needs CRO approval and a legal review of audit and data access rights.';
   X.decisions.d6.jurisdictions = [ { id: 'j1', name: 'Australia', start: 'Accepted' }, { id: 'j2', name: 'New Zealand', start: 'Accepted' }, { id: 'j3', name: 'United States', start: 'Escalate' }, { id: 'j4', name: 'India', start: 'Escalate' } ];
-  const old = S; S = X; const role = UI.role; UI.role = 'cro';
+  const old = S; S = X; const role = UI.role, force = UI.forceRole; UI.role = 'cro'; UI.forceRole = true;
   const put = (id, v, who, extra) => { const p = getPos(id); Object.assign(p, { value: v, status: 'set', proposedBy: who || 'p1', recordedBy: 'triodian', owner: defaultOwner(id), source: 'session' }, extra || {}); };
   Object.keys(X.current.d1).forEach(id => put(id, X.current.d1[id], id.includes('.cl.') || id.includes('.cd.') || id.includes('.cc.') ? 'p3' : 'p1'));
   Object.assign(getPos('d1.cl.provider'), { condition: 'Up to $5,000 per claim; above that a person approves', testable: true, reason: 'Matches the binder schedule for the claims TPA, clause 4.2' });
@@ -1619,7 +1673,7 @@ function buildExample() {
   ];
   X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1' };
   X.history = [{ at: '2026-10-15T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-10-22T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
-  S = old; UI.role = role; return X;
+  S = old; UI.role = role; UI.forceRole = force; return X;
 }
 
 /* ---------- events ---------- */
@@ -1713,7 +1767,7 @@ function onClick(e) {
 function onChange(e) { inChange = true; try { changeHandler(e); } finally { inChange = false; } }
 function changeHandler(e) {
   const t = e.target, d = t.dataset;
-  if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = p.role; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
+  if (d.act === 'role') { if (!practice() && SRV.user) { render(); return; } const [k, v] = t.value.split(':'); if (k === 'p') { const p = person(v); if (p) { UI.personId = p.id; UI.role = rolesOf(p)[0] || 'none'; } } else { UI.personId = ''; UI.role = v; } UI.err = {}; render(); toast('Acting as ' + actor()); return; }
   if (d.act === 'hideIntro') { setIntroHidden(t.checked); return; }
   if (d.act === 'showIntro') { setIntroHidden(!t.checked); PRF.msg = ''; return; }
   if (d.act === 'cmp') { const v = t.value === 'now' ? 'now' : +t.value; if (d.k === 'from') UI.cmpFrom = v; else UI.cmpTo = v; render(); return; }

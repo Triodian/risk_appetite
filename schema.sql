@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL DEFAULT '',
   organisation TEXT NOT NULL DEFAULT '',
-  role TEXT,                         -- counsel | triodian | cro | risk | independent | board | NULL
+  role TEXT,                         -- the first of roles; kept for one release (task 0.6) so the previous version still runs
+  roles TEXT,                        -- comma-separated: counsel, gc, triodian, cro, risk, independent, board; NULL = none
   is_admin INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL, created_by TEXT NOT NULL,
