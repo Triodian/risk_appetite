@@ -25,6 +25,9 @@ export default defineConfig({
       '--persist-to tests/e2e/.state',
       '--var LOCAL_DEV_NO_SIGNIN_EMAIL:damian.hickey@triodian.com',
       '--var NOTIFY_SENDING:off',
+      // A test-only demo account (password Tq7£2Wx*90), so the demo sign-in is on here as on the demo site, where
+      // DEMO_LOGIN is a Worker secret (docs/demo-sign-in.md).
+      `--var 'DEMO_LOGIN:[{"username":"trio_demo","email":"demo@triodian.com","hash":"pbkdf2-sha256$100000$A99MOzmBypmjVi3B4Q9fxQ$BQLXVqg6ctSNkJcQS99OlABRNWiGPWPhU42C51PE66g","anyCharAt":[3]}]'`,
       `--var SITE_URL:${BASE}`,
       '--show-interactive-dev-session=false',
     ].join(' '),
