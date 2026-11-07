@@ -81,6 +81,10 @@ npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@
 Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 Report security problems privately, as [SECURITY.md](SECURITY.md) describes, not as issues.
 
+## Supporting the project
+
+Use it, review it, tell us you use it, or fund its upkeep: see [SUPPORTING.md](SUPPORTING.md). Reviewers and organisations stay private unless they choose otherwise.
+
 ## Licence
 
 AI Risk Appetite is open source under the [Apache License, Version 2.0](LICENSE). Copyright 2026 Triodian Pty Ltd.
