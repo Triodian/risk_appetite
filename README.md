@@ -81,6 +81,10 @@ npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@
 Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 Report security problems privately, as [SECURITY.md](SECURITY.md) describes, not as issues.
 
+## Supporting the project
+
+This is one of five open-source apps from Triodian. There are four ways to help: use it, contribute to it, review it, or adopt it in your own work. See [SUPPORTING.md](SUPPORTING.md).
+
 ## Licence
 
 AI Risk Appetite is open source under the [Apache License, Version 2.0](LICENSE). Copyright 2026 Triodian Pty Ltd.
