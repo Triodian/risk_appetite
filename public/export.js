@@ -1,6 +1,9 @@
 /* Word and PDF export of the output documents.
    Both take the same Markdown the Outputs screen shows. The first line of every output is the
-   privilege marking; it is moved into the page header so it appears on every page. */
+   privilege marking; it is moved into the page header so it appears on every page.
+   meta.brand is the practitioner's branding from set-up ({ firm, line, logo }, read through brand.js). When set, the
+   firm's logo, name and line sit above the marking in the header, and the firm is the document's creator.
+   This file is the same in all the Triodian apps. */
 (function () {
   'use strict';
 
@@ -53,11 +56,13 @@
     return docxLoading;
   }
   const PRIV = '7D1D2C', INK = '17202B', SOFT = '4F5966', RULE = 'C9CFD6', HEAD_BG = 'EEF0F3';
+  const brandOf = meta => (window.TriodianBrand && meta && meta.brand) ? window.TriodianBrand.of(meta.brand) : null;
+  const pngBytes = url => { const bin = atob(url.slice(url.indexOf(',') + 1)), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return u; };
   const BODY_FONT = 'Georgia', PAGE_W = 11906, PAGE_H = 16838, MARGIN = 1134, TEXT_W = PAGE_W - 2 * MARGIN, TEXT_WL = PAGE_H - 2 * MARGIN; // A4, 2 cm margins
 
   async function toDocx(md, meta) {
     const D = await loadDocx();
-    const { marking, body, title } = split(md);
+    const { marking, body, title } = split(md), brand = brandOf(meta);
     meta = Object.assign({}, meta, { wide: blocks(body).some(b => b.t === 'table' && b.head.length >= 7) }); // wide tables → landscape
     const runs = (s, o = {}) => inlines(s).map(x => new D.TextRun({ text: x.text, bold: x.b || o.bold, italics: x.i || o.italics, font: x.code ? 'Consolas' : undefined, size: o.size, color: o.color }));
     const children = []; let h1seen = false; // each later top-level heading (an attachment) starts a new page
@@ -88,8 +93,21 @@
         children.push(new D.Paragraph({ spacing: { after: 120 }, children: [] }));
       }
     });
+    const head = [];
+    if (brand) {
+      const r = [];
+      if (brand.logo) {
+        const sz = window.TriodianBrand.size(brand.logo) || { w: 1, h: 1 }, h0 = 30, w0 = h0 * sz.w / sz.h, k = Math.min(1, 200 / w0); // 30 px high, 200 px wide at most
+        r.push(new D.ImageRun({ type: 'png', data: pngBytes(brand.logo), transformation: { width: Math.round(w0 * k), height: Math.round(h0 * k) } }));
+        if (brand.firm || brand.line) r.push(new D.TextRun({ text: '   ' }));
+      }
+      if (brand.firm) r.push(new D.TextRun({ text: brand.firm, bold: true, color: INK, size: 18 }));
+      if (brand.line) r.push(new D.TextRun({ text: (brand.firm ? '  ·  ' : '') + brand.line, color: SOFT, size: 16 }));
+      head.push(new D.Paragraph({ spacing: { after: 80 }, children: r }));
+    }
+    head.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } }, children: [new D.TextRun({ text: marking || 'Privilege marking not recorded', italics: true, color: PRIV, size: 17 })] }));
     const doc = new D.Document({
-      creator: 'Triodian AI Risk Appetite', title, description: meta.reference || '',
+      creator: (brand && brand.firm) || meta.creator || 'Triodian', title, description: meta.reference || '',
       styles: {
         default: { document: { run: { font: BODY_FONT, size: 21, color: INK }, paragraph: { spacing: { after: 140, line: 300 } } } },
         paragraphStyles: [
@@ -105,7 +123,7 @@
       ] },
       sections: [{
         properties: { page: { size: { width: PAGE_W, height: PAGE_H, orientation: meta.wide ? D.PageOrientation.LANDSCAPE : D.PageOrientation.PORTRAIT }, margin: { top: 1300, bottom: 1200, left: MARGIN, right: MARGIN, header: 560, footer: 560 } } },
-        headers: { default: new D.Header({ children: [new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } }, children: [new D.TextRun({ text: marking || 'Privilege marking not recorded', italics: true, color: PRIV, size: 17 })] })] }) },
+        headers: { default: new D.Header({ children: head }) },
         footers: { default: new D.Footer({ children: [new D.Paragraph({ tabStops: [{ type: D.TabStopType.RIGHT, position: meta.wide ? TEXT_WL : TEXT_W }], children: [
           new D.TextRun({ text: [meta.insurer, meta.reference, title].filter(Boolean).join(' · '), color: SOFT, size: 16 }),
           new D.TextRun({ text: '\tPage ', color: SOFT, size: 16 }), new D.TextRun({ children: [D.PageNumber.CURRENT], color: SOFT, size: 16 }), new D.TextRun({ text: ' of ', color: SOFT, size: 16 }), new D.TextRun({ children: [D.PageNumber.TOTAL_PAGES], color: SOFT, size: 16 })] })] }) },
@@ -118,7 +136,8 @@
   /* ---------- PDF (through the browser's print dialog) ---------- */
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function toPrintHtml(md, meta, mdToHtml) {
-    const { marking, body, title } = split(md);
+    const { marking, body, title } = split(md), brand = brandOf(meta);
+    const brandHtml = brand ? `<div class="brand">${brand.logo ? `<img src="${brand.logo}" alt="">` : ''}${brand.firm ? `<strong>${esc(brand.firm)}</strong>` : ''}${brand.line ? `<span>${brand.firm ? '· ' : ''}${esc(brand.line)}</span>` : ''}</div>` : '';
     const foot = [meta.insurer, meta.reference, title].filter(Boolean).join(' · '), wide = blocks(body).some(b => b.t === 'table' && b.head.length >= 7);
     return `<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>${esc(meta.fileBase || title)}</title><style>
 @font-face{font-family:'Source Serif 4';font-style:normal;font-weight:200 900;src:url(/fonts/source-serif-4-latin-opsz-normal.woff2) format('woff2')}
@@ -129,13 +148,14 @@
 html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0;font:10.5pt/1.5 'Source Serif 4',Georgia,serif;color:#17202B}
 table.frame{width:100%;border-collapse:collapse}table.frame>thead td{padding:0 0 4mm}
+.brand{display:flex;align-items:center;gap:3mm;margin:0 0 2.5mm;font:9pt/1.3 'IBM Plex Sans',Arial,sans-serif;color:#4F5966}.brand img{height:8mm;width:auto;max-width:55mm}.brand strong{color:#17202B;font-weight:600}
 .mark{font:italic 9pt/1.3 'Source Serif 4',Georgia,serif;color:#7D1D2C;border-bottom:0.5pt solid #C9CFD6;padding-bottom:2mm}
 h1{font-size:20pt;line-height:1.2;margin:0 0 4mm}.doc h1~h1{break-before:page}h2{font-size:13.5pt;margin:7mm 0 2mm;break-after:avoid}h3{font-size:11.5pt;margin:5mm 0 2mm;color:#4F5966;break-after:avoid}h4{font-size:10.5pt;margin:4mm 0 1mm}
 p{margin:0 0 2.5mm}hr{border:0;border-top:0.5pt solid #C9CFD6;margin:5mm 0}ul,ol{margin:0 0 3mm;padding-left:6mm}
 .doc table{width:100%;border-collapse:collapse;margin:2mm 0 4mm;font:8.5pt/1.35 'IBM Plex Sans',Arial,sans-serif}
 .doc th,.doc td{border:0.5pt solid #C9CFD6;padding:1.4mm 2mm;text-align:left;vertical-align:top}.doc th{background:#EEF0F3;font-weight:600}.doc tr{break-inside:avoid}.doc thead{display:table-header-group}
 code{font:9pt Consolas,monospace}
-</style></head><body><table class="frame"><thead><tr><td><div class="mark">${esc(marking || 'Privilege marking not recorded')}</div></td></tr></thead><tbody><tr><td><div class="doc">${mdToHtml(body)}</div></td></tr></tbody></table></body></html>`;
+</style></head><body><table class="frame"><thead><tr><td>${brandHtml}<div class="mark">${esc(marking || 'Privilege marking not recorded')}</div></td></tr></thead><tbody><tr><td><div class="doc">${mdToHtml(body)}</div></td></tr></tbody></table></body></html>`;
   }
   function printPdf(md, meta, mdToHtml) {
     let f = document.getElementById('printframe'); if (f) f.remove();
