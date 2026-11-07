@@ -18,10 +18,10 @@
   // IDENTITY (development plan tasks 1B.2 and 1B.3): the suite's shared identity database, one per environment, bound to
   // all four engagement apps. With it, people are added once, roles are kept per app, and one sign-in covers every app
   // on SUITE_COOKIE_DOMAIN (the cookie SUITE_SESSION_COOKIE; the test sites use their own name so live and test stay apart).
-  // Each app copies its own users in the first time it starts with the binding. Create the databases once:
-  //   npx wrangler d1 create triodian-identity      and      npx wrangler d1 create triodian-identity-test
-  // then add, here and in the test env with the test database:
-  //   { "binding": "IDENTITY", "database_name": "triodian-identity", "database_id": "<id from the create command>" }
+  // Each app copies its own users in the first time it starts with the binding. The databases are triodian-identity-db
+  // (live) and triodian-identity-test-db (test). The test sites are bound first; the live binding follows once the test
+  // sites are checked:
+  //   { "binding": "IDENTITY", "database_name": "triodian-identity-db", "database_id": "d2031f39-53b4-438c-aed6-1d480f9526bf" }
   "observability": { "enabled": true },
 
   // Daily at 07:00 Brisbane time: remind people about "not set" positions due soon (see lib/core/notify.js).
@@ -49,7 +49,8 @@
       "preview_urls": false,
       "routes": [{ "pattern": "risk-appetite-test.triodian.com", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
+        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" },
+        { "binding": "IDENTITY", "database_name": "triodian-identity-test-db", "database_id": "4d7591a1-bcb7-4514-b726-f0621d7de25a" }
       ],
       "vars": { "SUITE_DEMO": "on", "SUITE_COOKIE_DOMAIN": "triodian.com", "SUITE_SESSION_COOKIE": "tri_suite_test", "DEMO_LOGIN": "[{\"username\": \"trio_demo\", \"email\": \"demo@triodian.com\", \"hash\": \"pbkdf2-sha256$100000$ae_ndll6YbjpSddRDhFBLg$HAVf7tKSohiJck-ohKQ1KYft_e1YpCuWF8xcJgmjNqM\", \"anyCharAt\": [3]}]", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
       "send_email": [{ "name": "EMAIL" }],
