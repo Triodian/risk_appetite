@@ -22,8 +22,9 @@ const f = demoFlags(cv);
 t('client: the page is marked with no demo band', f.suiteDemo === false);
 t('client: the page is marked with no demo sign-in', f.demoLogin === false);
 t('client: no demo administrators come from its settings', String(cv.DEMO_ADMINS || '').split(',').map(e => e.trim()).filter(Boolean).length === 0);
-t('demo site: the demo band and the demo sign-in are on', demoFlags(top).suiteDemo && demoFlags(top).demoLogin);
-t('test site: the demo band and the demo sign-in are on', demoFlags(test).suiteDemo && demoFlags(test).demoLogin);
+t('demo and test sites: the demo band is on', demoFlags(top).suiteDemo && demoFlags(test).suiteDemo);
+// The demo account's password hash is a Worker secret (docs/demo-sign-in.md), never a value in this file.
+t('no demo password hash in wrangler.jsonc', !/pbkdf2-sha256\$/.test(raw) && !('DEMO_LOGIN' in top) && !('DEMO_LOGIN' in test));
 t('a deployment that sets nothing shows no demo band', demoFlags({}).suiteDemo === false);
 
 // the demo username sign-in is refused on the client profile

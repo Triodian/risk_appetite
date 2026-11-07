@@ -1,4 +1,38 @@
-# AI Risk Appetite (Triodian)
+# AI Risk Appetite
+
+[![Tests](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml/badge.svg)](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml) [![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue.svg)](LICENSE)
+
+AI Risk Appetite helps a regulated entity, starting with general insurers, settle its appetite for AI risk: how much
+authority AI may have in each function, what consequence it will accept, what it may not know about AI in its supply
+chain, where AI may run, and what must reach the board. The CRO, the risk function and counsel work through eight
+decisions; the CRO agrees a working appetite and the board approves it. The agreed appetite is issued as a
+calibration set that the [AI Use Assessment](https://github.com/Triodian/use-assessment) measures against.
+
+> The app records facts and the positions people take. It is not legal advice and does not say what the law requires;
+> counsel decides what applies.
+
+**Try it.** The demo runs at [risk-appetite.triodian.com](https://risk-appetite.triodian.com), with a worked example you can open without changing
+anything. Ask Triodian for the demo sign-in.
+
+**Run it yourself.** It runs as a Cloudflare Worker with a D1 database. See [Running locally](#running-locally) and
+[Tests](#tests) below, and the [installer](https://github.com/Triodian/triodian-install) to put it into your own
+Cloudflare account.
+
+## Part of the Triodian AI governance apps
+
+| App | What it is for |
+| --- | --- |
+| [AI Obligations Atlas](https://github.com/Triodian/obligations-atlas) | The AI governance obligations that apply by jurisdiction and use case, tiered by source, with a matter brief for counsel |
+| [AI Board Direction](https://github.com/Triodian/board-direction) | A board sets its direction on AI: where to use it, what to rule out, what comes back to the board |
+| [AI Risk Appetite](https://github.com/Triodian/risk_appetite) | A regulated entity settles its appetite for AI risk, for the board to approve |
+| [AI Use Assessment](https://github.com/Triodian/use-assessment) | The AI in a regulated entity's supply chain, measured against that appetite |
+| [AI Confidentiality Exposure Assessment](https://github.com/Triodian/Confidentiality-Exposure-Assessment) | Where confidential information in one transaction can reach an external AI model |
+| [Installer and suite test](https://github.com/Triodian/triodian-install) | Puts the apps a client needs into a Cloudflare account, and tests them together |
+
+The engagement apps are separate, each with its own repo and database. Deployed together they share one sign-in and
+reach each other through Cloudflare service bindings.
+
+## How it is built
 
 Single-engagement web app: each deployment holds one engagement for one organisation.
 It runs as a Cloudflare Worker: the files in `public/` are served as static assets, and `src/worker.js` handles `/api/*`.
@@ -29,18 +63,23 @@ A separate copy at `risk-appetite-test.triodian.com` with its own database. Set-
 - Cloudflare Access policy lets any verified email through; the app's user list (managed in `/admin`) decides who gets in.
 - Access team domain, AUD tag and the first administrator are in `lib/config.js`.
 
+## Tests
+```
+for f in tests/*.test.mjs; do node "$f"; done
+cd tests/e2e && npm ci && npx playwright install chromium && npx playwright test
+```
+
 ## Running locally
 ```
 npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@example.com
 ```
 `LOCAL_DEV_NO_SIGNIN_EMAIL` only works on localhost. Locally, an `X-Dev-User` header picks a different user for testing.
 
-## Roadmap
-1. Hosting: GitHub → Cloudflare Worker, protected by Cloudflare Access ✓
-2. Database: Cloudflare D1 ✓
-3. Single engagement, admin at /admin with users and role-based access, enforced on the server ✓
-4. Set-up moved to Admin; profile page with self-service email change ✓
-5. Next: UI refinements; enterprise items in `docs/architecture.md`
+
+## Contributing
+
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+Report security problems privately, as [SECURITY.md](SECURITY.md) describes, not as issues.
 
 ## Licence
 
