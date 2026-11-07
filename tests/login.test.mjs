@@ -2,7 +2,7 @@
 //   node tests/login.test.mjs
 import fs from 'node:fs';
 import worker from '../src/worker.js';
-import { whoIs } from '../lib/identity/session.js';
+import { whoIs, hashPassword, maskPassword } from '../lib/identity/session.js';
 let fails = 0; const check = (n, ok) => { console.log((ok ? 'PASS' : 'FAIL') + ' · ' + n); if (!ok) fails++; };
 
 const cfg = JSON.parse(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n'));
@@ -11,6 +11,10 @@ const DB = { prepare(sql) { let args = []; return { bind(...a) { args = a; retur
   async run() { if (/^INSERT INTO sessions/.test(sql)) sessions.set(args[0], { email: args[1], expires_at: args[3] }); if (/^DELETE FROM sessions WHERE token_hash/.test(sql)) sessions.delete(args[0]); return {}; },
   async first() { return /FROM sessions/.test(sql) ? sessions.get(args[0]) || null : null; } }; } };
 const env = { DEMO_SESSION_KEY: 'unit-test-key-not-used-anywhere-else', ...cfg.vars, DB, ACCESS_TEAM_DOMAIN: 'x.cloudflareaccess.com', ACCESS_AUD: 'aud', ASSETS: { fetch: r => new Response('asset ' + new URL(r.url).pathname) } };
+// A test-only demo account: the real one is a Worker secret (docs/demo-sign-in.md). Any character is accepted at
+// position 3, as for the real account's £.
+const TEST_PASSWORD = 'Tq7£2Wx*90';
+env.DEMO_LOGIN = JSON.stringify([{ username: 'trio_demo', email: 'demo@triodian.com', hash: await hashPassword(maskPassword(TEST_PASSWORD, [3])), anyCharAt: [3] }]);
 const HOST = 'https://' + cfg.routes[0].pattern;
 const go = (path, init = {}) => worker.fetch(new Request(HOST + path, { redirect: 'manual', ...init }), env, { waitUntil() {} });
 const login = (u, p, next = '/') => go('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username: u, password: p, next }).toString() });
@@ -26,12 +30,12 @@ check('the API refuses without a sign-in', r.status === 401);
 
 r = await login('trio_demo', 'wrong');
 check('a wrong password goes back to the sign-in page with a message', r.status === 303 && r.headers.get('Location').startsWith('/login?failed=1') && !r.headers.get('Set-Cookie'));
-r = await login('nobody', 'C4b£1Jh*12');
+r = await login('nobody', 'Tq7£2Wx*90');
 check('an unknown username is refused', r.headers.get('Location').startsWith('/login?failed=1'));
 
-r = await login(' TRIO_DEMO ', 'C4b£1Jh*12', '/admin/');
+r = await login(' TRIO_DEMO ', 'Tq7£2Wx*90', '/admin/');
 const sc = r.headers.get('Set-Cookie') || '';
-check('trio_demo with the YC password signs in (username not case-sensitive) and returns to where they were', r.status === 303 && r.headers.get('Location') === '/admin/');
+check('trio_demo with its password signs in (username not case-sensitive) and returns to where they were', r.status === 303 && r.headers.get('Location') === '/admin/');
 check('the sign-in cookie covers every triodian.com app, is HttpOnly and Secure', /^tri_demo=/.test(sc) && /Domain=triodian\.com/.test(sc) && /HttpOnly/.test(sc) && /Secure/.test(sc));
 const cookie = sc.split(';')[0];
 r = await go('/', { headers: { Cookie: cookie } });
@@ -45,14 +49,14 @@ check('a tampered cookie naming someone else is refused', !(await whoIs(new Requ
 check('a cookie signed with another key is refused', !(await whoIs(new Request(HOST + '/', { headers: { Cookie: cookie } }), { ...env, DEMO_SESSION_KEY: 'other' })).email);
 
 for (const c of ['#', 'L', '3', '$', 'e', '€', ' ']) {
-  r = await login('trio_demo', 'C4b' + c + '1Jh*12');
+  r = await login('trio_demo', 'Tq7' + c + '2Wx*90');
   check(`any character in place of the £ works: "${c}"`, r.headers.get('Location') === '/' && /^tri_demo=/.test(r.headers.get('Set-Cookie') || ''));
 }
-for (const [pw, why] of [['C4b1Jh*12', 'the £ left out'], ['C4b££1Jh*12', 'two characters there'], ['C4b£1Jh*13', 'another character wrong'], ['c4b£1Jh*12', 'a letter in the wrong case']]) {
+for (const [pw, why] of [['Tq72Wx*90', 'the £ left out'], ['Tq7££2Wx*90', 'two characters there'], ['Tq7£2Wx*91', 'another character wrong'], ['tq7£2Wx*90', 'a letter in the wrong case']]) {
   r = await login('trio_demo', pw);
   check('still refused with ' + why, r.headers.get('Location').startsWith('/login?failed=1'));
 }
-r = await login('trio_demo', 'C4b£1Jh*12', 'https://evil.example/');
+r = await login('trio_demo', 'Tq7£2Wx*90', 'https://evil.example/');
 check('the way back can only be a page on this site', r.headers.get('Location') === '/');
 
 r = await go('/auth/logout', { headers: { Cookie: cookie } });
