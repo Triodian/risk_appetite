@@ -20,6 +20,13 @@ function emailSender(env) {
 }
 const siteUrl = (env, request) => env.SITE_URL || (request ? new URL(request.url).origin : 'https://risk-appetite.triodian.com');
 
+/** The issued calibration set for another Triodian app over a service binding (src/service.js; plan task 1B.4). */
+export async function calibrationForService(env) {
+  if (!env.DB) return { status: 503, body: { error: 'The database is not connected to the Risk Appetite app yet.' } };
+  try { return await issuedCalibration(d1Store(env.DB)); }
+  catch (e) { console.error(e); return { status: 500, body: { error: 'The Risk Appetite app hit an error reading the calibration set.' } }; }
+}
+
 /** DEMO ADDITION: emails in DEMO_ADMINS (comma-separated) are made administrators when they sign in. */
 const demoAdmins = env => String(env.DEMO_ADMINS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
@@ -32,7 +39,8 @@ export default {
 
     const who = await whoIs(request, env);
     if (!env.DB && (who.email || who.service)) return json({ error: 'The database is not connected to this site yet.' }, 503);
-    // The AI Use Assessment app's service token may read the issued calibration set, and nothing else.
+    // The AI Use Assessment app's service token may read the issued calibration set, and nothing else. Kept for one release
+    // while the service binding (src/service.js) takes over; then this path and CALIBRATION_CLIENT_ID can go.
     // CALIBRATION_CLIENT_ID is that token's Client ID. Add it as a secret on this Worker (secrets survive deploys).
     if (who.service) {
       if (request.method !== 'GET' || url.pathname !== '/api/calibration-set') return json({ error: 'This service token may only read the calibration set.' }, 403);
