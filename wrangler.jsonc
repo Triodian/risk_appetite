@@ -13,15 +13,14 @@
   "routes": [{ "pattern": "risk-appetite.triodian.com", "custom_domain": true }],
 
   "d1_databases": [
-    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" }
+    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" },
+    { "binding": "IDENTITY", "database_name": "triodian-identity-db", "database_id": "d2031f39-53b4-438c-aed6-1d480f9526bf" }
   ],
   // IDENTITY (development plan tasks 1B.2 and 1B.3): the suite's shared identity database, one per environment, bound to
   // all four engagement apps. With it, people are added once, roles are kept per app, and one sign-in covers every app
   // on SUITE_COOKIE_DOMAIN (the cookie SUITE_SESSION_COOKIE; the test sites use their own name so live and test stay apart).
   // Each app copies its own users in the first time it starts with the binding. The databases are triodian-identity-db
-  // (live) and triodian-identity-test-db (test). The test sites are bound first; the live binding follows once the test
-  // sites are checked:
-  //   { "binding": "IDENTITY", "database_name": "triodian-identity-db", "database_id": "d2031f39-53b4-438c-aed6-1d480f9526bf" }
+  // (live) and triodian-identity-test-db (test). Both are bound below.
   "observability": { "enabled": true },
 
   // Daily at 07:00 Brisbane time: remind people about "not set" positions due soon (see lib/core/notify.js).
