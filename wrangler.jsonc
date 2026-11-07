@@ -1,7 +1,7 @@
 // Cloudflare Worker configuration. Cloudflare reads this file on every deploy from GitHub.
 {
   "name": "risk-appetite",
-  "main": "src/worker.js",
+  "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   // run_worker_first: every request reaches src/worker.js first, so pages can require sign-in (lib/identity/session.js).
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
@@ -13,8 +13,14 @@
   "routes": [{ "pattern": "risk-appetite.triodian.com", "custom_domain": true }],
 
   "d1_databases": [
-    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" }
+    { "binding": "DB", "database_name": "risk-appetite-db", "database_id": "9bd12781-030b-4940-8989-17e4858d2247" },
+    { "binding": "IDENTITY", "database_name": "triodian-identity-db", "database_id": "d2031f39-53b4-438c-aed6-1d480f9526bf" }
   ],
+  // IDENTITY (development plan tasks 1B.2 and 1B.3): the suite's shared identity database, one per environment, bound to
+  // all four engagement apps. With it, people are added once, roles are kept per app, and one sign-in covers every app
+  // on SUITE_COOKIE_DOMAIN (the cookie SUITE_SESSION_COOKIE; the test sites use their own name so live and test stay apart).
+  // Each app copies its own users in the first time it starts with the binding. The databases are triodian-identity-db
+  // (live) and triodian-identity-test-db (test). Both are bound below.
   "observability": { "enabled": true },
 
   // Daily at 07:00 Brisbane time: remind people about "not set" positions due soon (see lib/core/notify.js).
@@ -31,7 +37,7 @@
   // its password held only as a PBKDF2 hash. It is a secret so the hash is not public; see docs/demo-sign-in.md.
   // DEMO_SESSION_KEY (a Worker secret, not set here) signs the demo sign-in cookie, shared across triodian.com; it
   // must be the same in every Triodian app and is only ever accepted for the demo account's own email. See lib/identity/session.js.
-  "vars": { "SUITE_DEMO": "on", "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+  "vars": { "SUITE_DEMO": "on", "SUITE_COOKIE_DOMAIN": "triodian.com", "SUITE_SESSION_COOKIE": "tri_suite", "DEMO_ADMINS": "demo@triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
 
   // Test copy of the site: risk-appetite-test.triodian.com, with its own database.
   // Deployed with `npx wrangler deploy --env test` (see docs/test-site.md).
@@ -42,9 +48,10 @@
       "preview_urls": false,
       "routes": [{ "pattern": "risk-appetite-test.triodian.com", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" }
+        { "binding": "DB", "database_name": "risk-appetite-test-db", "database_id": "abb02586-fc71-4b8b-a6fc-7487d4b606b3" },
+        { "binding": "IDENTITY", "database_name": "triodian-identity-test-db", "database_id": "4d7591a1-bcb7-4514-b726-f0621d7de25a" }
       ],
-      "vars": { "SUITE_DEMO": "on", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
+      "vars": { "SUITE_DEMO": "on", "SUITE_COOKIE_DOMAIN": "triodian.com", "SUITE_SESSION_COOKIE": "tri_suite_test", "DEMO_ADMINS": "demo@triodian.com", "SITE_LABEL": "Test site", "SITE_URL": "https://risk-appetite-test.triodian.com", "NOTIFY_FROM": "notifications@triodian.com", "NOTIFY_SENDING": "on" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
@@ -64,7 +71,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "risk-appetite-client-db", "database_id": "REPLACE-WITH-THE-CLIENT-DATABASE-ID" }
       ],
-      "vars": { "SUITE_DEMO": "off", "DEMO_LOGIN": "", "DEMO_ADMINS": "", "SITE_URL": "https://risk-appetite.CLIENT-DOMAIN.example", "NOTIFY_SENDING": "off", "NOTIFY_FROM": "" },
+      "vars": { "SUITE_DEMO": "off", "SUITE_COOKIE_DOMAIN": "CLIENT-DOMAIN.example", "SUITE_SESSION_COOKIE": "tri_suite", "DEMO_LOGIN": "", "DEMO_ADMINS": "", "SITE_URL": "https://risk-appetite.CLIENT-DOMAIN.example", "NOTIFY_SENDING": "off", "NOTIFY_FROM": "" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }

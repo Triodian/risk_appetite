@@ -1317,7 +1317,7 @@ const PRF = { err: '', msg: '', emailErr: '' };
 async function loadAdmin() {
   const [u, a, n] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/audit'), api('GET', '/api/admin/notifications')]);
   ADM.notes = n.ok ? n.body.entries : []; ADM.sending = n.ok && n.body.sending;
-  if (u.ok) { ADM.users = u.body.users; ADM.roles = u.body.roles; ADM.perms = u.body.permissions; ADM.requests = u.body.accessRequests || []; }
+  if (u.ok) { ADM.users = u.body.users; ADM.roles = u.body.roles; ADM.perms = u.body.permissions; ADM.requests = u.body.accessRequests || []; ADM.others = u.body.otherApps || {}; }
   else ADM.err = u.error;
   ADM.audit = a.ok ? a.body.entries : []; ADM.loaded = true; render();
 }
@@ -1358,6 +1358,8 @@ function screenStart() {
   </div>`;
 }
 /* Several roles per person (task 0.6): one checkbox per role, as in AI Use Assessment's Admin. None ticked = no engagement role. */
+/* With the shared identity (plan task 1B.2): the person's roles in the other Triodian apps, shown under this app's. */
+const otherApps = u => ((ADM.others || {})[u.id] || []).map(o => `<div class="small soft" style="margin-top:4px">${esc(o.name)}: ${o.roleNames.length ? o.roleNames.map(esc).join(', ') : 'no role'}${o.isAdmin ? ' · admin' : ''}${o.active ? '' : ' · inactive'}</div>`).join('');
 function roleChecks(u) { const cur = rolesOf(u); return `<fieldset class="acts2" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Engagement roles <span class="soft" style="font-weight:400">· one person may hold more than one</span></legend><div class="row" style="gap:4px 16px;flex-wrap:wrap">${ADM.roles.map(r => `<label class="cb small"><input type="checkbox" name="f-roles" value="${esc(r.id)}" ${cur.includes(r.id) ? 'checked' : ''}> ${esc(r.name)}</label>`).join('')}</div></fieldset>`; }
 function userForm(u, isNew) {
   return `<form class="adm-form" id="userForm" data-id="${esc(u.id || '')}" novalidate>
@@ -1380,7 +1382,7 @@ function screenUsers() {
     return `<tr class="${u.active ? '' : 'off'}">
       <td><strong>${esc(u.name || '—')}</strong>${u.id === me.id ? ' <span class="badge b-aub">you</span>' : ''}<div class="em">${esc(u.email)}</div></td>
       <td class="adm-hide-sm">${esc(u.organisation)}</td>
-      <td>${rolesOf(u).length ? rolesOf(u).map(r => esc(roleLong(r))).join('<br>') : '<span class="soft">None</span>'}</td>
+      <td>${rolesOf(u).length ? rolesOf(u).map(r => esc(roleLong(r))).join('<br>') : '<span class="soft">None</span>'}${otherApps(u)}</td>
       <td>${u.isAdmin ? '<span class="badge b-aub">Admin</span>' : ''}</td>
       <td>${u.active ? '<span class="badge b-green">Active</span>' : '<span class="badge b-grey">Inactive</span>'}</td>
       <td class="adm-hide-sm small soft">${u.lastSeenAt ? fmtLocal(u.lastSeenAt) : 'Never'}</td>
