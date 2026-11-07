@@ -1,7 +1,7 @@
 // Cloudflare Worker configuration. Cloudflare reads this file on every deploy from GitHub.
 {
   "name": "risk-appetite",
-  "main": "src/worker.js",
+  "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   // run_worker_first: every request reaches src/worker.js first, so pages can require sign-in (lib/identity/session.js).
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
