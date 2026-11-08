@@ -59,6 +59,7 @@ Compare versions
 Each time the CRO agrees the working appetite or the board approves it, the positions are kept as that version. Once there is one, you can compare it with any later version or with the positions now.
 
 Board pack
+Board paper (plain words)
 Statement
 Schedule
 Session record

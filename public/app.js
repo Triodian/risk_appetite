@@ -1016,6 +1016,44 @@ function mdStatement() {
   return m;
 }
 function irContributed() { const ir = S.people.filter(p => rolesOf(p).includes('independent')).map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
+/* The board paper in plain words (task 3.8): what the board is asked to resolve, the eight positions as sentences, and
+   what changed since last year's approved appetite. It states what was recorded and who proposed it, never what the
+   law requires. A position shown as [ ] is blank; "not set" names who sets it and by when. */
+function mdPaper() {
+  const e = S.engagement, c = S.calibration, bm = e.boardMemo || {}, ck = runChecks(), bl = blocking(ck), ins = e.insurer || '[' + N.entity + ']', v = c.version || 1;
+  const w = code => code ? `${code} ${String(scaleName(code) || '').toLowerCase()}`.trim() : '';
+  const pw = id => { const x = val(id); return x != null && /^[ACE]\d$/.test(x) ? w(x) : pv(id); };
+  const cond = id => { const p = P(id); return p && p.status === 'set' && p.condition ? ` (${p.condition.replace(/\.$/, '')})` : ''; };
+  let m = mdHead('Board paper: the AI risk appetite in plain words');
+  m += `- **To:** ${bm.to || 'The Board'}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite, version ${v}, for ${ins}\n\n`;
+  m += `## What the board is asked to resolve\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite (version ${v}) set out in this paper, with its tolerance and trigger schedule.`}\n\n`;
+  const notes = [];
+  if (bl.length) notes.push(`${bl.length} consistency ${bl.length === 1 ? 'check is' : 'checks are'} not passing (${bl.map(k => k.id).join(', ')}). The appetite cannot be agreed until ${KB()} pass.`);
+  const bd = DIRS() ? cellsFor('d1').filter(x => { const p = P(x.id); return p && p.status === 'set' && beyond(x.id, p.value); }) : [];
+  if (bd.length) notes.push(`${bd.length} ${bd.length === 1 ? 'ceiling goes' : 'ceilings go'} past the board’s direction (BD1). Each records a reason and when the board revisits it: ${bd.map(x => { const p = P(x.id); return `${cellLabel(x.id).replace(/^D\d · /, '')}, ${p.value} (${p.reason || 'no reason'}; revisit ${p.boardRevisit || 'not recorded'})`; }).join('; ')}.`);
+  const ns = allCells().filter(x => { const p = P(x.id); return p && p.status === 'notSet'; });
+  if (ns.length) notes.push(`${ns.length} ${ns.length === 1 ? 'position is' : 'positions are'} recorded as not set, each with an owner and a due date.`);
+  if (notes.length) m += `The board should also note:\n\n${notes.map(x => '- ' + x).join('\n')}\n\n`;
+  m += `## The eight positions\n\n`;
+  m += `### 1. Authority\n\nThe most authority AI may hold in each function.\n\n` + S.functions.map(f => `- **${f.name}.** ${C.locations.map(l => { const id = `d1.${f.id}.${l.id}`; return `${l.name}: ${val(id) ? 'up to ' + pw(id) + cond(id) : pv(id)}`; }).join('. ')}.`).join('\n') + '\n\n';
+  m += `### 2. Consequence thresholds\n\nWhen a failure counts as each level of consequence.\n\n` + cellsFor('d2').map(x => `- **${x.rowLabel}:** ${pv(x.id)}`).join('\n') + '\n\n';
+  m += `### 3. Evidence expected\n\nThe evidence the board expects ${ins} to hold, by how much authority the AI has and how serious a failure would be.\n\n` + AT.map(a => `- **${w(a)}:** ${CO.map(co => `${co} ${pw(`d3.${a}.${co}`)}`).join(' · ')}`).join('\n') + '\n\n';
+  m += `### 4. Shortfall tolerance\n\nWhen the evidence falls short, how serious the shortfall is and how long it may continue.\n\n` + D('d4').priorities.map(pr => `- **${pr.id} priority:** ${pv(`d4.time.${pr.id}`)}. While the gap stands: ${pv(`d4.interim.${pr.id}`)}.`).join('\n') + '\n\n';
+  m += `### 5. Unknowns\n\nHow much ${ins} may not know about AI in its supply chain.\n\n` + D('d5').bands.map(b => `- **${b.name}:** not-known facts allowed per entry: ${pv(`d5.${b.id}.notKnown`)}. How long an F4 finding may stand: ${pv(`d5.${b.id}.f4`)}. Minimum confidence: ${pv(`d5.${b.id}.conf`)}.`).join('\n') + '\n\n';
+  const J = S.decisions.d6.jurisdictions, by = mk => J.filter(j => [val(`d6.j.${j.id}.established`), val(`d6.j.${j.id}.runs`)].includes(mk)).map(j => j.name);
+  m += `### 6. Location and concentration\n\n` + (J.length ? `Accepted: ${by('Accepted').join(', ') || 'none'}. Escalated to counsel: ${by('Escalate').join(', ') || 'none'}. Not accepted: ${by('Not accepted').join(', ') || 'none'}. ` : 'No jurisdictions were recorded. ') + (val('d6.concentration') != null ? `No more than ${val('d6.concentration')}% of critical operations may depend on a single platform or AI provider.` : `The concentration limit is ${pv('d6.concentration')}.`) + `\n\n`;
+  m += `### 7. Triggers\n\nThe events to be reported to ${ins}, and how quickly.\n\n` + S.decisions.d7.triggers.map(t => `- **${t.ref} ${t.name}:** ${val(`d7.${t.ref}.time`) ? 'within ' + val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`)}, to ${pv(`d7.${t.ref}.to`)}.`).join('\n') + '\n\n';
+  m += `### 8. Change and review\n\nReview interval: ${pv('d8.interval')}. The appetite, or an arrangement, comes back before then when:\n\n` + S.decisions.d8.events.map(x => `- ${x.event}: ${pv(`d8.ev.${x.id}`)}`).join('\n') + '\n\n';
+  m += `## Changes since last year\n\n`;
+  const prev = S.previous;
+  if (!prev || !prev.cells) m += `This is ${ins}'s first AI risk appetite, so there is no earlier approved version to compare.\n\n`;
+  else {
+    const rows = Object.entries(prev.cells).map(([id, x]) => [id, Array.isArray(x) ? x[0] : x]).filter(([id, was]) => { const now = val(id); return (now == null ? 'not set' : String(now)) !== String(was == null ? 'not set' : was); });
+    m += `The board approved version ${prev.version}${prev.approvedOn ? ' on ' + dAU(prev.approvedOn) : ''}${prev.minuteRef ? ' (minute ' + prev.minuteRef + ')' : ''}. ` + (rows.length ? `${rows.length} ${rows.length === 1 ? 'position has' : 'positions have'} changed since then:\n\n` + tbl(['Position', 'Last year', 'Now'], rows.map(([id, was]) => [cellLabel(id), was == null ? 'not set' : String(was), pv(id)])) : 'No position has changed since then.\n\n');
+  }
+  return m;
+}
+
 /* One board paper: cover memo, statement, schedule, check summary and glossary. */
 const bodyOf = md => { const i = md.indexOf('\n## '); return i < 0 ? '' : md.slice(i + 1); };
 function mdPack() {
@@ -1136,10 +1174,10 @@ function mdPlan() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], paper: [L(mdPaper), 'board-paper'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
+  const tabs = [['pack', 'Board pack'], ['paper', 'Board paper (plain words)'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || !rolesOf(who).includes('cro') ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);

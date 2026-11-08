@@ -1,0 +1,106 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Board paper: the AI risk appetite in plain words
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+- **To:** The Board
+- **Meeting:** [meeting and date]
+- **Subject:** AI risk appetite, version 1, for Corvane General Insurance (fictional)
+
+## What the board is asked to resolve
+
+That the Board approve the AI risk appetite (version 1) set out in this paper, with its tolerance and trigger schedule.
+
+The board should also note:
+
+- 3 consistency checks are not passing (K1, K7, K9). The appetite cannot be agreed until K1 to K9 pass.
+- 1 position is recorded as not set, each with an owner and a due date.
+
+## The eight positions
+
+### 1. Authority
+
+The most authority AI may hold in each function.
+
+- **Underwriting and pricing.** Own staff: up to A2 Recommends. Inside a provider: up to A3 Decides. Platform behind a provider: up to A2 Recommends.
+- **Claims.** Own staff: up to A3 Decides. Inside a provider: up to A4 Moves money (Up to $5,000 per claim; above that a person approves). Platform behind a provider: up to A3 Decides.
+- **Fraud and investigations.** Own staff: up to A2 Recommends. Inside a provider: up to A3 Decides. Platform behind a provider: up to A2 Recommends.
+- **Policy administration.** Own staff: up to A4 Moves money. Inside a provider: up to A4 Moves money. Platform behind a provider: up to A3 Decides.
+- **Complaints and disputes.** Own staff: up to A2 Recommends. Inside a provider: up to A2 Recommends. Platform behind a provider: up to A1 Assists.
+- **Customer communications.** Own staff: up to A3 Decides (Templates approved by Compliance). Inside a provider: up to A3 Decides. Platform behind a provider: up to A2 Recommends.
+- **Finance and reserving.** Own staff: up to A2 Recommends. Inside a provider: up to A2 Recommends. Platform behind a provider: up to A1 Assists.
+- **Legal and compliance.** Own staff: up to A1 Assists. Inside a provider: up to A1 Assists. Platform behind a provider: up to A1 Assists.
+- **Technology operations.** Own staff: up to A4 Moves money. Inside a provider: up to A4 Moves money. Platform behind a provider: up to A3 Decides.
+
+### 2. Consequence thresholds
+
+When a failure counts as each level of consequence.
+
+- **C2 Contract breach:** Breach of a material outsourcing term
+- **C3 Financial loss:** $250,000 single event; $1m in a quarter
+- **C4 Policyholder harm:** 10 or more policyholders affected, or any single case of serious financial hardship
+- **C5 Critical disruption · Claims payment:** No more than 2 business days without the ability to pay claims
+- **C5 Critical disruption · Policy issuance and renewal:** No more than 3 business days
+- **C5 Critical disruption · Premium collection:** No more than 5 business days
+
+### 3. Evidence expected
+
+The evidence the board expects Corvane General Insurance (fictional) to hold, by how much authority the AI has and how serious a failure would be.
+
+- **A1 Assists:** C1 Immaterial E0 None · C2 Contract breach E1 Disclosure · C3 Financial loss E1 Disclosure · C4 Policyholder harm E1 Disclosure · C5 Critical disruption E1 Disclosure
+- **A2 Recommends:** C1 Immaterial E1 Disclosure · C2 Contract breach E1 Disclosure · C3 Financial loss E2 Attestation · C4 Policyholder harm E2 Attestation · C5 Critical disruption E2 Attestation
+- **A3 Decides:** C1 Immaterial E2 Attestation · C2 Contract breach E2 Attestation · C3 Financial loss E2 Attestation · C4 Policyholder harm E4 Audit right · C5 Critical disruption E4 Audit right
+- **A4 Moves money:** C1 Immaterial E2 Attestation · C2 Contract breach E3 Event notice · C3 Financial loss E3 Event notice · C4 Policyholder harm E4 Audit right · C5 Critical disruption E5 Live telemetry
+- **A5 Acts unattended:** C1 Immaterial E5 Live telemetry · C2 Contract breach E5 Live telemetry · C3 Financial loss E5 Live telemetry · C4 Policyholder harm E5 Live telemetry · C5 Critical disruption E5 Live telemetry
+- **A6 Changes systems:** C1 Immaterial [ ] · C2 Contract breach E6 Action control · C3 Financial loss E6 Action control · C4 Policyholder harm E6 Action control · C5 Critical disruption E6 Action control
+
+### 4. Shortfall tolerance
+
+When the evidence falls short, how serious the shortfall is and how long it may continue.
+
+- **High priority:** Reported to the next board risk committee meeting, with a plan. While the gap stands: One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person.
+- **Medium priority:** Closed by the next contract renewal or variation for the arrangement. While the gap stands: Accept, recorded with an owner.
+- **Low priority:** Reviewed at the next annual review. While the gap stands: Accept.
+
+### 5. Unknowns
+
+How much Corvane General Insurance (fictional) may not know about AI in its supply chain.
+
+- **C1 Immaterial or C2 Contract breach:** not-known facts allowed per entry: No limit. How long an F4 finding may stand: Until the next annual review. Minimum confidence: Low.
+- **C3 Financial loss:** not-known facts allowed per entry: 2. How long an F4 finding may stand: Until the next contract renewal or variation. Minimum confidence: Medium.
+- **C4 Policyholder harm or C5 Critical disruption:** not-known facts allowed per entry: None among the facts that determine the authority level. How long an F4 finding may stand: 30 June 2027; then the provider is asked. Minimum confidence: Medium.
+
+### 6. Location and concentration
+
+Accepted: Australia, New Zealand, United States. Escalated to counsel: United States, India. Not accepted: none. The concentration limit is not set (Tom Ellery, by 30 November 2026).
+
+### 7. Triggers
+
+The events to be reported to Corvane General Insurance (fictional), and how quickly.
+
+- **TR1 Authority change:** within 48 hours, to Arrangement owner.
+- **TR2 Evidence lapse:** within 48 hours, to Arrangement owner.
+- **TR3 Tolerance signal:** within 48 hours, to Arrangement owner.
+- **TR4 AI incident:** within 12 hours, to CRO and the accountable person for the function.
+- **TR5 Other AI incident:** within 48 hours, to Arrangement owner.
+- **TR6 Model or platform change:** within 48 hours, to Arrangement owner.
+- **TR7 Sub-contractor change:** within 96 hours, to Arrangement owner.
+- **TR8 Location change:** [ ], to Arrangement owner.
+
+### 8. Change and review
+
+Review interval: Annual, in the same cycle as the main risk appetite statement. The appetite, or an arrangement, comes back before then when:
+
+- A new arrangement where AI is at A3 Decides or above: That arrangement is assessed before it starts
+- Trigger TR1, TR6, TR7 or TR8 occurs: The register entry is reassessed and its finding set again
+- An arrangement reaches renewal or variation of its contract: Its evidence terms are reviewed against the board's expectation
+- A material AI incident, at the insurer or in its supply chain: Decisions 1, 3 and 7
+- New regulatory guidance on AI or outsourcing: All eight decisions, on counsel's advice
+- The review interval set by the board has passed: All eight decisions
+
+## Changes since last year
+
+This is Corvane General Insurance (fictional)'s first AI risk appetite, so there is no earlier approved version to compare.

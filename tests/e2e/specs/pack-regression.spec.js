@@ -8,7 +8,7 @@ import { ADMIN } from '../helpers.js';
 const DIR = new URL('../golden/insurer/', import.meta.url);
 const UPDATE = process.env.GOLDEN === 'update';
 const SCREENS = ['overview', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'checks', 'challenge', 'outputs', 'reference'];
-const OUTPUTS = ['pack', 'statement', 'schedule', 'session', 'calibration', 'checks', 'plan'];
+const OUTPUTS = ['pack', 'paper', 'statement', 'schedule', 'session', 'calibration', 'checks', 'plan'];
 
 async function capture(browser) {
   // Times in the outputs follow the browser's zone; the golden copies were captured in Brisbane, so the test runs there.
