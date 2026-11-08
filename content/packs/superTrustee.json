@@ -5,7 +5,7 @@
   "entityTypes": [
     "superannuationTrustee"
   ],
-  "note": "Added for an ART engagement (development plan task 3.3). The trustee and member nouns; functions for member services, claims and group insurance, advice, investments, administration and payments; C4 tied to the critical operations register. Counsel reviews the wording before it is used with a client.",
+  "note": "Added for an ART engagement (development plan task 3.3). The trustee and member nouns; functions for member services, claims and group insurance, advice, investments, administration and payments; C4 tied to the critical operations register; and the single-provider concentration count (M10) beside M6, for concentration on Microsoft. Counsel reviews the wording before it is used with a client.",
   "nouns": {
     "entity": "trustee",
     "Entity": "Trustee",
@@ -167,6 +167,28 @@
       "at": "frameworkMarkdown",
       "find": "A ceiling is higher than the delegated authority or the AI policy currently allows for that function |",
       "replace": "A ceiling is higher than the administration agreement, the trustee's delegations or the AI policy currently allow for that function |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| M6 | Share of critical operations depending on one platform or model provider | \\[ \\]% | CRO | Register: platform field | Half-yearly |\n",
+      "replace": "| M6 | Share of critical operations depending on one platform or model provider | \\[ \\]% | CRO | Register: platform field | Half-yearly |\n| M10 | Critical operations depending on any one AI provider, counted for each provider (for example, Microsoft) | \\[ \\] | CRO | Register: platform field, counted for each provider | Half-yearly |\n"
+    }
+  ],
+  "insert": [
+    {
+      "at": "measures",
+      "after": "M6",
+      "key": "ref",
+      "items": [
+        {
+          "ref": "M10",
+          "measure": "Critical operations that depend on any one AI provider, counted for each provider (for example, Microsoft)",
+          "limit": "[ ]",
+          "owner": "CRO",
+          "from": "Register: platform field, counted for each provider",
+          "reported": "Half-yearly"
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,171 @@
+{
+  "id": "adi",
+  "name": "Authorised deposit-taking institution",
+  "jurisdiction": "AU",
+  "entityTypes": [
+    "authorisedDepositTakingInstitution"
+  ],
+  "note": "Task 3.3. ADI nouns and functions; the functions match the ADI pack in AI Board Direction. Counsel reviews the wording before it is used with a client.",
+  "nouns": {
+    "entity": "ADI",
+    "Entity": "ADI",
+    "entities": "ADIs",
+    "Entities": "ADIs",
+    "anEntity": "an ADI",
+    "AnEntity": "An ADI",
+    "customer": "customer",
+    "Customer": "Customer",
+    "customers": "customers",
+    "Customers": "Customers",
+    "aCustomer": "a customer",
+    "ACustomer": "A customer",
+    "customerHarm": "A customer is wrongly declined, delayed, charged or paid: in a credit decision, a payment, a hardship request, an account closure or a fee.",
+    "regulator": "APRA"
+  },
+  "replace": {
+    "functions": [
+      {
+        "id": "rl",
+        "name": "Retail lending and credit decisions"
+      },
+      {
+        "id": "dp",
+        "name": "Deposits and payments"
+      },
+      {
+        "id": "bi",
+        "name": "Business and institutional banking"
+      },
+      {
+        "id": "fc",
+        "name": "Financial crime (AML/CTF, fraud and scams)"
+      },
+      {
+        "id": "ch",
+        "name": "Collections and financial hardship"
+      },
+      {
+        "id": "cs",
+        "name": "Customer service and complaints"
+      },
+      {
+        "id": "tm",
+        "name": "Treasury, markets and finance"
+      },
+      {
+        "id": "rc",
+        "name": "Risk, legal and compliance"
+      },
+      {
+        "id": "to",
+        "name": "Technology and operations"
+      }
+    ],
+    "inputs": [
+      {
+        "ref": "I1",
+        "name": "Board risk appetite statement, current version",
+        "usedIn": "All decisions and the consistency checks"
+      },
+      {
+        "ref": "I2",
+        "name": "Operational risk incident thresholds and reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I3",
+        "name": "Conduct and breach reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I4",
+        "name": "Critical operations register, with the tolerance level for each",
+        "usedIn": "Decisions 2 and 7"
+      },
+      {
+        "ref": "I5",
+        "name": "Material service provider register",
+        "usedIn": "Decisions 1 and 6"
+      },
+      {
+        "ref": "I6",
+        "name": "Outsourcing and offshoring policy",
+        "usedIn": "Decisions 4 and 6"
+      },
+      {
+        "ref": "I7",
+        "name": "AI governance framework, permitted-use policy and AI inventory",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I8",
+        "name": "Credit and lending delegations, and the authority each provider holds under its agreement",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I9",
+        "name": "Accountability map, showing which accountable person holds each function",
+        "usedIn": "The owner of every position"
+      },
+      {
+        "ref": "I10",
+        "name": "Incident notification procedure and its timings",
+        "usedIn": "Decision 7"
+      },
+      {
+        "ref": "I11",
+        "name": "Board and risk committee calendar",
+        "usedIn": "Timing of board approval"
+      }
+    ]
+  },
+  "override": {
+    "decisions.0.prompts.1": "Would we accept a provider's AI declining a credit application or stopping a payment without a person reviewing it? If so, up to what amount?",
+    "decisions.1.prompts.1": "Does a single wrongly declined application or blocked payment count as harm to {customers}, or only a pattern of them?",
+    "decisions.2.prompts.0": "For a provider's AI that decides credit or payments, is a signed quarterly statement enough, or do we expect to be told whenever a limit is crossed?",
+    "decisions.4.prompts.0": "If our documents do not show whether a broker, a collections agency or a payments provider uses AI to make decisions, how long are we prepared not to know?",
+    "checks.4.fails": "A ceiling is higher than the credit delegations or the AI policy currently allow for that function"
+  },
+  "edits": [
+    {
+      "at": "frameworkMarkdown",
+      "find": "underwriting and pricing; claims; fraud and investigations; policy administration; complaints and disputes; customer communications; finance and reserving; legal and compliance; technology operations",
+      "replace": "retail lending and credit decisions; deposits and payments; business and institutional banking; financial crime (AML/CTF, fraud and scams); collections and financial hardship; customer service and complaints; treasury, markets and finance; risk, legal and compliance; technology and operations"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| Underwriting and pricing |  |  |  |\n| Claims |  |  |  |\n| Fraud and investigations |  |  |  |\n| Policy administration |  |  |  |\n| Complaints and disputes |  |  |  |\n| Customer communications |  |  |  |\n| Finance and reserving |  |  |  |\n| Legal and compliance |  |  |  |\n| Technology operations |  |  |  |",
+      "replace": "| Retail lending and credit decisions |  |  |  |\n| Deposits and payments |  |  |  |\n| Business and institutional banking |  |  |  |\n| Financial crime (AML/CTF, fraud and scams) |  |  |  |\n| Collections and financial hardship |  |  |  |\n| Customer service and complaints |  |  |  |\n| Treasury, markets and finance |  |  |  |\n| Risk, legal and compliance |  |  |  |\n| Technology and operations |  |  |  |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| I8 | Delegated authority schedules for binders and claims agreements |",
+      "replace": "| I8 | Credit and lending delegations, and the authority each provider holds |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Would we accept a provider's AI declining or paying a claim with no person involved?",
+      "replace": "Would we accept a provider's AI declining a credit application or stopping a payment with no person involved?"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Does one wrongly declined claim count as {customer} harm",
+      "replace": "Does one wrongly declined application or blocked payment count as {customer} harm"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "For a provider's AI that decides claims,",
+      "replace": "For a provider's AI that decides credit or payments,"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "whether a claims manager uses AI to decide",
+      "replace": "whether a broker, a collections agency or a payments provider uses AI to decide"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "A ceiling is higher than the delegated authority or the AI policy currently allows for that function |",
+      "replace": "A ceiling is higher than the credit delegations or the AI policy currently allow for that function |"
+    }
+  ]
+}

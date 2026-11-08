@@ -16,11 +16,12 @@
 <div id="toast" class="hidden" aria-live="polite"></div>
 <input type="file" id="fileIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
 <input type="file" id="extractIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
+<input type="file" id="dirIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
 <script src="/content.js"></script>
 <script src="/shared/packs.js"></script>
 <script src="/brand.js"></script>
 <script src="/export.js"></script>
-<script type="module">import { merge3 } from "/shared/merge.js"; window.RAFMerge = { merge3 };</script>
+<script type="module">import { merge3 } from "/shared/merge.js"; import * as directions from "/shared/directions.js"; window.RAFMerge = { merge3 }; window.RAFDirections = directions;</script>
 <script src="/app.js"></script>
 <script src="/suite.js" data-current="ra"></script>
 </body>

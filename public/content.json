@@ -628,6 +628,11 @@
       "id": "K10",
       "name": "Reachable",
       "fails": "The expected evidence for the most common combination of authority and consequence is higher than any evidence the {entity} currently obtains"
+    },
+    {
+      "id": "K11",
+      "name": "Within the board's direction",
+      "fails": "A ceiling in decision 1 is above the highest tier the board's posture accepts for that function (BD1), and no reason and board revisit are recorded. Runs only when board directions are loaded."
     }
   ],
   "k10Note": "K10 does not indicate an error. It tells the board that, from the first day, its expectation will show as a gap for most arrangements, so that the board sets the position knowing this.",

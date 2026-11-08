@@ -17,7 +17,7 @@
     return o;
   }
   // replace: { functions: [...] } replaces a top-level part whole.
-  // override: { "decisions.6.purpose": "…" } replaces one string at that path. All three apply before the nouns are filled.
+  // override: { "decisions.6.purpose": "…" } replaces one string at that path. All of these apply before the nouns are filled.
   function getPath(o, path) { return path.split('.').reduce((t, k) => (t == null ? t : t[k]), o); }
   function setPath(o, path, v) {
     const ks = path.split('.'); let t = o;
@@ -34,6 +34,14 @@
     const c = JSON.parse(JSON.stringify(Object.assign({}, base, { packs: undefined })));
     for (const [k, v] of Object.entries(pack.replace || {})) c[k] = JSON.parse(JSON.stringify(v));
     for (const [path, v] of Object.entries(pack.override || {})) setPath(c, path, v);
+    // insert: [{ at: "measures", after: "M6", key: "ref", items: [...] }] adds items to a list, after the one named.
+    for (const x of pack.insert || []) {
+      const list = getPath(c, x.at), k = x.key || 'id';
+      if (!Array.isArray(list)) throw new Error('Pack insert: ' + x.at + ' is not a list');
+      const i = x.after == null ? list.length - 1 : list.findIndex(v => v && v[k] === x.after);
+      if (i < 0) throw new Error('Pack insert: ' + x.after + ' not found in ' + x.at);
+      list.splice(i + 1, 0, ...JSON.parse(JSON.stringify(x.items)));
+    }
     // edits: [{ at: "frameworkMarkdown", find: "…", replace: "…" }] changes words inside one string; find must be there.
     for (const e of pack.edits || []) {
       const cur = getPath(c, e.at);
