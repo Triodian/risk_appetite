@@ -3,6 +3,12 @@
   "private": true,
   "type": "module",
   "description": "Browser and API tests against the app running locally (wrangler dev, local D1). Separate from the app so Cloudflare builds are unaffected.",
-  "scripts": { "test": "playwright test" },
-  "devDependencies": { "@playwright/test": "^1.48.0", "wrangler": "^4.40.0" }
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "ajv": "^8.20.0",
+    "wrangler": "^4.40.0"
+  }
 }

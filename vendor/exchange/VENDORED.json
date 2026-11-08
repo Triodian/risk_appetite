@@ -1,0 +1,14 @@
+{
+  "source": "https://github.com/Triodian/Triodian_Metamodel/tree/main/exchange",
+  "commit": "f7773ed1c03ea12d1ea36ccc4f8496311b03ea25",
+  "metamodelVersion": "2.6.0",
+  "files": [
+    "board-directions-v1.schema.json",
+    "board-view-v1.schema.json",
+    "calibration-set-v1.schema.json",
+    "confidentiality-position-v1.schema.json",
+    "matter-brief-v1.schema.json",
+    "register-extract-v1.schema.json",
+    "register-extract-v2.schema.json"
+  ]
+}
