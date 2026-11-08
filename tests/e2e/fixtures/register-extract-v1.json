@@ -1,0 +1,29 @@
+{
+  "privilegeMarking": null,
+  "generated": "2026-11-08T08:00:00.000Z",
+  "calibration": "working v1",
+  "entries": [
+    {
+      "function": "Claims",
+      "location": "provider",
+      "tier": "A3",
+      "consequence": "C4",
+      "received": "E2"
+    },
+    {
+      "function": "Claims",
+      "location": "provider",
+      "tier": "A3",
+      "consequence": "C4",
+      "received": "E1"
+    },
+    {
+      "function": "Policy administration",
+      "location": "own",
+      "tier": "A1",
+      "consequence": "C2",
+      "received": "E3"
+    }
+  ],
+  "schema": "triodian.aua.extract.v1"
+}

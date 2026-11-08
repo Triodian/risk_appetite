@@ -7,7 +7,7 @@
 import { whoIs, handleAuth, gate, markDemo } from '../lib/identity/session.js';
 import { d1Store } from '../lib/store/d1.js';
 import { identityUsers, withIdentity } from '../lib/identity/people.js';
-import { handle, issuedCalibration } from '../lib/core/api.js';
+import { handle, issuedCalibration, boardView } from '../lib/core/api.js';
 import { dueReminders, deliver } from '../lib/core/notify.js';
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
@@ -38,6 +38,25 @@ function directionsReader(env) {
     catch (e) { console.error(e); return { status: 503, error: 'The Board Direction app could not be reached through the BOARD service binding. Check that the binding names the Board Direction Worker deployed in this account.' }; }
     return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'The Board Direction app gave no answer.' };
   };
+}
+
+/** Reads the in-use feed from the AI Use Assessment app (task 3.7), through the ASSESSMENT service binding to its
+ *  AssessmentService entrypoint. Null when this site has no binding: decision 3 then offers the file instead. */
+function feedbackReader(env) {
+  if (!env.ASSESSMENT || typeof env.ASSESSMENT.feedback !== 'function') return null;
+  return async () => {
+    let r;
+    try { r = await env.ASSESSMENT.feedback(); }
+    catch (e) { console.error(e); return { status: 503, error: 'The Use Assessment app could not be reached through the ASSESSMENT service binding. Check that the binding names the Use Assessment Worker deployed in this account.' }; }
+    return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'The Use Assessment app gave no answer.' };
+  };
+}
+
+/** The board view for another Triodian app over a service binding (src/service.js; plan task 3.6). */
+export async function boardViewForService(env) {
+  if (!env.DB) return { status: 503, body: { error: 'The database is not connected to the Risk Appetite app yet.' } };
+  try { return await boardView(d1Store(env.DB)); }
+  catch (e) { console.error(e); return { status: 500, body: { error: 'The Risk Appetite app hit an error reading the board view.' } }; }
 }
 
 /** DEMO ADDITION: emails in DEMO_ADMINS (comma-separated) are made administrators when they sign in. */
@@ -74,7 +93,7 @@ export default {
         demoAdmins: demoAdmins(env),
         firstAdmins: String(env.FIRST_ADMINS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
         site: env.SITE_LABEL || '', origin: siteUrl(env, request), sender: emailSender(env), defer: p => ctx.waitUntil(p),
-        readDirections: directionsReader(env),
+        readDirections: directionsReader(env), readFeedback: feedbackReader(env),
       }, storeFor(env));
       return json(r.body, r.status);
     } catch (e) {

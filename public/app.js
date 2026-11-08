@@ -104,6 +104,41 @@ function directionsPanel(did) {
     ${list.map(x => `<p class="small" style="margin:8px 0 2px"><strong>${esc(x.id)} ${esc(x.name || '')}</strong></p><ul class="small" style="margin:0 0 0 18px">${row(x)}</ul>`).join('')}</div></details>`;
 }
 
+/* ---------- the assessment register extract, v1 or v2 (tasks 3.7) ----------
+   Read on decision 3 (the current state for K10) and, for v2, on decision 8 and in the board view (the measures, gaps
+   by priority and overdue items). Loaded from AI Use Assessment over the ASSESSMENT service binding, or from a file. */
+const EXTRACTS = ['triodian.aua.extract.v1', 'triodian.aua.extract.v2'];
+function useExtract(o, source) {
+  if (!o || !EXTRACTS.includes(o.schema) || !Array.isArray(o.entries)) { toast('Rejected: not a register extract (schema triodian.aua.extract.v1 or v2).'); return false; }
+  if (!canEdit('d3')) { toast(blockReason('d3')); return false; }
+  const cnt = {}; let max = null; o.entries.forEach(x => { if (x && x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x && x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
+  const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
+  const reg = { on: today(), entries: o.entries.length, pair: top ? top[0].replace('.', ' × ') : '', maxReceived: max };
+  if (o.schema === 'triodian.aua.extract.v2') {
+    const txt = (v, n) => String(v == null ? '' : v).slice(0, n);
+    Object.assign(reg, { schema: o.schema, source, generated: txt(o.generated, 40),
+      measures: (Array.isArray(o.measures) ? o.measures : []).slice(0, 20).filter(m => m && /^M\d{1,2}$/.test(m.ref)).map(m => { const c = C.measures.find(x => x.ref === m.ref) || {}; return { ref: m.ref, measure: c.measure || '', limit: c.limit || '', value: typeof m.value === 'number' && isFinite(m.value) ? m.value : null, basis: txt(m.basis, 400) }; }),
+      gapsByPriority: Object.fromEntries(['High', 'Medium', 'Low'].map(k => [k, Math.max(0, parseInt((o.gapsByPriority || {})[k], 10) || 0)])),
+      overdue: (Array.isArray(o.overdue) ? o.overdue : []).slice(0, 100).map(x => ({ entry: txt(x && x.entry, 64), item: txt(x && x.item, 200) })) });
+  }
+  S.current.register = reg;
+  log('registerExtract', 'd3', null, o.entries.length + ' entries' + (reg.schema ? ', in-use feed v2' : ''));
+  toast(reg.schema ? 'In-use feed loaded: K10 uses it, and decision 8 shows the measures.' : 'Register extract loaded. K10 uses it.');
+  return true;
+}
+/* The measures in use now, beside the limits the schedule sets (decision 8, the board view). */
+function inUseRows() {
+  const r = S.current.register; if (!r || !r.measures) return [];
+  return C.measures.map(m => { const x = r.measures.find(y => y.ref === m.ref); return { ref: m.ref, measure: m.measure, limit: m.limit, value: x ? x.value : null, basis: x ? x.basis : 'Not in the in-use feed' }; });
+}
+function inUsePanel(did) {
+  const r = S.current.register; if (did !== 'd8' || !r || !r.measures) return '';
+  const rows = inUseRows(), g = r.gapsByPriority || {};
+  return `<details class="pr about" open><summary>In use now · from the AI Use Assessment in-use feed, ${esc(dAU(r.on))}</summary><div class="about-in measure">
+    <p class="small soft" style="margin:0 0 8px">Counted from the assessment register when the feed was issued. A measure with no value cannot be counted from the register; the reason is shown. Gaps by priority: ${['High', 'Medium', 'Low'].map(k => `${k} ${g[k] || 0}`).join(' · ')}.${(r.overdue || []).length ? ` Overdue: ${r.overdue.length}.` : ''}</p>
+    <div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Measure</th><th>Limit</th><th>In use now</th></tr></thead><tbody>${rows.map(x => `<tr><td class="code">${esc(x.ref)}</td><td>${esc(withLabels(x.measure, 'C'))}</td><td>${esc(x.limit || '—')}</td><td>${x.value == null ? `<span class="soft">Not counted · ${esc(x.basis)}</span>` : `<strong>${esc(String(x.value))}${x.ref === 'M6' ? '%' : ''}</strong> <span class="mini">${esc(x.basis)}</span>`}</td></tr>`).join('')}</tbody></table></div></div></details>`;
+}
+
 function blankPos() { return { value: null, condition: '', testable: false, reason: '', boardRevisit: '', proposedBy: '', recordedBy: '', owner: '', dissent: '', status: 'unset', notSetOwner: '', notSetDue: '', source: '' }; }
 function newEngagement() {
   return {
@@ -781,7 +816,7 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
-      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><button class="btn sm ghost" data-act="loadFeed" ${canEdit('d3') ? '' : 'disabled'}>Load from AI Use Assessment</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the ${N.entity} asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
@@ -853,7 +888,7 @@ function screenDecision(did, ck) {
   <div class="stack">
     <details class="pr about"><summary>Purpose of this decision</summary><div class="about-in measure"><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}</div></details>
     <section>${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
-    ${directionsPanel(did)}${startPanel(d)}
+    ${directionsPanel(did)}${inUsePanel(did)}${startPanel(d)}
     <section><h2 class="sh">The ${N.entity}’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the ${N.entity} proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
@@ -1817,6 +1852,7 @@ function onClick(e) {
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
     loadDirFile: () => document.getElementById('dirIn').click(),
+    loadFeed: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useExtract(r.body, 'assessment')) render(); },
     loadDirBoard: async () => { if (practice()) return toast('The worked example has no board directions to load.'); toast('Reading the board directions from AI Board Direction…'); const r = await api('GET', '/api/directions-from-board'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useDirections(r.body, 'board')) { render(); toast('Board directions loaded: version ' + (r.body.version || '')); } },
     clearDir: () => { if (!can('setup')) return toast(blockReason('setup')); const from = S.boardDirections ? S.boardDirections.file.version : null; delete S.boardDirections; log('boardDirections', 'setup', from, 'removed'); render(); },
     agree: () => agreeWorking(), approve: () => recordApproval(document.getElementById('ap-date').value, document.getElementById('ap-min').value.trim(), document.getElementById('ap-by').value.trim()),
@@ -1845,10 +1881,7 @@ function changeHandler(e) {
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
   if (t.id === 'dirIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (e) { return toast('That file is not JSON.'); } if (useDirections(o, 'file')) { render(); toast('Board directions loaded: version ' + (o.version || '')); } }; fr.readAsText(f); return; }
-  if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { try { const o = JSON.parse(fr.result); if (!o || o.schema !== 'triodian.aua.extract.v1' || !Array.isArray(o.entries)) throw new Error('not a register extract (schema triodian.aua.extract.v1)');
-    const cnt = {}; let max = null; o.entries.forEach(x => { if (x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
-    const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
-    S.current.register = { on: today(), entries: o.entries.length, pair: top ? top[0].replace('.', ' × ') : '', maxReceived: max }; log('registerExtract', 'd3', null, o.entries.length + ' entries'); render(); toast('Register extract loaded. K10 uses it.'); } catch (er) { toast('Rejected: ' + er.message); } }; fr.readAsText(f); return; }
+  if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useExtract(o, 'file')) render(); }; fr.readAsText(f); return; }
   if (d.cell && !d.pf) { if (t.value === '__ns') return; setValue(d.cell, t.value.trim ? t.value.trim() : t.value); UI.sel = d.cell; render(); return; }
   if (d.pf) { const v = t.type === 'checkbox' ? t.checked : t.value; const p = getPos(d.cell); const from = p[d.pf]; if (from === v) return; setField(d.cell, d.pf, v, from); render(); return; }
   if (d.cur) { const did = d.cur.split('.')[0]; if (!canEdit(did) || did === 'd2') { toast(blockReason(did)); render(); return; } if (t.value) S.current[did][d.cur] = t.value; else delete S.current[did][d.cur]; log('currentState', d.cur, null, t.value || null); render(); return; }

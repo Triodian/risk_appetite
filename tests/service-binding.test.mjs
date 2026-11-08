@@ -18,6 +18,6 @@ check('no database: 503', r.status === 503);
 // the entry point exports both the app and the service
 const idx = readFileSync(new URL('../src/index.js', import.meta.url), 'utf8'), svc = readFileSync(new URL('../src/service.js', import.meta.url), 'utf8');
 check('src/index.js exports the app and AppetiteService', /export \{ default \} from '\.\/worker\.js'/.test(idx) && /AppetiteService/.test(idx));
-check('the service offers the calibration set only', (svc.match(/async \w+\(/g) || []).join() === 'async calibrationSet(');
+check('the service offers the calibration set and the board view only (task 3.6)', (svc.match(/async \w+\(/g) || []).join() === 'async calibrationSet(,async boardView(');
 check('wrangler.jsonc runs src/index.js', /"main": "src\/index\.js"/.test(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8')));
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);
