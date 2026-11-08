@@ -153,6 +153,48 @@ function inUsePanel(did) {
     <div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Measure</th><th>Limit</th><th>In use now</th></tr></thead><tbody>${rows.map(x => `<tr><td class="code">${esc(x.ref)}</td><td>${esc(withLabels(x.measure, 'C'))}</td><td>${esc(x.limit || '—')}</td><td>${x.value == null ? `<span class="soft">Not counted · ${esc(x.basis)}</span>` : `<strong>${esc(String(x.value))}${x.ref === 'M6' ? '%' : ''}</strong> <span class="mini">${esc(x.basis)}</span>`}</td></tr>`).join('')}</tbody></table></div></div></details>`;
 }
 
+/* ---------- the client's ISO/IEC 42001 limits and Statement of Applicability (task R.1) ----------
+   Loaded in set-up from the client's own registers (public/shared/import.js). Each limit names a function and an
+   authority ceiling or a consequence level. K11 tests each authority limit against the decision 1 ceiling for that
+   function and against the board's direction (BD1); a limit with neither above it is listed as having no board
+   position. Consequence limits are listed for counsel to read against decision 2; K11 does not test them. */
+const IMPX = () => window.RAFImport || null;
+const LIMITS = () => (S && S.aims && S.aims.limits && S.aims.limits.rows) || [];
+const SOA = () => (S && S.aims && S.aims.soa && S.aims.soa.rows) || [];
+function limitResults() {
+  return LIMITS().map(l => {
+    const f = (S.functions || []).find(x => x.name.toLowerCase().trim() === l.function.toLowerCase().trim());
+    if (!l.authority) return { limit: l, state: 'consequence', why: `a consequence limit (${l.consequence}), read against decision 2 by counsel; K11 does not test it` };
+    if (!f) return { limit: l, state: 'none', why: 'names a function that is not in the engagement, so no board position sits above it' };
+    const locs = l.location ? [l.location] : C.locations.map(x => x.id), out = [];
+    locs.forEach(loc => { const ceil = val(`d1.${f.id}.${loc}`); if (ceil && rk(AT, l.authority) > rk(AT, ceil)) out.push(`is above the appetite ceiling ${ceil} for ${(C.locations.find(x => x.id === loc) || {}).name || loc} (decision 1)`); });
+    const d = DIRS() ? DIRX().areaFor(DIRS(), f.name) : null;
+    if (d && d.maxTier && rk(AT, l.authority) > rk(AT, d.maxTier)) out.push(`is above ${d.maxTier}, the highest tier the board’s ${d.postureLabel} posture for ${d.name} accepts (BD1)`);
+    if (out.length) return { limit: l, state: 'above', why: out.join('; ') };
+    const any = locs.some(loc => val(`d1.${f.id}.${loc}`)) || (d && d.maxTier);
+    return any ? { limit: l, state: 'within', why: 'within the appetite' + (d ? ' and the board’s direction' : '') } : { limit: l, state: 'none', why: 'no ceiling is set for this function yet, and no direction sits above it' };
+  });
+}
+function useAims(kind, text, file) {
+  if (!IMPX()) { toast('The import module did not load. Reload the page.'); return; }
+  if (!can('setup')) { toast(blockReason('setup')); return; }
+  const r = kind === 'limits' ? IMPX().readLimits(text) : IMPX().readSoA(text);
+  if (r.error) { toast(r.error); return; }
+  S.aims = S.aims || {}; const from = S.aims[kind] ? S.aims[kind].rows.length : null;
+  S.aims[kind] = { file: String(file || '').slice(0, 200), loadedOn: today(), rows: r.rows.map(({ line, ...x }) => x) };
+  UI.aimsReport = { kind, refused: r.refused };
+  log('aims.' + kind, 'setup', from, r.rows.length + ' rows'); render();
+  toast(IMPX().summary(kind === 'limits' ? 'limits' : 'controls', r));
+}
+function limitsPanel(did) {
+  if (did !== 'd1' || !LIMITS().length) return '';
+  const res = limitResults(), soa = Object.fromEntries(SOA().map(c => [c.control, c])), cnt = k => res.filter(x => x.state === k).length;
+  const word = { above: '<strong style="color:var(--red)">Above</strong>', within: 'Within', none: '<span style="color:var(--ochre)">No board position</span>', consequence: '<span class="soft">Not tested</span>' };
+  return `<details class="pr about" ${cnt('above') || cnt('none') ? 'open' : ''}><summary>The ${esc(N.entity)}’s own AI limits (ISO/IEC 42001) · ${res.length} limits: ${cnt('above')} above, ${cnt('none')} with no board position</summary><div class="about-in measure">
+    <p class="small soft" style="margin:0 0 8px">From ${esc(S.aims.limits.file || 'the limits register')}, loaded ${esc(dAU(S.aims.limits.loadedOn))}. A limit above the appetite or the board’s direction fails check K11 until the limit or the position changes.</p>
+    <div class="tw"><table class="lg"><thead><tr><th>Limit</th><th>Function</th><th>Ceiling</th><th>Control</th><th>Result</th></tr></thead><tbody>${res.map(x => { const c = x.limit.control && soa[x.limit.control]; return `<tr><td class="code">${esc(x.limit.id)}</td><td>${esc(x.limit.function)}${x.limit.location ? ` <span class="mini">· ${esc(x.limit.location)}</span>` : ''}</td><td>${esc(x.limit.authority || x.limit.consequence)}</td><td>${esc(x.limit.control || '—')}${c ? ` <span class="mini">${c.applicable ? 'applicable' : 'excluded'}${c.implemented ? ', ' + esc(c.implemented) : ''}</span>` : x.limit.control && SOA().length ? ' <span class="mini" style="color:var(--ochre)">not in the Statement of Applicability</span>' : ''}</td><td>${word[x.state]} <span class="mini">${esc(x.why)}</span></td></tr>`; }).join('')}</tbody></table></div></div></details>`;
+}
+
 function blankPos() { return { value: null, condition: '', testable: false, reason: '', boardRevisit: '', proposedBy: '', recordedBy: '', owner: '', dissent: '', status: 'unset', notSetOwner: '', notSetDue: '', source: '' }; }
 function newEngagement() {
   return {
@@ -359,7 +401,9 @@ function runChecks() {
   C.measures.forEach(m => { const o = (S.measureOwners || {})[m.ref]; if (!o) fail('K8', m.ref, 'measure has no accountable person'); else if (!person(o)) fail('K8', m.ref, 'measure owner is no longer in the people list'); });
   // K11 (task 3.5): a decision 1 ceiling above the board's direction for its function needs a reason and a board revisit.
   if (DIRS()) cellsFor('d1').forEach(c => { const p = P(c.id); if (!p || p.status !== 'set') return; const why = beyond(c.id, p.value); if (why && !(String(p.reason || '').trim() && String(p.boardRevisit || '').trim())) fail('K11', c.id, why + ', with no reason and board revisit recorded'); });
-  else delete R.K11;
+  // The client's own ISO/IEC 42001 limits (task R.1): an authority limit above the appetite or the board's direction fails.
+  limitResults().forEach(x => { if (x.state === 'above') fail('K11', 'LIMIT:' + x.limit.id, `limit ${x.limit.id} (${x.limit.function}${x.limit.location ? ', ' + x.limit.location : ''}, up to ${x.limit.authority}) ${x.why}`); });
+  if (!DIRS() && !LIMITS().length) delete R.K11;
   const lim = parseFloat(S.engagement.notificationHours);
   S.decisions.d7.triggers.forEach(t => { const id = `d7.${t.ref}.time`, p = P(id); if (!p || p.status !== 'set') fail('K9', id, 'no time recorded'); else if (!isNaN(lim) && parseFloat(p.value) > lim) fail('K9', id, `${p.value} hours exceeds the ${lim}-hour notification procedure (I10)`); });
   const k10 = R.K10, pair = S.current.commonPair, curVals = Object.values(S.current.d3).filter(Boolean).concat(S.current.register && S.current.register.maxReceived ? [S.current.register.maxReceived] : []);
@@ -673,6 +717,10 @@ function screenSetup() {
   <section class="card"><h2 class="sh">4 · Documents from the ${N.entity}</h2><p class="small soft">Inputs I1 to I11, requested through counsel before session 1. The starting positions on the decision screens use the documents marked as received.</p>
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
     <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the ' + N.entity + '’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
+  <section class="card"><h2 class="sh">6 · ISO/IEC 42001 limits</h2><p class="small soft" style="margin:4px 0 12px">The ${esc(N.entity)}’s own limits register and Statement of Applicability, as CSV files. Decision 1 lists each limit against the appetite and the board’s direction, and check K11 fails on an authority limit above either.</p>
+    <p class="small" style="margin:0 0 10px">${LIMITS().length ? `${LIMITS().length} limits from ${esc(S.aims.limits.file || 'the limits register')}, loaded ${esc(dAU(S.aims.limits.loadedOn))}.` : 'No limits register loaded.'} ${SOA().length ? `${SOA().length} controls in the Statement of Applicability, ${SOA().filter(c => c.applicable).length} applicable.` : 'No Statement of Applicability loaded.'}</p>
+    ${UI.aimsReport && UI.aimsReport.refused.length ? `<div class="panel2" style="padding:10px 14px;margin:0 0 10px" role="status"><p class="small" style="margin:0 0 2px">${UI.aimsReport.refused.length} row${UI.aimsReport.refused.length === 1 ? '' : 's'} refused, and not loaded:</p><ul class="small" style="margin:0 0 0 18px">${UI.aimsReport.refused.slice(0, 50).map(x => `<li>Line ${x.line}: ${esc(x.reason)}</li>`).join('')}</ul></div>` : ''}
+    <div class="row" style="gap:8px"><button class="btn sm" data-act="loadLimits">Load the limits register (CSV)</button><button class="btn sm ghost" data-act="loadSoa">Load the Statement of Applicability (CSV)</button>${S.aims ? '<button class="btn sm ghost" data-act="clearAims">Remove</button>' : ''}</div></section>
   <section class="card"><h2 class="sh">5 · Board directions</h2><p class="small soft" style="margin:4px 0 12px">Where the board gave directions in AI Board Direction (connected mode), each decision shows the directions read on it, and check K11 holds back a decision 1 ceiling above the board’s posture for that function.</p>
     ${S.boardDirections ? `<p class="small" style="margin:0 0 10px">Loaded ${esc(dAU(S.boardDirections.loadedOn))} ${S.boardDirections.source === 'board' ? 'from AI Board Direction' : 'from a file'}: ${esc(S.boardDirections.file.company || '')}, version ${esc(S.boardDirections.file.version || '')}, ${esc(S.boardDirections.file.status === 'confirmed' ? 'confirmed by the board' : 'recorded by the chair')}. ${(() => { const d = S.boardDirections.file, miss = (S.functions || []).filter(f => !DIRX() || !DIRX().areaFor(d, f.name)).map(f => f.name); return miss.length ? `No BD1 area matches ${esc(miss.join(', '))}, so K11 does not test ${miss.length === 1 ? 'that function' : 'those functions'}.` : 'Every function matches a BD1 area.'; })()}</p>` : '<p class="small" style="margin:0 0 10px">None loaded.</p>'}
     <div class="row" style="gap:8px"><button class="btn sm" data-act="loadDirBoard">Load from AI Board Direction</button><button class="btn sm ghost" data-act="loadDirFile">Load from a file</button>${S.boardDirections ? '<button class="btn sm ghost" data-act="clearDir">Remove</button>' : ''}</div></section>
@@ -902,7 +950,7 @@ function screenDecision(did, ck) {
   <div class="stack">
     <details class="pr about"><summary>Purpose of this decision</summary><div class="about-in measure"><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}</div></details>
     <section>${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
-    ${directionsPanel(did)}${inUsePanel(did)}${startPanel(d)}
+    ${directionsPanel(did)}${limitsPanel(did)}${inUsePanel(did)}${startPanel(d)}
     <section><h2 class="sh">The ${N.entity}’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the ${N.entity} proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
@@ -1904,6 +1952,9 @@ function onClick(e) {
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
     loadDirFile: () => document.getElementById('dirIn').click(),
+    loadLimits: () => { if (!can('setup')) return toast(blockReason('setup')); document.getElementById('limitsIn').click(); },
+    loadSoa: () => { if (!can('setup')) return toast(blockReason('setup')); document.getElementById('soaIn').click(); },
+    clearAims: () => { if (!can('setup')) return toast(blockReason('setup')); delete S.aims; UI.aimsReport = null; log('aims', 'setup', 'loaded', 'removed'); render(); },
     loadFeed8: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useFeed(r.body, 'assessment')) render(); },
     loadFeedFile: () => document.getElementById('feedIn').click(),
     loadFeed: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useExtract(r.body, 'assessment')) render(); },
@@ -1934,6 +1985,7 @@ function changeHandler(e) {
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
+  if (t.id === 'limitsIn' || t.id === 'soaIn') { const f = t.files[0], kind = t.id === 'limitsIn' ? 'limits' : 'soa'; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => useAims(kind, String(fr.result), f.name); fr.readAsText(f); return; }
   if (t.id === 'feedIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useFeed(o, 'file')) render(); }; fr.readAsText(f); return; }
   if (t.id === 'dirIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (e) { return toast('That file is not JSON.'); } if (useDirections(o, 'file')) { render(); toast('Board directions loaded: version ' + (o.version || '')); } }; fr.readAsText(f); return; }
   if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useExtract(o, 'file')) render(); }; fr.readAsText(f); return; }
@@ -2002,6 +2054,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C };
+window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C, useAims: (kind, text, file) => useAims(kind, text, file), limits: () => limitResults() };
 boot();
 })();

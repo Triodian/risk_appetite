@@ -1,0 +1,31 @@
+limit_id,function,location,authority,consequence,description,control,owner
+LIM-01,Member services and communications,own,,C4,AI in member services and communications stays within the stated authority.,A.2.2,AI governance lead
+LIM-02,Claims and group insurance,provider,A2,,AI in claims and group insurance stays within the stated authority.,A.5.2,AI governance lead
+LIM-03,Advice,platform,A3,,AI in advice stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-04,Investments,,A4,,AI in investments stays within the stated authority.,A.9.2,AI governance lead
+LIM-05,Administration and payments,own,A1,,AI in administration and payments stays within the stated authority.,A.10.3,AI governance lead
+LIM-06,Complaints and disputes,provider,,C4,AI in complaints and disputes stays within the stated authority.,A.2.2,AI governance lead
+LIM-07,Finance and reporting,platform,A3,,AI in finance and reporting stays within the stated authority.,A.5.2,AI governance lead
+LIM-08,Legal and compliance,,A4,,AI in legal and compliance stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-09,Technology operations,own,A1,,AI in technology operations stays within the stated authority.,A.9.2,AI governance lead
+LIM-10,Member services and communications,provider,A2,,AI in member services and communications stays within the stated authority.,A.10.3,AI governance lead
+LIM-11,Claims and group insurance,platform,,C4,AI in claims and group insurance stays within the stated authority.,A.2.2,AI governance lead
+LIM-12,Advice,,A4,,AI in advice stays within the stated authority.,A.5.2,AI governance lead
+LIM-13,Investments,own,A1,,AI in investments stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-14,Administration and payments,provider,A2,,AI in administration and payments stays within the stated authority.,A.9.2,AI governance lead
+LIM-15,Complaints and disputes,platform,A3,,AI in complaints and disputes stays within the stated authority.,A.10.3,AI governance lead
+LIM-16,Finance and reporting,,,C4,AI in finance and reporting stays within the stated authority.,A.2.2,AI governance lead
+LIM-17,Legal and compliance,own,A1,,AI in legal and compliance stays within the stated authority.,A.5.2,AI governance lead
+LIM-18,Technology operations,provider,A2,,AI in technology operations stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-19,Member services and communications,platform,A3,,AI in member services and communications stays within the stated authority.,A.9.2,AI governance lead
+LIM-20,Claims and group insurance,,A4,,AI in claims and group insurance stays within the stated authority.,A.10.3,AI governance lead
+LIM-21,Advice,own,,C4,AI in advice stays within the stated authority.,A.2.2,AI governance lead
+LIM-22,Investments,provider,A2,,AI in investments stays within the stated authority.,A.5.2,AI governance lead
+LIM-23,Administration and payments,platform,A3,,AI in administration and payments stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-24,Complaints and disputes,,A4,,AI in complaints and disputes stays within the stated authority.,A.9.2,AI governance lead
+LIM-25,Finance and reporting,own,A1,,AI in finance and reporting stays within the stated authority.,A.10.3,AI governance lead
+LIM-26,Legal and compliance,provider,,C4,AI in legal and compliance stays within the stated authority.,A.2.2,AI governance lead
+LIM-27,Technology operations,platform,A3,,AI in technology operations stays within the stated authority.,A.5.2,AI governance lead
+LIM-28,Member services and communications,,A4,,AI in member services and communications stays within the stated authority.,A.6.2.6,AI governance lead
+LIM-29,Claims and group insurance,own,A1,,AI in claims and group insurance stays within the stated authority.,A.9.2,AI governance lead
+LIM-30,Advice,provider,A2,,AI in advice stays within the stated authority.,A.10.3,AI governance lead
