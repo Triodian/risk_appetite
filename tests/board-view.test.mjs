@@ -17,6 +17,8 @@ ok('the approved version is served, with the later working version named', v.bod
 ok('it says where the appetite stands now', v.body.appetite.status === 'working' && v.body.appetite.version === 3);
 ok('it carries the latest in-use measures', v.body.inUse && v.body.inUse.measures[0].value === 40 && v.body.inUse.gapsByPriority.Low === 2);
 ok('and the sector pack, so Board Direction can read the functions', v.body.sectorPack === 'superTrustee');
+const later = await boardView(store({ ...data, inUse: { on: '2026-12-10', measures: [{ ref: 'M6', value: 35, basis: 'y' }], gapsByPriority: { High: 0, Medium: 0, Low: 1 }, overdue: [] } }));
+ok('a feed loaded on decision 8 after approval (inUse) is the one shown', later.body.inUse.on === '2026-12-10' && later.body.inUse.measures[0].value === 35);
 const none = await boardView(store({ engagement: { insurer: 'A' }, calibration: { status: 'default', version: 0, issued: [] }, current: {} }));
 ok('before anything is issued it still answers, saying why there are no approved positions', none.status === 200 && none.body.approved === null && /No calibration set/.test(none.body.approvedNote) && none.body.inUse === null);
 ok('with no engagement it answers 404', (await boardView(store(null))).status === 404);

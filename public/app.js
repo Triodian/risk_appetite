@@ -108,19 +108,31 @@ function directionsPanel(did) {
    Read on decision 3 (the current state for K10) and, for v2, on decision 8 and in the board view (the measures, gaps
    by priority and overdue items). Loaded from AI Use Assessment over the ASSESSMENT service binding, or from a file. */
 const EXTRACTS = ['triodian.aua.extract.v1', 'triodian.aua.extract.v2'];
+/* The measures, gaps and overdue items of a v2 feed, as kept in S.inUse: reporting data, not part of the appetite, so
+   loading a newer feed after the board approves (decision 8) does not open a new version. */
+function inUseOf(o, source) {
+  const txt = (v, n) => String(v == null ? '' : v).slice(0, n);
+  return { on: today(), source, generated: txt(o.generated, 40), entries: o.entries.length,
+    measures: (Array.isArray(o.measures) ? o.measures : []).slice(0, 20).filter(m => m && /^M\d{1,2}$/.test(m.ref)).map(m => { const c = C.measures.find(x => x.ref === m.ref) || {}; return { ref: m.ref, measure: c.measure || '', limit: c.limit || '', value: typeof m.value === 'number' && isFinite(m.value) ? m.value : null, basis: txt(m.basis, 400) }; }),
+    gapsByPriority: Object.fromEntries(['High', 'Medium', 'Low'].map(k => [k, Math.max(0, parseInt((o.gapsByPriority || {})[k], 10) || 0)])),
+    overdue: (Array.isArray(o.overdue) ? o.overdue : []).slice(0, 100).map(x => ({ entry: txt(x && x.entry, 64), item: txt(x && x.item, 200) })) };
+}
+const inUseNow = () => S.inUse || (S.current.register && S.current.register.measures ? S.current.register : null);
+/* Decision 8 (and the board view): a newer in-use feed, at any time, by whoever keeps the measures. */
+function useFeed(o, source) {
+  if (!o || o.schema !== 'triodian.aua.extract.v2' || !Array.isArray(o.entries)) { toast('Rejected: not an in-use feed (schema triodian.aua.extract.v2).'); return false; }
+  if (!can('measures')) { toast(blockReason('measures')); return false; }
+  const from = S.inUse ? S.inUse.on : null; S.inUse = inUseOf(o, source);
+  log('inUseFeed', 'measures', from, `${o.entries.length} entries, ${S.inUse.measures.filter(m => m.value != null).length} measures counted`);
+  toast('In-use feed loaded: decision 8 and the board view show the measures.'); return true;
+}
 function useExtract(o, source) {
   if (!o || !EXTRACTS.includes(o.schema) || !Array.isArray(o.entries)) { toast('Rejected: not a register extract (schema triodian.aua.extract.v1 or v2).'); return false; }
   if (!canEdit('d3')) { toast(blockReason('d3')); return false; }
   const cnt = {}; let max = null; o.entries.forEach(x => { if (x && x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x && x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
   const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
   const reg = { on: today(), entries: o.entries.length, pair: top ? top[0].replace('.', ' × ') : '', maxReceived: max };
-  if (o.schema === 'triodian.aua.extract.v2') {
-    const txt = (v, n) => String(v == null ? '' : v).slice(0, n);
-    Object.assign(reg, { schema: o.schema, source, generated: txt(o.generated, 40),
-      measures: (Array.isArray(o.measures) ? o.measures : []).slice(0, 20).filter(m => m && /^M\d{1,2}$/.test(m.ref)).map(m => { const c = C.measures.find(x => x.ref === m.ref) || {}; return { ref: m.ref, measure: c.measure || '', limit: c.limit || '', value: typeof m.value === 'number' && isFinite(m.value) ? m.value : null, basis: txt(m.basis, 400) }; }),
-      gapsByPriority: Object.fromEntries(['High', 'Medium', 'Low'].map(k => [k, Math.max(0, parseInt((o.gapsByPriority || {})[k], 10) || 0)])),
-      overdue: (Array.isArray(o.overdue) ? o.overdue : []).slice(0, 100).map(x => ({ entry: txt(x && x.entry, 64), item: txt(x && x.item, 200) })) });
-  }
+  if (o.schema === 'triodian.aua.extract.v2') { reg.schema = o.schema; reg.source = source; if (can('measures')) S.inUse = inUseOf(o, source); }
   S.current.register = reg;
   log('registerExtract', 'd3', null, o.entries.length + ' entries' + (reg.schema ? ', in-use feed v2' : ''));
   toast(reg.schema ? 'In-use feed loaded: K10 uses it, and decision 8 shows the measures.' : 'Register extract loaded. K10 uses it.');
@@ -128,13 +140,15 @@ function useExtract(o, source) {
 }
 /* The measures in use now, beside the limits the schedule sets (decision 8, the board view). */
 function inUseRows() {
-  const r = S.current.register; if (!r || !r.measures) return [];
+  const r = inUseNow(); if (!r) return [];
   return C.measures.map(m => { const x = r.measures.find(y => y.ref === m.ref); return { ref: m.ref, measure: m.measure, limit: m.limit, value: x ? x.value : null, basis: x ? x.basis : 'Not in the in-use feed' }; });
 }
 function inUsePanel(did) {
-  const r = S.current.register; if (did !== 'd8' || !r || !r.measures) return '';
+  if (did !== 'd8') return '';
+  const r = inUseNow(), btns = `<div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" data-act="loadFeed8" ${can('measures') ? '' : 'disabled'}>Load the latest from AI Use Assessment</button><button class="btn sm ghost" data-act="loadFeedFile" ${can('measures') ? '' : 'disabled'}>Load from a file</button></div>`;
+  if (!r) return `<details class="pr about"><summary>In use now · no in-use feed loaded</summary><div class="about-in measure"><p class="small soft" style="margin:0">The measures from AI Use Assessment show here once its in-use feed is loaded. Loading it does not change the appetite.</p>${btns}</div></details>`;
   const rows = inUseRows(), g = r.gapsByPriority || {};
-  return `<details class="pr about" open><summary>In use now · from the AI Use Assessment in-use feed, ${esc(dAU(r.on))}</summary><div class="about-in measure">
+  return `<details class="pr about" open><summary>In use now · from the AI Use Assessment in-use feed, ${esc(dAU(r.on))}</summary><div class="about-in measure">${btns}
     <p class="small soft" style="margin:0 0 8px">Counted from the assessment register when the feed was issued. A measure with no value cannot be counted from the register; the reason is shown. Gaps by priority: ${['High', 'Medium', 'Low'].map(k => `${k} ${g[k] || 0}`).join(' · ')}.${(r.overdue || []).length ? ` Overdue: ${r.overdue.length}.` : ''}</p>
     <div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Measure</th><th>Limit</th><th>In use now</th></tr></thead><tbody>${rows.map(x => `<tr><td class="code">${esc(x.ref)}</td><td>${esc(withLabels(x.measure, 'C'))}</td><td>${esc(x.limit || '—')}</td><td>${x.value == null ? `<span class="soft">Not counted · ${esc(x.basis)}</span>` : `<strong>${esc(String(x.value))}${x.ref === 'M6' ? '%' : ''}</strong> <span class="mini">${esc(x.basis)}</span>`}</td></tr>`).join('')}</tbody></table></div></div></details>`;
 }
@@ -1890,6 +1904,8 @@ function onClick(e) {
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
     loadDirFile: () => document.getElementById('dirIn').click(),
+    loadFeed8: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useFeed(r.body, 'assessment')) render(); },
+    loadFeedFile: () => document.getElementById('feedIn').click(),
     loadFeed: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useExtract(r.body, 'assessment')) render(); },
     loadDirBoard: async () => { if (practice()) return toast('The worked example has no board directions to load.'); toast('Reading the board directions from AI Board Direction…'); const r = await api('GET', '/api/directions-from-board'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useDirections(r.body, 'board')) { render(); toast('Board directions loaded: version ' + (r.body.version || '')); } },
     clearDir: () => { if (!can('setup')) return toast(blockReason('setup')); const from = S.boardDirections ? S.boardDirections.file.version : null; delete S.boardDirections; log('boardDirections', 'setup', from, 'removed'); render(); },
@@ -1918,6 +1934,7 @@ function changeHandler(e) {
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
+  if (t.id === 'feedIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useFeed(o, 'file')) render(); }; fr.readAsText(f); return; }
   if (t.id === 'dirIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (e) { return toast('That file is not JSON.'); } if (useDirections(o, 'file')) { render(); toast('Board directions loaded: version ' + (o.version || '')); } }; fr.readAsText(f); return; }
   if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useExtract(o, 'file')) render(); }; fr.readAsText(f); return; }
   if (d.cell && !d.pf) { if (t.value === '__ns') return; setValue(d.cell, t.value.trim ? t.value.trim() : t.value); UI.sel = d.cell; render(); return; }
