@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { checkSave, packLocked } from '../lib/core/rbac.js';
 const require = createRequire(import.meta.url);
-const Packs = require('../public/packs.js');
+const Packs = require("../public/shared/packs.js");
 const at = (p) => new URL('../' + p, import.meta.url);
 let fails = 0; const ok = (label, cond, extra) => { if (!cond) fails++; console.log((cond ? 'PASS' : 'FAIL') + ' · ' + label + (extra ? ' → ' + extra : '')); };
 

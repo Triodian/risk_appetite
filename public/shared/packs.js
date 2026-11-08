@@ -1,12 +1,12 @@
 /* Sector packs (development plan tasks 3.1 and 3.2). The content's fixed wording names no sector: words in braces,
-   such as {entity} or {customer}, are filled from the pack chosen in set-up, and the pack supplies the functions and
-   inputs I1 to I11. Packs live in content/packs/*.json; tools/build-content.mjs merges them into content.js.
-   Shared by the page (window.TriodianPacks) and the tests (require or import of this file's exports). */
+   such as {entity} or {customer}, are filled from the pack chosen in set-up, and the pack replaces whole the parts
+   that differ by sector (in Risk Appetite the functions and inputs I1 to I11; in Use Assessment the documents).
+   Packs live in content/packs/*.json; tools/build-content.mjs merges them into the content script.
+   The same file is in AI Risk Appetite and AI Use Assessment. Used by the page (window.TriodianPacks) and the tests. */
 (function (root) {
   'use strict';
   const DEFAULT = 'generalInsurer';
-  // The parts of the content a pack replaces whole, and the nouns every pack names.
-  const WHOLE = ['functions', 'inputs'];
+  // The nouns every pack names.
   const NOUNS = ['entity', 'Entity', 'entities', 'Entities', 'anEntity', 'AnEntity', 'customer', 'Customer', 'customers', 'Customers', 'aCustomer', 'ACustomer', 'customerHarm', 'regulator'];
 
   function fill(s, nouns) { return s.replace(/\{([A-Za-z]+)\}/g, (m, k) => (Object.prototype.hasOwnProperty.call(nouns, k) ? nouns[k] : m)); }
@@ -16,7 +16,8 @@
     if (o && typeof o === 'object') { const r = {}; for (const k of Object.keys(o)) r[k] = walk(o[k], nouns); return r; }
     return o;
   }
-  // override: { "decisions.6.purpose": "…" } replaces one string at that path, before the nouns are filled.
+  // replace: { functions: [...] } replaces a top-level part whole.
+  // override: { "decisions.6.purpose": "…" } replaces one string at that path. Both apply before the nouns are filled.
   function setPath(o, path, v) {
     const ks = path.split('.'); let t = o;
     for (let i = 0; i < ks.length - 1; i++) { if (t == null || typeof t !== 'object' || !(ks[i] in t)) throw new Error('Pack override path not found: ' + path); t = t[ks[i]]; }
@@ -30,7 +31,7 @@
     const pack = packOf(base, id);
     if (!pack) throw new Error('No sector packs in the content. Run node tools/build-content.mjs');
     const c = JSON.parse(JSON.stringify(Object.assign({}, base, { packs: undefined })));
-    for (const k of WHOLE) if (pack[k]) c[k] = JSON.parse(JSON.stringify(pack[k]));
+    for (const [k, v] of Object.entries(pack.replace || {})) c[k] = JSON.parse(JSON.stringify(v));
     for (const [path, v] of Object.entries(pack.override || {})) setPath(c, path, v);
     const out = walk(c, pack.nouns || {});
     out.packs = base.packs; out.pack = pack.id;
@@ -46,7 +47,7 @@
   /** The pack that fits an entity type, if any. */
   function forEntityType(base, entityType) { return list(base).find(p => p.entityTypes.includes(entityType)) || null; }
 
-  const api = { DEFAULT, WHOLE, NOUNS, resolve, unfilled, list, forEntityType, fill };
+  const api = { DEFAULT, NOUNS, resolve, unfilled, list, forEntityType, fill };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.TriodianPacks = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

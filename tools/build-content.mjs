@@ -5,7 +5,9 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const Packs = require('../public/packs.js');
+const Packs = require('../public/shared/packs.js');
+// The parts every pack in this app replaces whole.
+const WHOLE = ['functions', 'inputs'];
 const at = (p) => new URL('../' + p, import.meta.url);
 
 const base = JSON.parse(readFileSync(at('public/content.json'), 'utf8'));
@@ -15,7 +17,7 @@ for (const f of readdirSync(at('content/packs')).filter(f => f.endsWith('.json')
   if (p.id + '.json' !== f) throw new Error(`${f}: its id is ${p.id}`);
   const missing = Packs.NOUNS.filter(n => !(p.nouns && typeof p.nouns[n] === 'string'));
   if (missing.length) throw new Error(`${f}: nouns missing: ${missing.join(', ')}`);
-  for (const k of Packs.WHOLE) if (!Array.isArray(p[k]) || !p[k].length) throw new Error(`${f}: ${k} missing`);
+  for (const k of WHOLE) if (!Array.isArray((p.replace || {})[k]) || !p.replace[k].length) throw new Error(`${f}: replace.${k} missing`);
   packs[p.id] = p;
 }
 if (!packs[Packs.DEFAULT]) throw new Error(`The ${Packs.DEFAULT} pack is missing`);
