@@ -11,7 +11,8 @@ const SCREENS = ['overview', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'ch
 const OUTPUTS = ['pack', 'statement', 'schedule', 'session', 'calibration', 'checks', 'plan'];
 
 async function capture(browser) {
-  const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 1280, height: 900 } });
+  // Times in the outputs follow the browser's zone; the golden copies were captured in Brisbane, so the test runs there.
+  const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 1280, height: 900 }, timezoneId: 'Australia/Brisbane', locale: 'en-AU' });
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(String(e)));
   await page.goto('/');
