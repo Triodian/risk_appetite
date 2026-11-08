@@ -17,7 +17,8 @@
     return o;
   }
   // replace: { functions: [...] } replaces a top-level part whole.
-  // override: { "decisions.6.purpose": "…" } replaces one string at that path. Both apply before the nouns are filled.
+  // override: { "decisions.6.purpose": "…" } replaces one string at that path. All three apply before the nouns are filled.
+  function getPath(o, path) { return path.split('.').reduce((t, k) => (t == null ? t : t[k]), o); }
   function setPath(o, path, v) {
     const ks = path.split('.'); let t = o;
     for (let i = 0; i < ks.length - 1; i++) { if (t == null || typeof t !== 'object' || !(ks[i] in t)) throw new Error('Pack override path not found: ' + path); t = t[ks[i]]; }
@@ -33,6 +34,12 @@
     const c = JSON.parse(JSON.stringify(Object.assign({}, base, { packs: undefined })));
     for (const [k, v] of Object.entries(pack.replace || {})) c[k] = JSON.parse(JSON.stringify(v));
     for (const [path, v] of Object.entries(pack.override || {})) setPath(c, path, v);
+    // edits: [{ at: "frameworkMarkdown", find: "…", replace: "…" }] changes words inside one string; find must be there.
+    for (const e of pack.edits || []) {
+      const cur = getPath(c, e.at);
+      if (typeof cur !== 'string' || !cur.includes(e.find)) throw new Error('Pack edit not found in ' + e.at + ': ' + e.find.slice(0, 60));
+      setPath(c, e.at, cur.split(e.find).join(e.replace));
+    }
     const out = walk(c, pack.nouns || {});
     out.packs = base.packs; out.pack = pack.id;
     return out;
