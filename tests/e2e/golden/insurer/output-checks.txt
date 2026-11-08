@@ -1,0 +1,22 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Check report
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+| Check | Name | Result | Detail |
+| --- | --- | --- | --- |
+| K1 | Complete | failed | Decision 3 · A6 Changes systems · C1 Immaterial: blank; Decision 7 · TR8 Location change · Notify within (hours): blank |
+| K2 | Ordered | passed | Passed. |
+| K3 | Priority ordered | passed | Passed. |
+| K4 | Consistent with existing thresholds | passed | Passed. |
+| K5 | Consistent with existing authority | passed | Passed. |
+| K6 | Provider compared with own staff | passed | Passed. |
+| K7 | Testable | failed | Decision 1 · Customer communications · Own staff: condition not marked as capable of being checked against documents |
+| K8 | Owned | passed | Passed. |
+| K9 | Timed | failed | Decision 7 · TR7 Sub-contractor change · Notify within (hours): 96 hours exceeds the 72-hour notification procedure (I10); Decision 7 · TR8 Location change · Notify within (hours): no time recorded |
+| K10 | Reachable | passed | E2 Attestation for A3 Decides × C3 Financial loss is within what is obtained today (highest E4 Audit right). |
+
+K10 does not indicate an error. It tells the board that, from the first day, its expectation will show as a gap for most arrangements, so that the board sets the position knowing this.

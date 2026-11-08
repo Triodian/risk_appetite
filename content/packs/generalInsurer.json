@@ -1,0 +1,123 @@
+{
+  "id": "generalInsurer",
+  "name": "General insurer",
+  "jurisdiction": "AU",
+  "entityTypes": [
+    "generalInsurer"
+  ],
+  "note": "Today's wording, from before sector packs. Its outputs are checked word for word against the golden copies in tests/e2e/golden/insurer.",
+  "nouns": {
+    "entity": "insurer",
+    "Entity": "Insurer",
+    "entities": "insurers",
+    "Entities": "Insurers",
+    "anEntity": "an insurer",
+    "AnEntity": "An insurer",
+    "customer": "policyholder",
+    "Customer": "Policyholder",
+    "customers": "policyholders",
+    "Customers": "Policyholders",
+    "aCustomer": "a policyholder",
+    "ACustomer": "A policyholder",
+    "customerHarm": "A policyholder is wrongly declined, delayed, charged or paid.",
+    "regulator": "APRA"
+  },
+  "replace": {
+    "functions": [
+      {
+        "id": "uw",
+        "name": "Underwriting and pricing"
+      },
+      {
+        "id": "cl",
+        "name": "Claims"
+      },
+      {
+        "id": "fr",
+        "name": "Fraud and investigations"
+      },
+      {
+        "id": "pa",
+        "name": "Policy administration"
+      },
+      {
+        "id": "cd",
+        "name": "Complaints and disputes"
+      },
+      {
+        "id": "cc",
+        "name": "Customer communications"
+      },
+      {
+        "id": "fi",
+        "name": "Finance and reserving"
+      },
+      {
+        "id": "lc",
+        "name": "Legal and compliance"
+      },
+      {
+        "id": "to",
+        "name": "Technology operations"
+      }
+    ],
+    "inputs": [
+      {
+        "ref": "I1",
+        "name": "Board risk appetite statement, current version",
+        "usedIn": "All decisions and the consistency checks"
+      },
+      {
+        "ref": "I2",
+        "name": "Operational risk incident thresholds and reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I3",
+        "name": "Conduct and breach reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I4",
+        "name": "Critical operations register, with the tolerance level for each",
+        "usedIn": "Decisions 2 and 7"
+      },
+      {
+        "ref": "I5",
+        "name": "Material service provider register",
+        "usedIn": "Decisions 1 and 6"
+      },
+      {
+        "ref": "I6",
+        "name": "Outsourcing and offshoring policy",
+        "usedIn": "Decisions 4 and 6"
+      },
+      {
+        "ref": "I7",
+        "name": "AI governance framework, permitted-use policy and AI inventory",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I8",
+        "name": "Delegated authority schedules for binders and claims agreements",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I9",
+        "name": "Accountability map, showing which accountable person holds each function",
+        "usedIn": "The owner of every position"
+      },
+      {
+        "ref": "I10",
+        "name": "Incident notification procedure and its timings",
+        "usedIn": "Decision 7"
+      },
+      {
+        "ref": "I11",
+        "name": "Board and risk committee calendar",
+        "usedIn": "Timing of board approval"
+      }
+    ]
+  },
+  "override": {}
+}

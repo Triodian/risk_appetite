@@ -1,0 +1,172 @@
+{
+  "id": "superTrustee",
+  "name": "Superannuation trustee",
+  "jurisdiction": "AU",
+  "entityTypes": [
+    "superannuationTrustee"
+  ],
+  "note": "Added for an ART engagement (development plan task 3.3). The trustee and member nouns; functions for member services, claims and group insurance, advice, investments, administration and payments; C4 tied to the critical operations register. Counsel reviews the wording before it is used with a client.",
+  "nouns": {
+    "entity": "trustee",
+    "Entity": "Trustee",
+    "entities": "trustees",
+    "Entities": "Trustees",
+    "anEntity": "a trustee",
+    "AnEntity": "A trustee",
+    "customer": "member",
+    "Customer": "Member",
+    "customers": "members",
+    "Customers": "Members",
+    "aCustomer": "a member",
+    "ACustomer": "A member",
+    "customerHarm": "A member is wrongly denied, delayed, charged or paid: in a benefit payment, an insurance claim, a rollover or a fee. Where the operation is on the critical operations register (I4), the failure is also tested against C5.",
+    "regulator": "APRA"
+  },
+  "replace": {
+    "functions": [
+      {
+        "id": "ms",
+        "name": "Member services and communications"
+      },
+      {
+        "id": "ci",
+        "name": "Claims and group insurance"
+      },
+      {
+        "id": "ad",
+        "name": "Advice"
+      },
+      {
+        "id": "iv",
+        "name": "Investments"
+      },
+      {
+        "id": "ap",
+        "name": "Administration and payments"
+      },
+      {
+        "id": "cd",
+        "name": "Complaints and disputes"
+      },
+      {
+        "id": "fi",
+        "name": "Finance and reporting"
+      },
+      {
+        "id": "lc",
+        "name": "Legal and compliance"
+      },
+      {
+        "id": "to",
+        "name": "Technology operations"
+      }
+    ],
+    "inputs": [
+      {
+        "ref": "I1",
+        "name": "Board risk appetite statement, current version",
+        "usedIn": "All decisions and the consistency checks"
+      },
+      {
+        "ref": "I2",
+        "name": "Operational risk incident thresholds and reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I3",
+        "name": "Conduct, member outcomes and breach reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I4",
+        "name": "Critical operations register, with the tolerance level for each",
+        "usedIn": "Decisions 2 and 7"
+      },
+      {
+        "ref": "I5",
+        "name": "Material service provider register, including the administrator, the group insurer and the custodian",
+        "usedIn": "Decisions 1 and 6"
+      },
+      {
+        "ref": "I6",
+        "name": "Outsourcing and offshoring policy",
+        "usedIn": "Decisions 4 and 6"
+      },
+      {
+        "ref": "I7",
+        "name": "AI governance framework, permitted-use policy and AI inventory",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I8",
+        "name": "Administration agreement and group insurance policy terms, showing the authority each provider holds over member decisions",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I9",
+        "name": "Accountability map, showing which accountable person holds each function",
+        "usedIn": "The owner of every position"
+      },
+      {
+        "ref": "I10",
+        "name": "Incident notification procedure and its timings",
+        "usedIn": "Decision 7"
+      },
+      {
+        "ref": "I11",
+        "name": "Board and risk committee calendar",
+        "usedIn": "Timing of board approval"
+      }
+    ]
+  },
+  "override": {
+    "decisions.0.prompts.1": "Would we accept a provider's AI declining an insurance claim or a benefit payment without a person reviewing it? If so, up to what amount?",
+    "decisions.1.prompts.1": "Does a single wrongly declined or delayed benefit payment count as harm to {customers}, or only a pattern of them?",
+    "decisions.1.levels.3.source": "Conduct, member outcomes and breach reporting definitions",
+    "decisions.2.prompts.0": "For the administrator's or the group insurer's AI that decides claims or benefit payments, is a signed quarterly statement enough, or do we expect to be told whenever a limit is crossed?",
+    "decisions.4.prompts.0": "If our documents do not show whether the administrator or the group insurer uses AI to make decisions, how long are we prepared not to know?",
+    "checks.4.fails": "A ceiling is higher than the administration agreement, the trustee's delegations or the AI policy currently allow for that function"
+  },
+  "edits": [
+    {
+      "at": "frameworkMarkdown",
+      "find": "underwriting and pricing; claims; fraud and investigations; policy administration; complaints and disputes; customer communications; finance and reserving; legal and compliance; technology operations",
+      "replace": "member services and communications; claims and group insurance; advice; investments; administration and payments; complaints and disputes; finance and reporting; legal and compliance; technology operations"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| Underwriting and pricing |  |  |  |\n| Claims |  |  |  |\n| Fraud and investigations |  |  |  |\n| Policy administration |  |  |  |\n| Complaints and disputes |  |  |  |\n| Customer communications |  |  |  |\n| Finance and reserving |  |  |  |\n| Legal and compliance |  |  |  |\n| Technology operations |  |  |  |",
+      "replace": "| Member services and communications |  |  |  |\n| Claims and group insurance |  |  |  |\n| Advice |  |  |  |\n| Investments |  |  |  |\n| Administration and payments |  |  |  |\n| Complaints and disputes |  |  |  |\n| Finance and reporting |  |  |  |\n| Legal and compliance |  |  |  |\n| Technology operations |  |  |  |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| I8 | Delegated authority schedules for binders and claims agreements |",
+      "replace": "| I8 | Administration agreement and group insurance policy terms |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Would we accept a provider's AI declining or paying a claim with no person involved?",
+      "replace": "Would we accept a provider's AI declining an insurance claim or a benefit payment with no person involved?"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Does one wrongly declined claim count as {customer} harm",
+      "replace": "Does one wrongly declined or delayed benefit payment count as {customer} harm"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "For a provider's AI that decides claims,",
+      "replace": "For the administrator's or the group insurer's AI that decides claims or benefit payments,"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "whether a claims manager uses AI to decide",
+      "replace": "whether the administrator or the group insurer uses AI to decide"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "A ceiling is higher than the delegated authority or the AI policy currently allows for that function |",
+      "replace": "A ceiling is higher than the administration agreement, the trustee's delegations or the AI policy currently allow for that function |"
+    }
+  ]
+}

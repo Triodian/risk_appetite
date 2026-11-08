@@ -1,0 +1,149 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decision 6 · session 2
+Location and concentration
+
+Where may AI acting for us operate, and how much may depend on a single platform?
+
+Some not set
+Answered as: Each location marked accepted, escalate or not accepted, and a concentration limit
+Purpose of this decision
+Marking	Meaning in the assessment
+Accepted	Recorded. No further step is needed
+Escalate	A question for counsel is raised for every entry in that location
+Not accepted	The entry is flagged in the same way as a use above the authority ceiling
+Starting position
+I6 · received
+
+For location, the insurer's existing offshoring position. There is no starting position for concentration, because most insurers will not yet have measured it.
+
+Existing offshoring position (I6)
+Use starting position
+Fills empty cells only. Nothing is filled in automatically.
+The insurer’s positions
+
+Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
+
+Jurisdiction	Where the provider is established	Where the AI runs
+
+Starting position: Accepted · remove
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+Starting position: Accepted · remove
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+Starting position: Escalate · remove
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+Starting position: Escalate · remove
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+
+—
+Accepted
+Escalate
+Not accepted
+⋯
+No starting marking
+Accepted
+Escalate
+Not accepted
+Add jurisdiction
+Concentration limit
+
+One limit is set: the largest share of critical operations that may depend on a single platform or AI model provider. The register records the platform for each entry, so this share can be counted.
+
+⋯
+not set · Tom Ellery · 30 November 2026
+Percent of critical operations
+Give every recorded position without an owner this owner:
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Apply
+Questions to open the discussion · 3
+Questions for counsel
+recorded for counsel, not decided in the session
+
+None logged.
+
+New question
+Log question
+← Decision 5
+Every cell set or recorded as not set
+Decision 7 →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

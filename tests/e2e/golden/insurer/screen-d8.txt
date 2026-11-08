@@ -1,0 +1,96 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decision 8 · session 2
+Change and review
+
+Which changes bring an arrangement back for approval, and how often is the appetite reviewed?
+
+Complete
+Answered as: A list of change events and a review interval
+Purpose of this decision
+Starting position
+I1 · received
+I11 · received
+
+A review at least once a year, in the same cycle as the board's risk appetite statement.
+
+Use starting position
+Fills empty cells only. Nothing is filled in automatically.
+The insurer’s positions
+
+Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
+
+Event	What is revisited
+A new arrangement where AI is at A3 or above
+⋯
+
+Trigger TR1, TR6, TR7 or TR8 occurs
+⋯
+
+An arrangement reaches renewal or variation of its contract
+⋯
+
+A material AI incident, at the insurer or in its supply chain
+⋯
+
+New regulatory guidance on AI or outsourcing
+⋯
+
+The review interval set by the board has passed
+⋯
+Add event
+Review interval
+⋯
+Give every recorded position without an owner this owner:
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Apply
+Questions for counsel
+recorded for counsel, not decided in the session
+
+None logged.
+
+New question
+Log question
+← Decision 7
+Every cell set or recorded as not set
+Checks →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

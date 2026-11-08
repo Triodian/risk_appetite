@@ -1,0 +1,36 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Tolerance and trigger schedule
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+The measurable parts of the statement, kept in a separate schedule so that they can be updated without the board re-approving the whole statement.
+
+## Measures
+
+| Ref | Measure | Limit | Owner | Counted from | Reported |
+| --- | --- | --- | --- | --- | --- |
+| M1 | Register entries above the authority ceiling without an approved exception | [0] | Ana Duarte | Register: authority tier against P1 | Each risk committee |
+| M2 | High-priority gaps open beyond their time limit | [0] | Priya Natarajan | Findings: priority and date set | Each risk committee |
+| M3 | Medium-priority gaps still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
+| M4 | F4 findings open beyond their permitted date, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Findings: type and date set | Each risk committee |
+| M5 | Expected items of evidence that are overdue | [ ] days | Tom Ellery | Technical schedule: item and due date | Monthly |
+| M6 | Share of critical operations that depend on a single platform or AI model provider | not set (Tom Ellery, by 30 November 2026) | Priya Natarajan | Register: platform field | Half-yearly |
+| M7 | Register entries in a location marked not accepted | [0] | Marcus Lee | Register: location against P8 | Each risk committee |
+| M8 | Triggers reported later than the time limit | [0] | Tom Ellery | Trigger log | Quarterly |
+| M9 | Evidence levels established with low confidence, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Register: confidence against P7 | Each risk committee |
+
+## Triggers
+
+| Ref | Trigger | Measure | Threshold | Notify within | Notified to |
+| --- | --- | --- | --- | --- | --- |
+| TR1 | Authority change | A provider's AI moves to a higher tier | Any move to A3 Decides or above | 48 hours | Arrangement owner |
+| TR2 | Evidence lapse | An expected item of evidence is not received | Days past due | 48 hours | Arrangement owner |
+| TR3 | Tolerance signal | An aggregate measure approaches or crosses a tolerance the board has set | Set per measure | 48 hours | Arrangement owner |
+| TR4 | AI incident | An event involving AI that could disrupt a critical operation | Any | 12 hours | CRO and the accountable person for the function |
+| TR5 | Other AI incident | Any other defined AI event at a provider | As defined | 48 hours | Arrangement owner |
+| TR6 | Model or platform change | The provider changes the AI model or platform behind the service | Any, for A3 Decides or above | 48 hours | Arrangement owner |
+| TR7 | Sub-contractor change | A new party is added to the supply chain | Any, for a critical operation | 96 hours | Arrangement owner |
+| TR8 | Location change | The AI operates, or the provider operates, from a new location | Any | [ ] | Arrangement owner |

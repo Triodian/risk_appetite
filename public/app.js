@@ -4,11 +4,13 @@
    The worked example is a practice mode: never saved, and the role can be switched to see what each role can do. */
 (function () {
 'use strict';
-let C = null;            // content.json
+let C = null;            // content.json with the engagement's sector pack applied (public/packs.js)
+let BASE = null;         // content.js as built: the wording with {tokens}, and every pack
+let N = {};              // the pack's nouns: N.entity is "insurer" in the general insurer pack
 let S = null;            // engagement
 const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, open: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
-const ROLE_NAME = { counsel: 'Counsel', gc: 'GC', triodian: 'Triodian', cro: 'CRO', risk: 'Insurer risk', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
+const ROLE_NAME = { counsel: 'Counsel', gc: 'GC', triodian: 'Triodian', cro: 'CRO', risk: 'Risk function', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 /* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
 const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
 const ADMIN_SCREENS = ['setup', 'users', 'activity', 'notifications'];
@@ -51,7 +53,7 @@ const scaleName = (code) => { const all = [].concat(C.scales.authority, C.scales
 const scaleLabel = code => { const s = [].concat(C.scales.authority, C.scales.consequence, C.scales.evidence).find(x => x.code === code); return s ? (s.label || s.name) : ''; };
 const scaleOpt = code => scaleLabel(code) ? code + ' ' + scaleLabel(code) : code;
 /* Put the short label after a bare code: "C1 or C2" -> "C1 Immaterial or C2 Contract breach". Leaves a code alone when its
-   label or framework name already follows ("C4 Policyholder harm", "C1 immaterial", "C5 disruption of ..."), and turns
+   label or framework name already follows ("C4 Customer harm", "C1 immaterial", "C5 disruption of ..."), and turns
    "C2, contract breach" into "C2 Contract breach". */
 const withLabels = (str, letters = 'ACE') => { str = String(str); let out = '', last = 0; const re = new RegExp(`\\b([${letters}][0-6])\\b`, 'g'); let m;
   while ((m = re.exec(str))) {
@@ -74,7 +76,7 @@ function blankPos() { return { value: null, condition: '', testable: false, reas
 function newEngagement() {
   return {
     schema: 'triodian.raf.v1',
-    engagement: { id: uid(), insurer: '', reference: '', counselFirm: '', privilegeMarking: '', sessionDates: ['', ''], example: false, overallPosition: '', notificationHours: '', autosave: false },
+    engagement: { id: uid(), insurer: '', sectorPack: C.pack, reference: '', counselFirm: '', privilegeMarking: '', sessionDates: ['', ''], example: false, overallPosition: '', notificationHours: '', autosave: false },
     people: [], functions: C.functions.map(f => ({ ...f })), functionsConfirmed: false, criticalOperations: [],
     inputs: C.inputs.map(i => ({ ref: i.ref, status: '', date: '', note: '' })),
     current: { d1: {}, d2: {}, d3: {}, offshoring: '', commonPair: { tier: '', consequence: '' } },
@@ -99,8 +101,8 @@ function cellsFor(did) {
   if (did === 'd2') {
     D('d2').levels.forEach(l => {
       if (l.code === 'C1') return;
-      if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => add(`d2.op.${o.id}`, { row: 'C5.' + o.id, col: 'setting', rowLabel: scaleOpt('C5') + ' · ' + (o.name || 'critical operation'), colLabel: 'Insurer\u2019s setting', kind: 'text' }));
-      else add(`d2.${l.code}`, { row: l.code, col: 'setting', rowLabel: scaleOpt(l.code), colLabel: 'Insurer\u2019s setting', kind: 'text' });
+      if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => add(`d2.op.${o.id}`, { row: 'C5.' + o.id, col: 'setting', rowLabel: scaleOpt('C5') + ' · ' + (o.name || 'critical operation'), colLabel: N.Entity + '\u2019s setting', kind: 'text' }));
+      else add(`d2.${l.code}`, { row: l.code, col: 'setting', rowLabel: scaleOpt(l.code), colLabel: N.Entity + '\u2019s setting', kind: 'text' });
     });
   }
   if (did === 'd3') AT.forEach(a => CO.forEach(c => add(`d3.${a}.${c}`, { row: a, col: c, rowLabel: scaleOpt(a), colLabel: scaleOpt(c), kind: 'select', options: EV })));
@@ -462,7 +464,7 @@ function entry() {
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="entry-h"><div class="entry">
     <div class="row" style="gap:10px;color:var(--aubergine);margin-bottom:26px"><img class="logo" src="/triodian-logo.svg" alt="Triodian" height="30" style="height:30px;width:auto;display:block"><span class="vrule"></span><span style="font-weight:600;color:var(--ink)">AI Risk Appetite</span></div>
     ${quick ? '<h1 id="entry-h" class="sr-only">AI Risk Appetite</h1>' : `<h1 id="entry-h" class="h1">The board’s AI risk appetite</h1>
-    <p class="sub" style="font-size:18px">Record the insurer’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>`}
+    <p class="sub" style="font-size:18px">Record the ${N.entity}’s positions on how much authority AI may hold, what failures it will tolerate and what evidence it expects. Test them for consistency, and produce the appetite statement for board approval and the calibration set.</p>`}
     ${note ? `<p class="entry-note">${note}</p>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}
     ${acts && !quick ? '<label class="entry-skip"><input type="checkbox" data-act="hideIntro"> Don’t show this introduction again</label>' : ''}
@@ -472,9 +474,9 @@ function entry() {
 
 /* ---------- guides shown after choosing set-up or practice ---------- */
 const STAGES = [
-  ['Session 1: decisions 1 to 3', 'External counsel leads the session and Triodian records it. The CRO, General Counsel, head of operational risk, AI governance lead and the owners of the functions in scope work through the first three decisions: the authority AI may hold in each function; the thresholds at which a failure counts as a financial loss, harm to policyholders or disruption to a critical operation; and the evidence the insurer expects for each combination of authority and consequence. Each decision starts from the insurer’s current position. The independent reviewer attends for decision 2 only.'],
+  ['Session 1: decisions 1 to 3', 'External counsel leads the session and Triodian records it. The CRO, General Counsel, head of operational risk, AI governance lead and the owners of the functions in scope work through the first three decisions: the authority AI may hold in each function; the thresholds at which a failure counts as a financial loss, harm to ${N.customers} or disruption to a critical operation; and the evidence the ${N.entity} expects for each combination of authority and consequence. Each decision starts from the ${N.entity}’s current position. The independent reviewer attends for decision 2 only.'],
   ['Session 2: decisions 4 to 8', 'The same group, joined by procurement or vendor management, works through how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval. The session 1 positions are then reviewed in light of these decisions.'],
-  ['Checks and challenge', 'Ten consistency checks run after every change. Failed checks go back to the CRO, and checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about what the insurer is legally obliged to do are recorded for counsel rather than settled in the session, and counsel answers them.'],
+  ['Checks and challenge', 'Ten consistency checks run after every change. Failed checks go back to the CRO, and checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about what the ${N.entity} is legally obliged to do are recorded for counsel rather than settled in the session, and counsel answers them.'],
   ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. Counsel drafts the AI risk appetite statement in a form the board can approve, and the CRO recommends it to the board or its risk committee. When the board approves it, the date, minute reference and approving body are recorded.'],
 ];
 function exampleSummary() {
@@ -493,10 +495,10 @@ function guideOverlay() {
   if (g === 'setup') {
     const admin = SRV.user && SRV.user.isAdmin;
     body = `<h1 id="entry-h" class="h1">How an engagement runs</h1>
-    <p class="sub" style="font-size:18px">External counsel leads the engagement and Triodian records it. The positions come from the insurer, and the board approves the result. After set-up, the engagement runs in four stages.</p>
+    <p class="sub" style="font-size:18px">External counsel leads the engagement and Triodian records it. The positions come from the ${N.entity}, and the board approves the result. After set-up, the engagement runs in four stages.</p>
     <ol class="stages">${STAGES.map(([t, x]) => `<li><strong>${t}</strong><p>${x}</p></li>`).join('')}</ol>
-    <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the insurer. On decisions 1 and 3, only the CRO or the insurer’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
-    <div class="guide-box"><h2 class="sh">The AI Use Assessment</h2><p style="margin:0">Triodian’s AI Use Assessment runs alongside, from the same week. Its register extract is loaded on decision 3 as the evidence the insurer holds today, and its findings inform decisions 1, 4, 5 and 6. Once the CRO agrees the working appetite, the calibration set goes back to the assessment. <a href="/user-guide/#informs">How the assessment informs the appetite</a></p></div>
+    <div class="guide-box"><h2 class="sh">Who proposes positions</h2><p style="margin:0">Positions come from the ${N.entity}. On decisions 1 and 3, only the CRO or the ${N.entity}’s risk function may propose a position; on decision 2, the independent reviewer may also propose. Counsel and Triodian explain, answer questions and record; neither proposes or recommends a position. Every position is recorded with who proposed it, an accountable owner and any dissent.</p></div>
+    <div class="guide-box"><h2 class="sh">The AI Use Assessment</h2><p style="margin:0">Triodian’s AI Use Assessment runs alongside, from the same week. Its register extract is loaded on decision 3 as the evidence the ${N.entity} holds today, and its findings inform decisions 1, 4, 5 and 6. Once the CRO agrees the working appetite, the calibration set goes back to the assessment. <a href="/user-guide/#informs">How the assessment informs the appetite</a></p></div>
     <p class="small soft">Changes are saved as they are made. Each change is recorded in the engagement history with the name and role of the person who made it.</p>
     <div class="row between guide-acts">${close}${admin ? '<a class="btn primary" href="/admin/#set-up" style="text-decoration:none">Continue to set-up</a>' : ''}</div>`;
   } else {
@@ -505,7 +507,7 @@ function guideOverlay() {
     <p class="sub" style="font-size:18px">${esc(e.insurer.replace(/\s*\(fictional\)/i, ''))} is a fictional general insurer. The example shows an engagement part-way through the second session, so you can see each screen with realistic content.</p>
     <h2 class="sh" style="margin-top:22px">What has been done</h2>
     <ul class="done">
-      <li><strong>Set-up is complete.</strong> ${cap(numW(x.people))} people are recorded, including the CRO, three members of the insurer risk function, counsel from ${esc(e.counselFirm)}, the Triodian recorder and an independent reviewer. ${cap(numW(x.X.criticalOperations.length))} critical operations are recorded with their tolerance levels, and ${x.inputs === 11 ? 'all 11 inputs are' : x.inputs + ' of the 11 inputs are'} marked as received.</li>
+      <li><strong>Set-up is complete.</strong> ${cap(numW(x.people))} people are recorded, including the CRO, three members of the ${N.entity} risk function, counsel from ${esc(e.counselFirm)}, the Triodian recorder and an independent reviewer. ${cap(numW(x.X.criticalOperations.length))} critical operations are recorded with their tolerance levels, and ${x.inputs === 11 ? 'all 11 inputs are' : x.inputs + ' of the 11 inputs are'} marked as received.</li>
       <li><strong>Session 1 is complete</strong> (dated ${esc(fmtDate(e.sessionDates[0]))}), and <strong>session 2 is under way</strong> (dated ${esc(fmtDate(e.sessionDates[1]))}).</li>
       <li><strong>Positions are recorded</strong> on all eight decisions. ${done.length ? `Decision${done.length === 1 ? '' : 's'} ${listN(done.map(o => o.d.n))} ${done.length === 1 ? 'is' : 'are'} complete.` : ''} ${open.length ? `Decision${open.length === 1 ? '' : 's'} ${listN(open.map(o => o.d.n))} still ${open.length === 1 ? 'has' : 'have'} gaps.` : ''}</li>
       <li><strong>Challenge has started.</strong> ${cap(numW(x.chAll))} challenge point${x.chAll === 1 ? ' has' : 's have'} been raised (${numW(x.chOpen)} still open), and ${numW(x.qcAll)} question${x.qcAll === 1 ? ' has' : 's have'} been recorded for counsel (${numW(x.qcOpen)} awaiting an answer).</li>
@@ -564,18 +566,18 @@ function screenSetup() {
   const inputs = S.inputs.map((x, i) => { const c = C.inputs[i]; return b === 'phone'
     ? `<div class="panel2" style="padding:12px 14px"><div class="row" style="gap:8px"><span class="mono">${esc(x.ref)}</span><strong class="small">${esc(c.name)}</strong></div><div class="mini" style="margin:4px 0 8px">Used in: ${esc(c.usedIn)}</div><div class="fgrid">${fld('Status', `inputs.${i}.status`, x.status, { select: [['','Not marked'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']] })}${fld('Date', `inputs.${i}.date`, x.date, { type: 'date' })}${fld('Note', `inputs.${i}.note`, x.note)}</div></div>`
     : `<tr><td class="code">${esc(x.ref)}</td><td>${esc(c.name)}<div class="mini">${esc(c.usedIn)}</div></td><td><select class="in" id="in-${i}-status" data-path="inputs.${i}.status" aria-label="${esc(x.ref)} status">${[['','—'],['received','Received'],['notHeld','Not held'],['notRequested','Not requested']].map(o => `<option value="${o[0]}" ${x.status === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></td><td><input class="in" type="date" id="in-${i}-date" data-path="inputs.${i}.date" value="${esc(x.date)}" aria-label="${esc(x.ref)} date"></td><td><input class="in" id="in-${i}-note" data-path="inputs.${i}.note" value="${esc(x.note)}" aria-label="${esc(x.ref)} note"></td></tr>`; }).join('');
-  return `${opening('Admin · set-up', 'Set up the engagement', 'Who takes part, which functions are in scope, and what the insurer has already decided.')}
+  return `${opening('Admin · set-up', 'Set up the engagement', 'Who takes part, which functions are in scope, and what the ' + N.entity + ' has already decided.')}
   ${ro ? `<p class="err">${esc(blockReason('setup'))} ${whyLink()}</p>` : ''}
   <fieldset ${ro ? 'disabled' : ''} style="border:0;padding:0;margin:0" class="stack">
   <section class="card"><h2 class="sh">1 · Engagement details</h2><p class="small soft" style="margin:4px 0 14px">Who the engagement is for, when the two sessions are held, and the privilege marking counsel directs.</p><div class="fgrid">
-    ${fld('Insurer', 'engagement.insurer', e.insurer)}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
+    ${fld(N.Entity, 'engagement.insurer', e.insurer)}${fld('Sector pack', 'engagement.sectorPack', packId(), { select: TriodianPacks.list(BASE).map(p => [p.id, p.name]), disabled: !can('setup') || packLocked() })}${fld('Engagement reference', 'engagement.reference', e.reference)}${fld('Counsel firm', 'engagement.counselFirm', e.counselFirm)}
     ${fld('Session 1 date', 'engagement.sessionDates.0', e.sessionDates[0], { type: 'date' })}${fld('Session 2 date', 'engagement.sessionDates.1', e.sessionDates[1], { type: 'date' })}
-  </div><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
+  </div><p class="mini" style="margin-top:8px">The sector pack sets the words for the ${esc(N.entity)} and its ${esc(N.customers)}, the business functions and the inputs requested. ${packLocked() ? 'It is now fixed, because a position has been recorded.' : 'It is fixed once the first position is recorded.'}</p><div style="margin-top:14px">${fld('Privilege marking · as counsel directs', 'engagement.privilegeMarking', e.privilegeMarking, { ph: 'Printed as the first line of every output' })}</div></section>
   <section class="card"><h2 class="sh">Practitioner</h2><p class="small soft" style="margin:4px 0 14px">The GC’s or advisory firm’s name, a line under it and a logo. They appear in the header and above the privilege marking on every Word and PDF output.</p><div class="fgrid">
     ${fld('Firm', 'engagement.practitioner.firm', (e.practitioner || {}).firm || '')}${fld('Line under the name', 'engagement.practitioner.line', (e.practitioner || {}).line || '', { ph: 'Prepared by [firm] using the Triodian method' })}
   </div><div style="margin-top:14px">${TriodianBrand.logoControl(e.practitioner, can(pathTarget('engagement.practitioner.logo')) ? '' : 'disabled')}</div></section>
   <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People taking part</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
-    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the insurer risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
+    <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the ${N.entity} risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
     ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
   <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')} in scope</h2><p class="small soft" style="margin:4px 0 14px">The business functions the appetite covers (decision 1 sets a ceiling for each), and the critical operations whose approved tolerance levels decision 2 uses.</p>
     <div class="grid2"><div><div class="mini" style="margin-bottom:6px">Functions (the framework’s starting list, which can be edited)</div>
@@ -584,9 +586,9 @@ function screenSetup() {
     <div><div class="mini" style="margin-bottom:6px">Critical operations, from input I4, with their approved ${T('tolerance', 'tolerance levels')}</div>
       <div class="stack" style="gap:10px">${S.criticalOperations.map((o, i) => `<div class="panel2" style="padding:12px"><div class="fgrid">${fld('Operation', `criticalOperations.${i}.name`, o.name)}${fld('Tolerance', `criticalOperations.${i}.tolerance`, o.tolerance)}${fld('Source document', `criticalOperations.${i}.source`, o.source)}</div><div class="row" style="justify-content:flex-end"><button class="btn sm ghost" data-act="rmOp" data-i="${i}">Remove</button></div></div>`).join('') || '<p class="small soft">None recorded.</p>'}</div>
       <button class="btn sm" style="margin-top:10px" data-act="addOp">Add critical operation</button></div></div></section>
-  <section class="card"><h2 class="sh">4 · Documents from the insurer</h2><p class="small soft">Inputs I1 to I11, requested through counsel before session 1. The starting positions on the decision screens use the documents marked as received.</p>
+  <section class="card"><h2 class="sh">4 · Documents from the ${N.entity}</h2><p class="small soft">Inputs I1 to I11, requested through counsel before session 1. The starting positions on the decision screens use the documents marked as received.</p>
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
-    <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the insurer’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
+    <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the ' + N.entity + '’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
   </fieldset>
   ${practice() ? '' : `<section class="card" style="margin-top:18px"><h2 class="sh">Copy of the engagement</h2><p class="small soft" style="margin:4px 0 12px">The whole engagement as one file: every position, its history, the people and set-up. Keep it as a backup or to move the engagement elsewhere.</p><button class="btn sm" data-act="save">Download the engagement (.json)</button></section>
   <section class="card" style="margin-top:18px"><h2 class="sh">Next review</h2><p class="small soft" style="margin:4px 0 12px">When the board has approved the appetite and the review interval comes round, start the next review. The approved engagement is kept read-only under Earlier reviews (in the menu). The new review keeps the set-up and people, and starts each position from the approved one.</p>
@@ -685,9 +687,9 @@ function decisionBody(did, off) {
       const sc = C.scales.consequence.find(x => x.code === l.code);
       if (l.code === 'C1') rows.push({ head: `<span class="mono">C1</span> ${esc(scaleLabel('C1'))}`, label: 'C1', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, { html: `<span class="soft">Whatever falls below ${esc(scaleOpt('C2'))}</span>` }, { html: 'n/a' }] });
       else if (l.code === 'C5' && S.criticalOperations.length) S.criticalOperations.forEach(o => rows.push({ head: `<span class="mono">C5</span> ${esc(scaleLabel('C5'))}: ${esc(o.name)}`, sub: 'Approved tolerance level: ' + esc(o.tolerance || '—'), label: scaleOpt('C5') + ': ' + o.name, items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.op.${o.id}`), { html: esc(o.source || l.source) }] }));
-      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: scaleOpt(l.code), sub: S.current.d2[l.code] ? 'Insurer’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
+      else rows.push({ head: `<span class="mono">${l.code}</span> ${esc(scaleLabel(l.code))}`, label: scaleOpt(l.code), sub: S.current.d2[l.code] ? N.Entity + '’s existing threshold: ' + esc(S.current.d2[l.code]) : '', items: [{ html: esc(sc.def) }, { html: esc(withLabels(l.sets)) }, by(`d2.${l.code}`), { html: esc(l.source) }] });
     });
-    return recArea(did, 'g2', [T('consequence', 'Level'), 'Generic definition', 'What the insurer sets', 'Insurer\u2019s setting', 'Usual source'], rows, off);
+    return recArea(did, 'g2', [T('consequence', 'Level'), 'Generic definition', 'What the ' + N.entity + ' sets', N.Entity + '\u2019s setting', 'Usual source'], rows, off);
   }
   if (did === 'd3') return recArea(did, 'g3', [T('tier', 'Authority'), ...CO.map(c => `<span title="${esc(scaleTip(c))}">${c}</span><div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div>`)],
     AT.map(a => ({ head: `<span class="mono" title="${esc(scaleTip(a))}">${a}</span> ${esc(scaleLabel(a))}`, label: a, items: CO.map(c => by(`d3.${a}.${c}`)) })), off);
@@ -737,12 +739,12 @@ function startPanel(d) {
   if (d.id === 'd1') extra = `<details class="pr" id="cur-d1" style="margin-top:12px;background:#fff" ${UI.openCur && UI.openCur.d1 ? 'open' : ''}><summary>${T('current', 'Current state')}: where a person signs off today</summary><div style="padding:0 16px 16px">${curGrid('d1')}</div></details>`;
   if (d.id === 'd3') {
     const pr = S.current.commonPair;
-    extra = `<details class="pr" id="cur-d3" style="margin-top:12px;background:#fff" ${UI.openCur && UI.openCur.d3 ? 'open' : ''}><summary>${T('current', 'Current state')}: evidence the insurer holds today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
+    extra = `<details class="pr" id="cur-d3" style="margin-top:12px;background:#fff" ${UI.openCur && UI.openCur.d3 ? 'open' : ''}><summary>${T('current', 'Current state')}: evidence the ${N.entity} holds today</summary><div style="padding:0 16px 16px">${curGrid('d3')}
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
       <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
-      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the insurer asks for it. Each time it is shown is recorded in the session record.</span></div>
+      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the ${N.entity} asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
   if (d.id === 'd2') extra = `<div class="fgrid" style="margin-top:12px">${['C2', 'C3', 'C4'].map(c => fld(`Existing ${scaleOpt(c)} threshold`, `current.d2.${c}`, S.current.d2[c] || '', { ph: 'From I2 / I3' })).join('')}</div>${S.criticalOperations.length ? '' : fld(`Existing ${scaleOpt('C5')} position (no critical operations recorded in set-up)`, 'current.d2.C5', S.current.d2.C5 || '')}`;
@@ -812,14 +814,14 @@ function screenDecision(did, ck) {
     <details class="pr about"><summary>Purpose of this decision</summary><div class="about-in measure"><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}</div></details>
     <section>${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
     ${startPanel(d)}
-    <section><h2 class="sh">The insurer’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the insurer proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
+    <section><h2 class="sh">The ${N.entity}’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the ${N.entity} proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
     </section>
     ${d.prompts.length ? `<details class="pr"><summary>Questions to open the discussion · ${d.prompts.length}</summary><ul>${d.prompts.map(p => `<li>${esc(withLabels(p, 'C'))}</li>`).join('')}</ul></details>` : ''}
     <section class="card"><div class="row between"><h2 class="sh" style="margin:0">Questions for ${T('counsel', 'counsel')}</h2><span class="mini">recorded for counsel, not decided in the session</span></div>
       ${qcs.length ? `<div class="stack" style="gap:8px;margin-top:12px">${qcs.map(q => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><span class="mono">${esc(q.ref)}</span><span style="flex:1">${esc(q.question)}${q.cell ? `<br><button class="lnk mono" data-act="gotoCell" data-cell="${esc(q.cell)}">${esc(cellLabel(q.cell))}</button>` : ''}${q.response ? `<div class="small soft">Response: ${esc(q.response)}</div>` : ''}</span>${badge(q.status, q.status === 'answered' ? 'b-green' : 'b-ochre')}</div>`).join('')}</div>` : '<p class="small soft" style="margin-top:8px">None logged.</p>'}
-      ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Any question about what the insurer is legally obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
+      ${canEdit(did) ? `<div style="margin-top:12px"><label class="f" for="qc-new"><span>New question${details ? ' · on ' + esc(cellLabel(details)) : ''}</span><textarea class="in" id="qc-new" placeholder="Any question about what the ${N.entity} is legally obliged to do"></textarea></label><button class="btn sm" style="margin-top:8px" data-act="addQC" data-d="${did}">Log question</button></div>` : ''}
     </section>
   </div>
   ${stepbar(gate(st.gate, gateTxt))}`;
@@ -916,9 +918,9 @@ function screenChallenge() {
 /* ---------- outputs ---------- */
 const tbl = (h, rows) => '| ' + h.join(' | ') + ' |\n| ' + h.map(() => '---').join(' | ') + ' |\n' + rows.map(r => '| ' + r.map(x => String(x == null ? '' : x).replace(/\|/g, '\\|').replace(/\n/g, ' ')).join(' | ') + ' |').join('\n') + '\n\n';
 const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'; if (p.status === 'notSet') return `not set (${pname(p.notSetOwner)}, by ${dAU(p.notSetDue)})`; return String(p.value); };
-function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[Insurer]'} · ${e.reference || '[reference]'} · generated ${today()}\n\n`; }
+function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[' + N.Entity + ']'} · ${e.reference || '[reference]'} · generated ${today()}\n\n`; }
 function mdStatement() {
-  const e = S.engagement, ins = e.insurer || '[insurer]'; let m = mdHead('AI risk appetite statement');
+  const e = S.engagement, ins = e.insurer || '[' + N.entity + ']'; let m = mdHead('AI risk appetite statement');
   m += `## 1. Purpose and scope\n\nThis statement covers AI used by ${ins}, by its material service providers, and by the platforms behind them. It sits within ${ins}'s board-approved risk appetite statement, and uses the loss thresholds and critical operation tolerance levels the board has already approved.\n\n`;
   m += `## 2. Overall position\n\n${e.overallPosition || '[For counsel to write, in the board\u2019s words. For example: ' + C.overallExample + ']'}\n\n`;
   m += `## 3. Authority\n\nThe ceiling is the highest level of authority the board accepts for AI in each function and location.\n\n` + tbl(['Function', 'Own staff', 'Inside a provider', 'Platform behind a provider'], S.functions.map(f => [f.name, ...C.locations.map(l => { const id = `d1.${f.id}.${l.id}`, p = P(id); return pv(id) + (p && p.condition ? ` (${p.condition})` : ''); })]));
@@ -943,7 +945,7 @@ function irContributed() { const ir = S.people.filter(p => rolesOf(p).includes('
 const bodyOf = md => { const i = md.indexOf('\n## '); return i < 0 ? '' : md.slice(i + 1); };
 function mdPack() {
   const e = S.engagement, c = S.calibration, bm = e.boardMemo || {}, ck = runChecks(), bl = blocking(ck);
-  const cro = S.people.find(p => rolesOf(p).includes('cro')), ins = e.insurer || '[insurer]', v = c.version || 1;
+  const cro = S.people.find(p => rolesOf(p).includes('cro')), ins = e.insurer || '[' + N.entity + ']', v = c.version || 1;
   let m = mdHead('Board paper: AI risk appetite');
   m += `- **To:** ${bm.to || 'The Board'}\n- **From:** ${bm.from || (cro ? cro.name + ', Chief Risk Officer' : 'Chief Risk Officer')}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite statement, version ${v}\n\n`;
   m += `## Decision sought\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite statement (version ${v}) and the tolerance and trigger schedule in this paper.`}\n\n`;
@@ -1039,18 +1041,18 @@ function mdPlan() {
   const stands = [`${recv} of ${S.inputs.length} inputs received or recorded as not held`, sd[0] ? 'Dated ' + dAU(sd[0]) : 'Date to be set', sd[1] ? 'Dated ' + dAU(sd[1]) : 'Date to be set',
     `${pass} of ${ck.length} checks pass`, c.agreedById ? 'Agreed ' + dAU(c.agreedOn) + (c.agreedBy ? ' by ' + c.agreedBy : '') : 'Not yet', '', '', c.status === 'approved' ? 'Approved ' + dAU(c.approvedOn) + (c.minuteRef ? ', ' + c.minuteRef : '') : 'Not yet'];
   let m = mdHead('Engagement plan');
-  m += `This plan follows the framework’s process. It is for everyone taking part: what happens when, who attends, what the insurer is asked to provide, and where each sign-off stands.\n\n`;
+  m += `This plan follows the framework’s process. It is for everyone taking part: what happens when, who attends, what the ${N.entity} is asked to provide, and where each sign-off stands.\n\n`;
   m += `## Steps\n\n` + tbl(['Step', 'When', 'Activity', 'Output', 'Where it stands'], fwTable('### 7.2 Steps').map((r, i) => [r[0], r[1], r[2], r[3], stands[i] || ''])) + '\n';
   const dec = s => C.decisions.filter(d => d.session === s).map(d => d.n + ' ' + d.name).join(', ');
   m += `## Sessions and who attends\n\n` + tbl(['Session', 'When', 'Covers', 'Attends'], [
-    ['Session 1', sd[0] ? dAU(sd[0]) + ', two hours' : 'Week 1, day 4 or 5, two hours', 'Decisions ' + dec(1), 'The CRO and the insurer risk function, who propose positions; counsel, who facilitates; Triodian, who records'],
+    ['Session 1', sd[0] ? dAU(sd[0]) + ', two hours' : 'Week 1, day 4 or 5, two hours', 'Decisions ' + dec(1), 'The CRO and the ' + N.entity + ' risk function, who propose positions; counsel, who facilitates; Triodian, who records'],
     ['Session 2', sd[1] ? dAU(sd[1]) + ', two hours' : 'Week 2, two hours', 'Decisions ' + dec(2) + '; session 1 positions reviewed in their light', 'As session 1'],
     ['Challenge', 'Week 3', 'Each area’s positions', 'Second line and each accountable person, with the CRO'],
     ['Approval', 'Next risk committee or board meeting', 'The statement and schedule', 'The board; the CRO presents, counsel settles the wording'],
   ]) + '\n';
   m += `## Attendees by role\n\n` + tbl(['Role', 'Named'], C.roles.map(r => [r.name, named(r.id) || 'Not yet named'])) + '\n';
   const st = { received: 'Received', requested: 'Requested', notHeld: 'Not held' };
-  m += `## Inputs needed from the insurer\n\nRequested through external counsel before session 1.\n\n` + tbl(['Ref', 'Input', 'Used in', 'Status'], C.inputs.map((x, i) => { const s = S.inputs[i] || {}; return [x.ref, x.name, x.usedIn, (st[s.status] || 'Not yet requested') + (s.date ? ' ' + dAU(s.date) : '')]; })) + '\n';
+  m += `## Inputs needed from the ${N.entity}\n\nRequested through external counsel before session 1.\n\n` + tbl(['Ref', 'Input', 'Used in', 'Status'], C.inputs.map((x, i) => { const s = S.inputs[i] || {}; return [x.ref, x.name, x.usedIn, (st[s.status] || 'Not yet requested') + (s.date ? ' ' + dAU(s.date) : '')]; })) + '\n';
   m += `## Sign-off points\n\n` + tbl(['Sign-off', 'By', 'Where it stands'], [
     ['Working appetite agreed (the calibration set issued to the assessment, marked working)', 'The CRO, once checks K1 to K9 pass', c.agreedById ? `Agreed ${dAU(c.agreedOn)}, version ${c.version}` : 'Not yet'],
     ['Statement and schedule settled for the board', 'External counsel', c.status === 'approved' ? 'Done' : 'Before approval'],
@@ -1158,7 +1160,25 @@ function renderSheet() {
 let lastBp = null, inChange = false, pendingRender = false;
 function render() { if (inChange) { if (!pendingRender) { pendingRender = true; setTimeout(() => { pendingRender = false; doRender(); }, 0); } return; } doRender(); }
 const dsKey = el => el && el !== document.body && el.dataset && Object.keys(el.dataset).length ? el.tagName + '|' + JSON.stringify(Object.assign({}, el.dataset)) : null;
+// The sector pack follows the engagement: set-up picks it, and it locks once a decision or entry is recorded.
+function packId() { return (S && S.engagement && S.engagement.sectorPack) || TriodianPacks.DEFAULT; }
+// Mirrors packLocked in lib/core/rbac.js, which refuses the change on the server.
+function packLocked() { if (!S) return false; if ((S.calibration || {}).version > 0) return true; return Object.values(S.decisions || {}).some(d => d && d.cells && Object.keys(d.cells).length > 0); }
+// A new pack on an engagement with nothing recorded: the functions, inputs, triggers and events follow the pack.
+function switchPack(from) {
+  applyPack();
+  const keep = Object.fromEntries((S.inputs || []).map(x => [x.ref, x]));
+  S.functions = C.functions.map(f => ({ ...f })); S.functionsConfirmed = false;
+  const ids = new Set(S.functions.map(f => f.id));
+  (S.people || []).forEach(p => { if (p.areas) p.areas = p.areas.filter(a => ids.has(a)); });
+  S.inputs = C.inputs.map(i => keep[i.ref] ? { ...keep[i.ref] } : { ref: i.ref, status: '', date: '', note: '' });
+  S.decisions.d7.triggers = D('d7').triggers.map(t => ({ ...t, custom: false })).concat(S.decisions.d7.triggers.filter(t => t.custom));
+  S.decisions.d8.events = D('d8').events.map(e => ({ ...e, custom: false })).concat(S.decisions.d8.events.filter(e => e.custom));
+  toast('Sector pack: ' + BASE.packs[C.pack].name + '. Functions and inputs now follow it.');
+}
+function applyPack() { const id = packId(); if (C && C.pack === id) return; C = TriodianPacks.resolve(BASE, id); N = BASE.packs[C.pack].nouns; ROLE_NAME.risk = N.Entity + ' risk'; }
 function doRender() {
+  applyPack();
   const app = document.getElementById('app'); lastBp = bp();
   if (AREA !== 'app') return renderArea(app);
   // Until start-up has finished, show a quiet line rather than the welcome screen, so it doesn't flash before the engagement opens.
@@ -1789,6 +1809,7 @@ function changeHandler(e) {
   if (d.pf) { const v = t.type === 'checkbox' ? t.checked : t.value; const p = getPos(d.cell); const from = p[d.pf]; if (from === v) return; setField(d.cell, d.pf, v, from); render(); return; }
   if (d.cur) { const did = d.cur.split('.')[0]; if (!canEdit(did) || did === 'd2') { toast(blockReason(did)); render(); return; } if (t.value) S.current[did][d.cur] = t.value; else delete S.current[did][d.cur]; log('currentState', d.cur, null, t.value || null); render(); return; }
   if (d.area != null) { if (!can('setup')) { toast(blockReason('setup')); render(); return; } const p = S.people[+d.area]; p.areas = p.areas || []; if (t.checked) p.areas.push(t.value); else p.areas = p.areas.filter(x => x !== t.value); log('areas', 'people.' + d.area, null, p.areas.join(',')); render(); return; }
+  if (d.path === 'engagement.sectorPack') { if (packLocked()) { toast('The sector pack is fixed once a position is recorded.'); render(); return; } const from = packId(); setPath(d.path, t.value); if (packId() !== from) switchPack(from); render(); return; }
   if (d.path) { setPath(d.path, t.type === 'checkbox' ? t.checked : t.value); render(); return; }
 }
 function onInput(e) {
@@ -1819,8 +1840,9 @@ function onKey(e) {
 
 /* ---------- boot ---------- */
 async function boot() {
-  C = window.RAF_CONTENT || null;
-  if (!C) { try { C = await (await fetch('/content.json')).json(); } catch (e) { document.getElementById('app').innerHTML = '<p style="padding:40px;font-family:sans-serif">content.json could not be loaded. Keep content.js beside index.html, or serve the folder from a web server.</p>'; return; } }
+  BASE = window.RAF_CONTENT || null;
+  if (!BASE || !BASE.packs || !window.TriodianPacks) { document.getElementById('app').innerHTML = '<p style="padding:40px;font-family:sans-serif">content.js or packs.js could not be loaded. Keep both beside index.html.</p>'; return; }
+  applyPack();
 
   document.addEventListener('click', onClick);
   document.addEventListener('change', onChange);
@@ -1848,6 +1870,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU };
+window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C };
 boot();
 })();

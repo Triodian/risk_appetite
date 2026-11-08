@@ -1,0 +1,156 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decision 7 · session 2
+Triggers
+
+Which events must be reported to us, and how quickly?
+
+In progress
+Answered as: A list of triggers, each with a measure, a threshold and a time limit
+Purpose of this decision
+Starting position
+I4 · received
+I10 · received
+
+The eight triggers, with thresholds and time limits left for the session to decide.
+
+Use starting position
+Fills empty cells only. Nothing is filled in automatically.
+The insurer’s positions
+
+Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
+
+Trigger · measure	Threshold	Notify within (hours)	Notified to
+TR1 Authority change
+A provider's AI moves to a higher tier
+
+⋯
+
+⋯
+
+⋯
+
+TR2 Evidence lapse
+An expected item of evidence is not received
+
+⋯
+
+⋯
+
+⋯
+
+TR3 Tolerance signal
+An aggregate measure approaches or crosses a tolerance the board has set
+
+⋯
+
+⋯
+
+⋯
+
+TR4 AI incident
+An event involving AI that could disrupt a critical operation
+
+⋯
+
+⋯
+
+⋯
+
+TR5 Other AI incident
+Any other defined AI event at a provider
+
+⋯
+
+⋯
+
+⋯
+
+TR6 Model or platform change
+The provider changes the AI model or platform behind the service
+
+⋯
+
+⋯
+
+⋯
+
+TR7 Sub-contractor change
+A new party is added to the supply chain
+
+⋯
+
+⋯
+K9
+
+⋯
+
+TR8 Location change
+The AI operates, or the provider operates, from a new location
+
+⋯
+
+⋯
+K1
+K9
+
+⋯
+Add trigger
+
+Each time limit must leave the insurer able to assess the event and meet its own notification obligations. The example wording in the counsel briefing used 12 hours for an event that could disrupt a critical operation and 48 hours for other triggers. Those figures are examples only. Counsel advises on the timing. I10: 72 hours.
+
+Give every recorded position without an owner this owner:
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Apply
+Questions for counsel
+recorded for counsel, not decided in the session
+QC-02
+Does 12 hours for TR4 leave enough room to meet the insurer’s own notification obligations?
+Decision 7 · TR4 AI incident · Notify within (hours)
+Response: Yes, on the current procedure. Confirm if I10 changes.
+answered
+New question
+Log question
+← Decision 6
+1 of 24 cells blank
+Decision 8 →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed
