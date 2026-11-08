@@ -37,4 +37,7 @@ r = await call('/api/calibration-set', { common_name: CID }, 'GET', { ...env, CA
 check('refused until CALIBRATION_CLIENT_ID is set, with the fix in the message', r.status === 403 && /CALIBRATION_CLIENT_ID/.test(r.body.error || ''));
 r = await call('/api/calibration-set', {});
 check('a token with neither email nor Client ID is refused', r.status === 401);
+// the board directions (task 3.5): read over the BOARD binding for people signed in, never for the service token
+r = await call('/api/directions-from-board', { common_name: CID, sub: '' });
+check('the Use Assessment token cannot read the board directions', r.status === 403);
 console.log(fails ? fails + ' failed' : 'all passed'); if (fails) process.exit(1);

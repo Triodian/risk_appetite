@@ -72,7 +72,39 @@ const linkify = s => esc(s).replace(/\[\[(\w+)(?:\|([^\]]+))?\]\]/g, (m, id, t) 
 const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
 
 /* ---------- engagement ---------- */
-function blankPos() { return { value: null, condition: '', testable: false, reason: '', proposedBy: '', recordedBy: '', owner: '', dissent: '', status: 'unset', notSetOwner: '', notSetDue: '', source: '' }; }
+/* ---------- board directions (task 3.5) ----------
+   The directions AI Board Direction issues (public/shared/directions.js), read over the BOARD service binding or from a
+   file in set-up. Each decision shows the directions read on it; K11 holds back a decision 1 ceiling above BD1. */
+const DIRX = () => window.RAFDirections || null;
+const KB = () => (DIRS() ? 'K1 to K9 and K11' : 'K1 to K9'); // the checks that must pass before the appetite is agreed
+const DIRS = () => (S && S.boardDirections && S.boardDirections.file && DIRX()) ? S.boardDirections.file : null;
+const fnName = row => ((S.functions || []).find(f => f.id === row) || {}).name || row;
+function beyond(cellId, tier) { const d = DIRS(); if (!d) return ''; const [did, row] = cellId.split('.'); return did === 'd1' ? DIRX().beyondDirection(d, fnName(row), tier) : ''; }
+function useDirections(o, source) {
+  const why = DIRX() ? DIRX().directionsError(o) : 'The directions module did not load. Reload the page.';
+  if (why) { toast(why); return false; }
+  if (!can('setup')) { toast(blockReason('setup')); return false; }
+  const from = S.boardDirections ? S.boardDirections.file.version : null;
+  S.boardDirections = { source, loadedOn: today(), file: o };
+  log('boardDirections', 'setup', from, `${o.version || 'loaded'} · ${o.status || ''}`.trim()); return true;
+}
+function directionsPanel(did) {
+  const d = DIRS(); if (!d) return '';
+  const list = DIRX().readOn(d, did); if (!list.length) return '';
+  const row = (x) => {
+    if (x.id === 'BD1') return x.areas.map(a => `<li><strong>${esc(a.name)}</strong>: ${esc(a.postureLabel)}${a.maxTier ? ' · up to ' + esc(a.maxTier) : ''}${a.condition ? ' · ' + esc(a.condition) : ''}</li>`).join('');
+    if (x.id === 'BD2') return (x.lines || []).map(l => `<li>${esc(l.use)} <span class="soft">(${esc(l.scope)})</span></li>`).join('') || '<li class="soft">No red lines were set.</li>';
+    if (x.id === 'BD3') return (x.events || []).map(e => `<li>${esc(e.event)} <span class="soft">· ${esc(e.timing)}${e.by ? ', brought by ' + esc(e.by) : ''}</span></li>`).join('');
+    if (x.id === 'BD5') return (x.harms || []).filter(h => h.notTolerated).map(h => `<li><strong>${esc(h.harmTo)}</strong>: ${esc(h.notTolerated)}${h.threshold ? ' · ' + esc(h.threshold) : ''}</li>`).join('') || '<li class="soft">Existing thresholds.</li>';
+    if (x.id === 'BD6') return [...(x.measures || []).map(m => `<li>${esc(m.measure)}${m.limit ? ' · limit ' + esc(m.limit) : ''}</li>`), ...(x.events || []).map(e => `<li>${esc(e.event)} · to ${esc(e.to)} within ${esc(e.within)}</li>`)].join('');
+    return '';
+  };
+  return `<details class="pr about" open><summary>The board’s direction${list.length > 1 ? 's' : ''} for this decision · ${list.map(x => esc(x.id)).join(', ')}</summary><div class="about-in measure">
+    <p class="small soft" style="margin:0 0 8px">From AI Board Direction, ${esc(d.company || '')} · version ${esc(d.version || '')}, ${esc(d.status === 'confirmed' ? 'confirmed by the board' : 'recorded by the chair')}${d.beingRevised ? ' · the board is revising them' : ''}. A position that goes past a direction cannot form part of the working appetite until a reason and a board revisit are recorded (check K11).</p>
+    ${list.map(x => `<p class="small" style="margin:8px 0 2px"><strong>${esc(x.id)} ${esc(x.name || '')}</strong></p><ul class="small" style="margin:0 0 0 18px">${row(x)}</ul>`).join('')}</div></details>`;
+}
+
+function blankPos() { return { value: null, condition: '', testable: false, reason: '', boardRevisit: '', proposedBy: '', recordedBy: '', owner: '', dissent: '', status: 'unset', notSetOwner: '', notSetDue: '', source: '' }; }
 function newEngagement() {
   return {
     schema: 'triodian.raf.v1',
@@ -276,6 +308,9 @@ function runChecks() {
   });
   cells.forEach(c => { const p = P(c.id); if (p && p.status === 'set') { if (!p.owner) fail('K8', c.id, 'no accountable person'); else if (!person(p.owner)) fail('K8', c.id, 'owner is no longer in the people list'); } });
   C.measures.forEach(m => { const o = (S.measureOwners || {})[m.ref]; if (!o) fail('K8', m.ref, 'measure has no accountable person'); else if (!person(o)) fail('K8', m.ref, 'measure owner is no longer in the people list'); });
+  // K11 (task 3.5): a decision 1 ceiling above the board's direction for its function needs a reason and a board revisit.
+  if (DIRS()) cellsFor('d1').forEach(c => { const p = P(c.id); if (!p || p.status !== 'set') return; const why = beyond(c.id, p.value); if (why && !(String(p.reason || '').trim() && String(p.boardRevisit || '').trim())) fail('K11', c.id, why + ', with no reason and board revisit recorded'); });
+  else delete R.K11;
   const lim = parseFloat(S.engagement.notificationHours);
   S.decisions.d7.triggers.forEach(t => { const id = `d7.${t.ref}.time`, p = P(id); if (!p || p.status !== 'set') fail('K9', id, 'no time recorded'); else if (!isNaN(lim) && parseFloat(p.value) > lim) fail('K9', id, `${p.value} hours exceeds the ${lim}-hour notification procedure (I10)`); });
   const k10 = R.K10, pair = S.current.commonPair, curVals = Object.values(S.current.d3).filter(Boolean).concat(S.current.register && S.current.register.maxReceived ? [S.current.register.maxReceived] : []);
@@ -360,7 +395,7 @@ function compareCard() {
 }
 function agreeWorking() {
   const who = me(); if (!who || !rolesOf(who).includes('cro')) return toast((practice() ? 'Choose the CRO under "Acting as" in the practice bar' : 'Only the CRO can agree the working appetite. Sign in as the CRO') + '.');
-  if (blocking(runChecks()).length) return toast('Checks K1 to K9 must pass first.');
+  if (blocking(runChecks()).length) return toast('Checks ' + KB() + ' must pass first.');
   if (S.calibration.status !== 'default' && S.calibration.agreedById) return toast('Version ' + S.calibration.version + ' is already agreed.');
   const c = S.calibration, from = c.status + ' v' + c.version; c.version = Math.max(1, c.version + (c.status === 'default' ? 1 : 0)); if (c.status !== 'default' && c.version === 0) c.version = 1;
   c.status = 'working'; c.agreedBy = who.name; c.agreedById = who.id; c.agreedOn = today();
@@ -476,7 +511,7 @@ function entry() {
 const STAGES = [
   ['Session 1: decisions 1 to 3', 'External counsel leads the session and Triodian records it. The CRO, General Counsel, head of operational risk, AI governance lead and the owners of the functions in scope work through the first three decisions: the authority AI may hold in each function; the thresholds at which a failure counts as a financial loss, harm to ${N.customers} or disruption to a critical operation; and the evidence the ${N.entity} expects for each combination of authority and consequence. Each decision starts from the ${N.entity}’s current position. The independent reviewer attends for decision 2 only.'],
   ['Session 2: decisions 4 to 8', 'The same group, joined by procurement or vendor management, works through how long an evidence shortfall may continue, how much may remain unknown about AI in the supply chain, where AI may operate and how much may depend on one platform, the events that must be reported and how quickly, and what brings an arrangement back for approval. The session 1 positions are then reviewed in light of these decisions.'],
-  ['Checks and challenge', 'Ten consistency checks run after every change. Failed checks go back to the CRO, and checks K1 to K9 must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about what the ${N.entity} is legally obliged to do are recorded for counsel rather than settled in the session, and counsel answers them.'],
+  ['Checks and challenge', 'Ten consistency checks run after every change. Failed checks go back to the CRO, and checks ' + KB() + ' must pass before the appetite can be agreed. The second line and each accountable person review the positions in their area. Questions about what the ${N.entity} is legally obliged to do are recorded for counsel rather than settled in the session, and counsel answers them.'],
   ['Agreement and approval', 'The CRO agrees the working appetite, which becomes version 1 of the calibration set the AI Use Assessment reads. Counsel drafts the AI risk appetite statement in a form the board can approve, and the CRO recommends it to the board or its risk committee. When the board approves it, the date, minute reference and approving body are recorded.'],
 ];
 function exampleSummary() {
@@ -589,6 +624,9 @@ function screenSetup() {
   <section class="card"><h2 class="sh">4 · Documents from the ${N.entity}</h2><p class="small soft">Inputs I1 to I11, requested through counsel before session 1. The starting positions on the decision screens use the documents marked as received.</p>
     ${b === 'phone' ? `<div class="stack" style="gap:10px">${inputs}</div>` : `<div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Input</th><th style="width:150px">Status</th><th style="width:160px">Date</th><th>Note</th></tr></thead><tbody>${inputs}</tbody></table></div>`}
     <div style="margin-top:14px;max-width:360px">${fld('Hours allowed by the ' + N.entity + '’s incident notification procedure (from I10)', 'engagement.notificationHours', e.notificationHours, { type: 'number', ph: 'Used by check K9 to test trigger time limits' })}</div></section>
+  <section class="card"><h2 class="sh">5 · Board directions</h2><p class="small soft" style="margin:4px 0 12px">Where the board gave directions in AI Board Direction (connected mode), each decision shows the directions read on it, and check K11 holds back a decision 1 ceiling above the board’s posture for that function.</p>
+    ${S.boardDirections ? `<p class="small" style="margin:0 0 10px">Loaded ${esc(dAU(S.boardDirections.loadedOn))} ${S.boardDirections.source === 'board' ? 'from AI Board Direction' : 'from a file'}: ${esc(S.boardDirections.file.company || '')}, version ${esc(S.boardDirections.file.version || '')}, ${esc(S.boardDirections.file.status === 'confirmed' ? 'confirmed by the board' : 'recorded by the chair')}. ${(() => { const d = S.boardDirections.file, miss = (S.functions || []).filter(f => !DIRX() || !DIRX().areaFor(d, f.name)).map(f => f.name); return miss.length ? `No BD1 area matches ${esc(miss.join(', '))}, so K11 does not test ${miss.length === 1 ? 'that function' : 'those functions'}.` : 'Every function matches a BD1 area.'; })()}</p>` : '<p class="small" style="margin:0 0 10px">None loaded.</p>'}
+    <div class="row" style="gap:8px"><button class="btn sm" data-act="loadDirBoard">Load from AI Board Direction</button><button class="btn sm ghost" data-act="loadDirFile">Load from a file</button>${S.boardDirections ? '<button class="btn sm ghost" data-act="clearDir">Remove</button>' : ''}</div></section>
   </fieldset>
   ${practice() ? '' : `<section class="card" style="margin-top:18px"><h2 class="sh">Copy of the engagement</h2><p class="small soft" style="margin:4px 0 12px">The whole engagement as one file: every position, its history, the people and set-up. Keep it as a backup or to move the engagement elsewhere.</p><button class="btn sm" data-act="save">Download the engagement (.json)</button></section>
   <section class="card" style="margin-top:18px"><h2 class="sh">Next review</h2><p class="small soft" style="margin:4px 0 12px">When the board has approved the appetite and the review interval comes round, start the next review. The approved engagement is kept read-only under Earlier reviews (in the menu). The new review keeps the set-up and people, and starts each position from the approved one.</p>
@@ -609,7 +647,7 @@ function nextStep(ck, sg) {
     return box('', `Next: decision ${x.d.n} · ${x.d.name}`, `${x.st.un} of ${x.st.total} positions still to record${more ? `, and ${more} more ${more === 1 ? 'decision has' : 'decisions have'} blank positions` : ''}.`, btn(x.d.id, 'Open decision ' + x.d.n, true)); }
   if (bl.length) { const ds = [...new Set(bl.flatMap(k => k.off.map(o => D(o.id.split('.')[0]).n)).filter(n => n !== '?'))].sort();
     return box('bad', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing${ds.length ? ' in decision' + (ds.length > 1 ? 's ' : ' ') + ds.join(', ').replace(/, ([^,]*)$/, ' and $1') : ''}`, `The working appetite can’t be agreed until ${bl.map(k => k.id).join(', ').replace(/, ([^,]*)$/, ' and $1')} pass.`, btn('checks', 'Open checks', true)); }
-  if (c.status === 'default') return box('ok', 'Ready for the CRO to agree', `Every position is recorded and checks K1 to K9 pass. ${role === 'cro' ? 'You can now agree the working appetite.' : 'The CRO can now agree the working appetite.'}`, btn('outputs', 'Outputs', true));
+  if (c.status === 'default') return box('ok', 'Ready for the CRO to agree', `Every position is recorded and checks ${KB()} pass. ${role === 'cro' ? 'You can now agree the working appetite.' : 'The CRO can now agree the working appetite.'}`, btn('outputs', 'Outputs', true));
   if (c.status === 'working') return box('ok', statusPlain(), `Counsel settles the statement for the board. ${role === 'board' ? 'Record the approval when the board approves it.' : 'Once the board approves it, the board record role records the approval.'}`, btn('outputs', 'Outputs', true));
   return box('ok', statusPlain(), 'The appetite is approved. A later change to any position raises the version number and needs approval again.', btn('outputs', 'Outputs'));
 }
@@ -778,7 +816,9 @@ function detailsHtml(id, inline) {
       <label class="f"><span>Owner · ${T('ap', 'accountable person')}</span><select class="in" ${fid('owner')} data-pf="owner" data-cell="${eid}">${pOpt(activePeople(), p.owner)}</select></label>`;
   const what = `${did === 'd1' ? `<label class="f"><span>${T('condition', 'Condition')}</span><textarea class="in" ${fid('condition')} data-pf="condition" data-cell="${eid}" placeholder="e.g. A4 Moves money, up to a stated amount per transaction">${esc(p.condition)}</textarea></label>
         <label class="cb"><input type="checkbox" ${fid('testable')} data-pf="testable" data-cell="${eid}" ${p.testable ? 'checked' : ''}> Can be checked against documents</label>` : ''}
-      ${(did === 'd1' && c.col !== 'own') || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (if it differs from the existing threshold)' : ' (if higher than for own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
+      ${did === 'd1' && p.status === 'set' && beyond(id, p.value) ? `<div class="panel2 small" style="padding:10px 12px"><strong>Beyond the board’s direction.</strong> ${esc(beyond(id, p.value))}. Record a reason and when the board revisits it (check K11).</div>
+        <label class="f"><span>Board revisit · meeting or minute where the board revisits this position</span><input class="in" ${fid('boardRevisit')} data-pf="boardRevisit" data-cell="${eid}" value="${esc(p.boardRevisit || '')}" placeholder="e.g. Board meeting 9 December 2026"></label>` : ''}
+      ${(did === 'd1' && (c.col !== 'own' || beyond(id, p.value))) || did === 'd2' ? `<label class="f"><span>Reason recorded${did === 'd2' ? ' (if it differs from the existing threshold)' : beyond(id, p.value) ? ' (why the position goes past the board’s direction)' : ' (if higher than for own staff)'}</span><textarea class="in" ${fid('reason')} data-pf="reason" data-cell="${eid}">${esc(p.reason)}</textarea></label>` : ''}
       <label class="f"><span>Dissent</span><textarea class="in" ${fid('dissent')} data-pf="dissent" data-cell="${eid}" placeholder="Who disagreed, and why">${esc(p.dissent)}</textarea></label>`;
   const notSet = `<div class="panel2" style="padding:12px 14px"><div class="sh" style="margin-bottom:8px">Record as not set <span class="soft" style="font-weight:400">· needs an owner and a due date</span></div>
         <div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><label class="f"><span>Will set it</span><select class="in" id="ns-owner">${pOpt(activePeople(), p.notSetOwner)}</select></label><label class="f"><span>By</span><input class="in" type="date" id="ns-due" value="${esc(dAU(p.notSetDue))}"></label></div>
@@ -813,7 +853,7 @@ function screenDecision(did, ck) {
   <div class="stack">
     <details class="pr about"><summary>Purpose of this decision</summary><div class="about-in measure"><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}</div></details>
     <section>${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
-    ${startPanel(d)}
+    ${directionsPanel(did)}${startPanel(d)}
     <section><h2 class="sh">The ${N.entity}’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the ${N.entity} proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
@@ -830,7 +870,7 @@ function screenDecision(did, ck) {
 /* ---------- S11 checks ---------- */
 function screenChecks(ck) {
   const bl = blocking(ck).length;
-  return `${opening('Checks K1 to K10', 'Consistency checks', bl ? `${bl} of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.` : 'K1 to K9 pass. The CRO may agree the working appetite.')}
+  return `${opening('Checks K1 to K10', 'Consistency checks', bl ? `${bl} of ${DIRS() ? 'ten' : 'nine'} blocking checks failing. The working appetite cannot be agreed until ${KB()} pass.` : '' + KB() + ' pass. The CRO may agree the working appetite.')}
   <p class="small soft measure">The checks run after every change. A failed ${T('check', 'check')} is referred to the CRO; Triodian does not resolve it.</p>
   ${(() => {
     const st = k => k.state === 'pass' ? ['passed', 'b-green'] : k.state === 'fail' ? ['failed', 'b-red'] : k.state === 'warn' ? ['warning', 'b-ochre'] : ['cannot run', 'b-grey'];
@@ -875,7 +915,7 @@ function myActions(ck) {
   if (hasRole('cro')) { const missing = C.measures.filter(m => !(S.measureOwners || {})[m.ref]).length; if (missing) add('measures', `Name owners for ${missing} ${missing === 1 ? 'measure' : 'measures'}`, 'Outputs → Schedule (check K8)', { to: 'outputs', tab: 'schedule' }); }
   // agreement and approval
   const bl = blocking(ck), blank = C.decisions.some(d => decisionStatus(d.id, ck).un);
-  if (hasRole('cro') && S.calibration.status === 'default') { if (!bl.length && !blank) add('agree', 'Agree the working appetite', 'Every position is recorded and checks K1 to K9 pass', { to: 'outputs' }, 'due'); else if (bl.length) add('checks', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing`, 'The working appetite can’t be agreed until they pass', { to: 'checks' }); }
+  if (hasRole('cro') && S.calibration.status === 'default') { if (!bl.length && !blank) add('agree', 'Agree the working appetite', 'Every position is recorded and checks ' + KB() + ' pass', { to: 'outputs' }, 'due'); else if (bl.length) add('checks', `${bl.length} ${bl.length === 1 ? 'check is' : 'checks are'} failing`, 'The working appetite can’t be agreed until they pass', { to: 'checks' }); }
   if (hasRole('board') && S.calibration.status === 'working') add('approve', 'Record the board’s approval', 'When the board or its committee approves the working appetite', { to: 'outputs' }, 'due');
   const rank = { overdue: 0, fail: 1, due: 2, '': 3 };
   return out.sort((a, b) => rank[a.tone] - rank[b.tone]);
@@ -950,7 +990,7 @@ function mdPack() {
   m += `- **To:** ${bm.to || 'The Board'}\n- **From:** ${bm.from || (cro ? cro.name + ', Chief Risk Officer' : 'Chief Risk Officer')}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite statement, version ${v}\n\n`;
   m += `## Decision sought\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite statement (version ${v}) and the tolerance and trigger schedule in this paper.`}\n\n`;
   m += `## Recommendation and summary\n\n${bm.summary || '[For counsel or the CRO to write: what the appetite allows and does not allow, in a few sentences, and any matters the board should note.]'}\n\n`;
-  m += `## How the positions were reached\n\nThe positions were proposed by ${ins}'s CRO and risk function in sessions facilitated by ${e.counselFirm || 'external counsel'}${S.people.some(p => rolesOf(p).includes('independent')) ? ', with the independent reviewer advising on the consequence thresholds' : ''}. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks ${bl.length ? `show ${bl.length} ${bl.length === 1 ? 'check' : 'checks'} failing (${bl.map(k => k.id).join(', ')}); these must be resolved before approval` : 'K1 to K9 pass'}. ${c.status === 'working' ? `The CRO agreed this working appetite${c.agreedOn ? ' on ' + c.agreedOn : ''}.` : c.status === 'approved' ? `It was approved${c.approvedOn ? ' on ' + c.approvedOn : ''}${c.minuteRef ? ' (minute ' + c.minuteRef + ')' : ''}.` : 'The CRO has not yet agreed the working appetite.'}\n\n`;
+  m += `## How the positions were reached\n\nThe positions were proposed by ${ins}'s CRO and risk function in sessions facilitated by ${e.counselFirm || 'external counsel'}${S.people.some(p => rolesOf(p).includes('independent')) ? ', with the independent reviewer advising on the consequence thresholds' : ''}. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks ${bl.length ? `show ${bl.length} ${bl.length === 1 ? 'check' : 'checks'} failing (${bl.map(k => k.id).join(', ')}); these must be resolved before approval` : '' + KB() + ' pass'}. ${c.status === 'working' ? `The CRO agreed this working appetite${c.agreedOn ? ' on ' + c.agreedOn : ''}.` : c.status === 'approved' ? `It was approved${c.approvedOn ? ' on ' + c.approvedOn : ''}${c.minuteRef ? ' (minute ' + c.minuteRef + ')' : ''}.` : 'The CRO has not yet agreed the working appetite.'}\n\n`;
   const sa = sinceApproved();
   if (sa) m += `## Changes since the approved version\n\nThe board approved version ${sa.from.version} on ${sa.from.on}. ${sa.rows.length} ${sa.rows.length === 1 ? 'position has' : 'positions have'} changed:\n\n` + tbl(['Position', 'Approved', 'Proposed now'], sa.rows.map(r => [r[0], r[1], r[2]]));
   m += `---\n\n# Attachment A. AI risk appetite statement\n\n` + bodyOf(mdStatement()).replace(/## Changes since the approved version[\s\S]*?(?=## Appendix)/, '');
@@ -1054,7 +1094,7 @@ function mdPlan() {
   const st = { received: 'Received', requested: 'Requested', notHeld: 'Not held' };
   m += `## Inputs needed from the ${N.entity}\n\nRequested through external counsel before session 1.\n\n` + tbl(['Ref', 'Input', 'Used in', 'Status'], C.inputs.map((x, i) => { const s = S.inputs[i] || {}; return [x.ref, x.name, x.usedIn, (st[s.status] || 'Not yet requested') + (s.date ? ' ' + dAU(s.date) : '')]; })) + '\n';
   m += `## Sign-off points\n\n` + tbl(['Sign-off', 'By', 'Where it stands'], [
-    ['Working appetite agreed (the calibration set issued to the assessment, marked working)', 'The CRO, once checks K1 to K9 pass', c.agreedById ? `Agreed ${dAU(c.agreedOn)}, version ${c.version}` : 'Not yet'],
+    ['Working appetite agreed (the calibration set issued to the assessment, marked working)', 'The CRO, once checks ' + KB() + ' pass', c.agreedById ? `Agreed ${dAU(c.agreedOn)}, version ${c.version}` : 'Not yet'],
     ['Statement and schedule settled for the board', 'External counsel', c.status === 'approved' ? 'Done' : 'Before approval'],
     ['Board approval (the calibration set re-issued, marked approved)', 'The board, recorded with the minute reference', c.status === 'approved' ? `Approved ${dAU(c.approvedOn)}${c.minuteRef ? ', ' + c.minuteRef : ''}` : 'Not yet'],
   ]);
@@ -1078,7 +1118,7 @@ function screenOutputs(ck) {
       ${UI.err.approval ? `<p class="err" role="alert">${esc(UI.err.approval)}</p>` : ''}
       <button class="btn sm" style="margin-top:10px" data-act="approve" ${hasRole('board') && c.status === 'working' && c.agreedById ? '' : 'disabled'}>Record approval</button> ${whyApprove ? `<p class="why small">${esc(whyApprove)}</p>` : ''}</div></div>
     ${c.issued.length ? `<div class="mini" style="margin-top:12px">Issued: ${c.issued.map(x => `v${esc(x.version)} ${esc(x.status)} ${esc(dAU(x.on))}${x.by ? ' · ' + esc(x.by) : ''}${x.minuteRef ? ' · ' + esc(x.minuteRef) : ''}`).join(' · ')}</div>` : ''}
-    ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks K1 to K9 pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
+    ${exportBlocked() ? `<p class="err" role="alert" style="margin-top:12px">${esc(statusMark())}. The calibration set cannot be exported until checks ${KB()} pass. <button class="lnk" data-act="go" data-to="checks">Open checks</button></p>` : ''}</section>
   ${compareCard()}
   <div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" id="tab-${t[0]}" aria-selected="${tab === t[0]}" data-act="outTab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${tab === 'pack' ? `<div class="card" style="margin-bottom:16px"><h3 class="sh">Cover memo</h3><p class="small soft" style="margin:4px 0 12px">Written by counsel or the CRO. Empty fields use the wording shown in the preview.</p><div class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">${fld('To', 'engagement.boardMemo.to', (S.engagement.boardMemo || {}).to || '', { ph: 'The Board' })}${fld('From', 'engagement.boardMemo.from', (S.engagement.boardMemo || {}).from || '', { ph: 'Chief Risk Officer' })}${fld('Meeting', 'engagement.boardMemo.meeting', (S.engagement.boardMemo || {}).meeting || '', { ph: 'Board Risk Committee, 12 November 2026' })}</div>${fld('Decision sought', 'engagement.boardMemo.decision', (S.engagement.boardMemo || {}).decision || '', { area: true, ph: 'That the Board approve the AI risk appetite statement and the tolerance and trigger schedule in this paper.' })}${fld('Recommendation and summary', 'engagement.boardMemo.summary', (S.engagement.boardMemo || {}).summary || '', { area: true, ph: 'What the appetite allows and does not allow, and any matters the board should note.' })}${can('overall') ? '' : `<p class="small soft" style="margin:6px 0 0">${esc(blockReason('overall'))} ${whyLink()}</p>`}</div>` : ''}
@@ -1776,6 +1816,9 @@ function onClick(e) {
     rmEvent: () => { const e = S.decisions.d8.events[+d.i]; if (!e || !e.custom) return; if (!confirm('Remove the event "' + e.event + '"?')) return; S.decisions.d8.events.splice(+d.i, 1); delete S.decisions.d8.cells['d8.ev.' + e.id]; log('removeEvent', 'd8', e.event, null); render(); },
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
+    loadDirFile: () => document.getElementById('dirIn').click(),
+    loadDirBoard: async () => { if (practice()) return toast('The worked example has no board directions to load.'); toast('Reading the board directions from AI Board Direction…'); const r = await api('GET', '/api/directions-from-board'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useDirections(r.body, 'board')) { render(); toast('Board directions loaded: version ' + (r.body.version || '')); } },
+    clearDir: () => { if (!can('setup')) return toast(blockReason('setup')); const from = S.boardDirections ? S.boardDirections.file.version : null; delete S.boardDirections; log('boardDirections', 'setup', from, 'removed'); render(); },
     agree: () => agreeWorking(), approve: () => recordApproval(document.getElementById('ap-date').value, document.getElementById('ap-min').value.trim(), document.getElementById('ap-by').value.trim()),
     goTab: () => { if (d.tab) { if (d.to === 'challenge') UI.chTab = d.tab; if (d.to === 'outputs') UI.outTab = d.tab; } go(d.to); },
     outTab: () => { UI.outTab = d.t; render(); }, chTab: () => { UI.chTab = d.t; render(); },
@@ -1801,6 +1844,7 @@ function changeHandler(e) {
   if (d.act === 'chFilter') { UI.chFilter = t.value; render(); return; }
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
+  if (t.id === 'dirIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (e) { return toast('That file is not JSON.'); } if (useDirections(o, 'file')) { render(); toast('Board directions loaded: version ' + (o.version || '')); } }; fr.readAsText(f); return; }
   if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { try { const o = JSON.parse(fr.result); if (!o || o.schema !== 'triodian.aua.extract.v1' || !Array.isArray(o.entries)) throw new Error('not a register extract (schema triodian.aua.extract.v1)');
     const cnt = {}; let max = null; o.entries.forEach(x => { if (x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
     const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
