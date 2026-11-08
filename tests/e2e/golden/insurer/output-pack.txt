@@ -1,0 +1,272 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Board paper: AI risk appetite
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+- **To:** The Board
+- **From:** Priya Natarajan, Chief Risk Officer
+- **Meeting:** [meeting and date]
+- **Subject:** AI risk appetite statement, version 1
+
+## Decision sought
+
+That the Board approve the AI risk appetite statement (version 1) and the tolerance and trigger schedule in this paper.
+
+## Recommendation and summary
+
+[For counsel or the CRO to write: what the appetite allows and does not allow, in a few sentences, and any matters the board should note.]
+
+## How the positions were reached
+
+The positions were proposed by Corvane General Insurance (fictional)'s CRO and risk function in sessions facilitated by Askew Lane Partners (fictional), with the independent reviewer advising on the consequence thresholds. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks show 3 checks failing (K1, K7, K9); these must be resolved before approval. The CRO has not yet agreed the working appetite.
+
+---
+
+# Attachment A. AI risk appetite statement
+
+## 1. Purpose and scope
+
+This statement covers AI used by Corvane General Insurance (fictional), by its material service providers, and by the platforms behind them. It sits within Corvane General Insurance (fictional)'s board-approved risk appetite statement, and uses the loss thresholds and critical operation tolerance levels the board has already approved.
+
+## 2. Overall position
+
+[For counsel to write, in the board’s words. For example: [Insurer] accepts AI that assists its people and its providers' people. It accepts AI that decides or transacts only [where / up to], and only where it holds [evidence]. It does not accept [ ].]
+
+## 3. Authority
+
+The ceiling is the highest level of authority the board accepts for AI in each function and location.
+
+| Function | Own staff | Inside a provider | Platform behind a provider |
+| --- | --- | --- | --- |
+| Underwriting and pricing | A2 Recommends | A3 Decides | A2 Recommends |
+| Claims | A3 Decides | A4 Moves money (Up to $5,000 per claim; above that a person approves) | A3 Decides |
+| Fraud and investigations | A2 Recommends | A3 Decides | A2 Recommends |
+| Policy administration | A4 Moves money | A4 Moves money | A3 Decides |
+| Complaints and disputes | A2 Recommends | A2 Recommends | A1 Assists |
+| Customer communications | A3 Decides (Templates approved by Compliance) | A3 Decides | A2 Recommends |
+| Finance and reserving | A2 Recommends | A2 Recommends | A1 Assists |
+| Legal and compliance | A1 Assists | A1 Assists | A1 Assists |
+| Technology operations | A4 Moves money | A4 Moves money | A3 Decides |
+
+Exceptions: a use above the ceiling must be approved by the person named in decision 1, for a limited period, and is reported under measure M1.
+
+## 4. Consequence thresholds
+
+| Level | Threshold | Source |
+| --- | --- | --- |
+| C1 Immaterial | Whatever falls below C2 Contract breach | n/a |
+| C2 Contract breach | Breach of a material outsourcing term | Outsourcing policy |
+| C3 Financial loss | $250,000 single event; $1m in a quarter | Operational risk incident thresholds |
+| C4 Policyholder harm | 10 or more policyholders affected, or any single case of serious financial hardship | Conduct and breach reporting definitions |
+| C5 Critical disruption · Claims payment | No more than 2 business days without the ability to pay claims | Critical operations register v3 |
+| C5 Critical disruption · Policy issuance and renewal | No more than 3 business days | Critical operations register v3 |
+| C5 Critical disruption · Premium collection | No more than 5 business days | Critical operations register v3 |
+
+## 5. Evidence expected
+
+| Authority | C1 Immaterial | C2 Contract breach | C3 Financial loss | C4 Policyholder harm | C5 Critical disruption |
+| --- | --- | --- | --- | --- | --- |
+| A1 Assists | E0 None | E1 Disclosure | E1 Disclosure | E1 Disclosure | E1 Disclosure |
+| A2 Recommends | E1 Disclosure | E1 Disclosure | E2 Attestation | E2 Attestation | E2 Attestation |
+| A3 Decides | E2 Attestation | E2 Attestation | E2 Attestation | E4 Audit right | E4 Audit right |
+| A4 Moves money | E2 Attestation | E3 Event notice | E3 Event notice | E4 Audit right | E5 Live telemetry |
+| A5 Acts unattended | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry |
+| A6 Changes systems | [ ] | E6 Action control | E6 Action control | E6 Action control | E6 Action control |
+
+## 6. Tolerances
+
+### Shortfall
+
+| Gap | C1 Immaterial or C2 Contract breach | C3 Financial loss | C4 Policyholder harm or C5 Critical disruption |
+| --- | --- | --- | --- |
+| 1 rung | Low | Low | Medium |
+| 2 rungs | Low | Medium | High |
+| 3 or more rungs | Medium | High | High |
+
+| Priority | Time limit | Interim position |
+| --- | --- | --- |
+| High | Reported to the next board risk committee meeting, with a plan | One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person |
+| Medium | Closed by the next contract renewal or variation for the arrangement | Accept, recorded with an owner |
+| Low | Reviewed at the next annual review | Accept |
+
+### Unknowns
+
+| Consequence | Not-known facts allowed per entry | F4 allowed to stand | Minimum confidence |
+| --- | --- | --- | --- |
+| C1 Immaterial or C2 Contract breach | No limit | Until the next annual review | Low |
+| C3 Financial loss | 2 | Until the next contract renewal or variation | Medium |
+| C4 Policyholder harm or C5 Critical disruption | None among the facts that determine the authority level | 30 June 2027; then the provider is asked | Medium |
+
+### Location and concentration
+
+| Jurisdiction | Provider established | AI runs |
+| --- | --- | --- |
+| Australia | Accepted | Accepted |
+| New Zealand | Accepted | Accepted |
+| United States | Escalate | Accepted |
+| India | Escalate | Escalate |
+
+Concentration limit: not set (Tom Ellery, by 30 November 2026) of critical operations on a single platform or model provider.
+
+## 7. Triggers and escalation
+
+| Ref | Trigger | Measure | Threshold | Notify within | Notified to |
+| --- | --- | --- | --- | --- | --- |
+| TR1 | Authority change | A provider's AI moves to a higher tier | Any move to A3 Decides or above | 48 hours | Arrangement owner |
+| TR2 | Evidence lapse | An expected item of evidence is not received | Days past due | 48 hours | Arrangement owner |
+| TR3 | Tolerance signal | An aggregate measure approaches or crosses a tolerance the board has set | Set per measure | 48 hours | Arrangement owner |
+| TR4 | AI incident | An event involving AI that could disrupt a critical operation | Any | 12 hours | CRO and the accountable person for the function |
+| TR5 | Other AI incident | Any other defined AI event at a provider | As defined | 48 hours | Arrangement owner |
+| TR6 | Model or platform change | The provider changes the AI model or platform behind the service | Any, for A3 Decides or above | 48 hours | Arrangement owner |
+| TR7 | Sub-contractor change | A new party is added to the supply chain | Any, for a critical operation | 96 hours | Arrangement owner |
+| TR8 | Location change | The AI operates, or the provider operates, from a new location | Any | [ ] | Arrangement owner |
+
+## 8. Accountability
+
+| Function | Accountable person |
+| --- | --- |
+| Underwriting and pricing | Marcus Lee |
+| Claims | Ana Duarte |
+| Fraud and investigations | Tom Ellery |
+| Policy administration | Marcus Lee |
+| Complaints and disputes | Ana Duarte |
+| Customer communications | Ana Duarte |
+| Finance and reserving | Priya Natarajan |
+| Legal and compliance | Priya Natarajan |
+| Technology operations | Tom Ellery |
+
+The independent reviewer proposed 1 of the consequence thresholds in decision 2. If the same reviewer reviews the AI Use Assessment for the CRO, they will review findings measured against thresholds they helped set.
+
+## 9. Review
+
+Review interval: Annual, in the same cycle as the main risk appetite statement.
+
+| Event | What is revisited |
+| --- | --- |
+| A new arrangement where AI is at A3 Decides or above | That arrangement is assessed before it starts |
+| Trigger TR1, TR6, TR7 or TR8 occurs | The register entry is reassessed and its finding set again |
+| An arrangement reaches renewal or variation of its contract | Its evidence terms are reviewed against the board's expectation |
+| A material AI incident, at the insurer or in its supply chain | Decisions 1, 3 and 7 |
+| New regulatory guidance on AI or outsourcing | All eight decisions, on counsel's advice |
+| The review interval set by the board has passed | All eight decisions |
+
+## Appendix. Definitions
+
+Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
+
+| Code | Authority tier | Definition |
+| --- | --- | --- |
+| A1 Assists | productivity | Drafts, summarises, searches. A person still acts. |
+| A2 Recommends | analytical | Scores, ranks, recommends. A person decides. |
+| A3 Decides | decision | Approves, declines, triages. The output is the decision; no person reviews before it takes effect. |
+| A4 Moves money | transactional | Prices, allocates, pays. Money or positions move. |
+| A5 Acts unattended | agentic | Plans and acts across steps and tools, unattended. |
+| A6 Changes systems | actuation | Holds credentials that change systems, assets or infrastructure. |
+
+| Code | Consequence level | Generic definition |
+| --- | --- | --- |
+| C1 Immaterial | immaterial | No effect outside the team using it. |
+| C2 Contract breach | contract breach | The provider or insurer would be in breach of an agreement term. |
+| C3 Financial loss | financial loss | Loss to the insurer above its reporting threshold for the operation. |
+| C4 Policyholder harm | policyholder harm | A policyholder is wrongly declined, delayed, charged or paid. |
+| C5 Critical disruption | critical-operation disruption | A critical operation moves outside the tolerance the board has set. |
+
+| Code | Evidence rung | Definition |
+| --- | --- | --- |
+| E0 None | none | Nothing is held. |
+| E1 Disclosure | disclosure | A statement of what AI is used, where and for what. |
+| E2 Attestation | attestation | A signed statement that the AI operated within stated limits over a period. |
+| E3 Event notice | event notification | Notice when a defined trigger is crossed. Also called trigger reporting. |
+| E4 Audit right | audit | A right to examine the aggregate record, exercised by the insurer or its verifier. |
+| E5 Live telemetry | continuous telemetry | A stream of aggregate measures against the declared appetite. Also called continuous evidence. |
+| E6 Action control | deterministic actuation control | A control at the point of action, independent of the AI's reasoning, with a signed record of what was requested, what applied and what was allowed. |
+
+---
+
+# Attachment B. Tolerance and trigger schedule
+
+## Measures
+
+| Ref | Measure | Limit | Owner | Counted from | Reported |
+| --- | --- | --- | --- | --- | --- |
+| M1 | Register entries above the authority ceiling without an approved exception | [0] | Ana Duarte | Register: authority tier against P1 | Each risk committee |
+| M2 | High-priority gaps open beyond their time limit | [0] | Priya Natarajan | Findings: priority and date set | Each risk committee |
+| M3 | Medium-priority gaps still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
+| M4 | F4 findings open beyond their permitted date, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Findings: type and date set | Each risk committee |
+| M5 | Expected items of evidence that are overdue | [ ] days | Tom Ellery | Technical schedule: item and due date | Monthly |
+| M6 | Share of critical operations that depend on a single platform or AI model provider | not set (Tom Ellery, by 30 November 2026) | Priya Natarajan | Register: platform field | Half-yearly |
+| M7 | Register entries in a location marked not accepted | [0] | Marcus Lee | Register: location against P8 | Each risk committee |
+| M8 | Triggers reported later than the time limit | [0] | Tom Ellery | Trigger log | Quarterly |
+| M9 | Evidence levels established with low confidence, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Register: confidence against P7 | Each risk committee |
+
+## Triggers
+
+| Ref | Trigger | Measure | Threshold | Notify within | Notified to |
+| --- | --- | --- | --- | --- | --- |
+| TR1 | Authority change | A provider's AI moves to a higher tier | Any move to A3 Decides or above | 48 hours | Arrangement owner |
+| TR2 | Evidence lapse | An expected item of evidence is not received | Days past due | 48 hours | Arrangement owner |
+| TR3 | Tolerance signal | An aggregate measure approaches or crosses a tolerance the board has set | Set per measure | 48 hours | Arrangement owner |
+| TR4 | AI incident | An event involving AI that could disrupt a critical operation | Any | 12 hours | CRO and the accountable person for the function |
+| TR5 | Other AI incident | Any other defined AI event at a provider | As defined | 48 hours | Arrangement owner |
+| TR6 | Model or platform change | The provider changes the AI model or platform behind the service | Any, for A3 Decides or above | 48 hours | Arrangement owner |
+| TR7 | Sub-contractor change | A new party is added to the supply chain | Any, for a critical operation | 96 hours | Arrangement owner |
+| TR8 | Location change | The AI operates, or the provider operates, from a new location | Any | [ ] | Arrangement owner |
+
+---
+
+# Attachment C. Consistency checks
+
+| Check | Name | Result |
+| --- | --- | --- |
+| K1 | Complete | failed |
+| K2 | Ordered | passed |
+| K3 | Priority ordered | passed |
+| K4 | Consistent with existing thresholds | passed |
+| K5 | Consistent with existing authority | passed |
+| K6 | Provider compared with own staff | passed |
+| K7 | Testable | failed |
+| K8 | Owned | passed |
+| K9 | Timed | failed |
+| K10 | Reachable | passed |
+
+# Attachment D. Glossary
+
+| Term | Meaning |
+| --- | --- |
+| Above ceiling | An AI use with more authority than the ceiling the board has set. It is reported separately from evidence shortfalls. |
+| Accountable person | The senior person responsible for a function under the Financial Accountability Regime. |
+| AI risk appetite | The board's statement of how much authority AI may hold, what failures it will tolerate, and what evidence it expects the insurer to hold. |
+| Authority tier | How much AI may do without a person deciding, from A1 Assists to A6 Changes systems. |
+| Calibration set | The eleven parameters, P1 to P11, that the AI Use Assessment reads. |
+| Ceiling | The highest authority tier the board accepts for a function and location. |
+| Concentration | The share of critical operations that depend on a single platform behind a provider or AI model provider. |
+| Condition | A limit attached to a ceiling, such as a maximum amount. It must be capable of being checked against documents. |
+| Confidence | How firmly the obtainable evidence is established: high if seen, medium if described, and low if inferred. |
+| Consequence level | How serious a failure would be, from C1 Immaterial to C5 Critical disruption (disruption of a critical operation). |
+| Consistency check | One of ten tests, K1 to K10, applied to the recorded positions. |
+| Counsel | The law firm leading the engagement. Counsel is responsible for every legal judgement. |
+| Critical operation | A business process whose disruption the insurer has assessed as critical, with a tolerance level approved by the board. |
+| Current state | What the insurer does or holds today. It is the starting point for decisions 1 and 3. |
+| Evidence ladder | The seven evidence levels, in order of strength. |
+| Evidence rung | A level of evidence, from E0 None to E6 Action control. |
+| Expected evidence | The evidence the board expects the insurer to hold for a given authority tier and consequence level. |
+| Gap | The number of evidence levels between required and obtainable evidence. |
+| Gap priority | How serious a gap is, based on its size and the consequence level. |
+| Interim position | What the insurer does while a gap remains open: restrict the AI's authority, add a compensating control, or accept the gap. |
+| Material service provider | A provider the insurer relies on for a critical operation or to manage a material risk. |
+| Not determinable (F4) | An assessment finding that the documents cannot show whether, or how, AI is used. |
+| Not known | A fact the insurer's documents do not show. Such facts are counted, not estimated. |
+| Obtainable evidence | The evidence that can actually be produced and independently checked. |
+| Platform behind a provider | The technology, pricing service or AI model a provider relies on (a fourth party). |
+| Proposer | The person who put a position forward. On decisions 1 and 3 this must be the CRO or the insurer's risk function. |
+| Required evidence | The evidence the insurer can reasonably require from a provider under its contract, as settled with counsel. |
+| Risk appetite statement | The board-approved statement of the risk the insurer is prepared to accept. The AI risk appetite sits within it. |
+| Role limits | Administrators complete set-up. Counsel, Triodian, the CRO and the insurer's risk function record positions and starting data. The independent reviewer may change decision 2 only, including its starting data, questions and challenge. The board record role may complete the approval fields only. Only counsel or the CRO may write the overall position. Challenge responses and their status are recorded by counsel, the CRO or the risk function. |
+| Starting position | A value filled in before the session as a basis for discussion. It is not a recommendation. |
+| Tolerance level | The maximum disruption to a critical operation the board accepts. |
+| Trigger | A defined event that must be reported to the insurer within a set time. |
+| Who may propose | On decisions 1 and 3, only the CRO or the insurer's risk function may propose a position. On decision 2, the independent reviewer may also propose. Counsel and Triodian explain and record positions; neither proposes them. |
+| Working appetite | Positions agreed by the CRO and used to calibrate the assessment before the board approves them. |

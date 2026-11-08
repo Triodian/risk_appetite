@@ -1,0 +1,116 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Challenge
+Challenge round
+
+The second line and each accountable person review the positions in their area. Each point raised is either accepted or answered.
+
+Challenge log · 2
+Questions for counsel · 2
+Filter by accountable person
+Everyone
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Ref	Raised by	Decision and cell	Point	Response	Status
+CH-01	Ana Duarte	Decision 1 · Claims · Inside a provider
+changed this position
+	The A4 ceiling inside the claims TPA is above our own staff. The reason should cite the binder schedule.
+open
+accepted
+answered
+
+CH-02	Tom Ellery	Decision 2 · C4 Policyholder harm · Insurer’s setting	The hardship part of C4 Policyholder harm has no definition. Two people assessing the same case could reach different levels.
+open
+accepted
+answered
+Record a challenge point
+Raised by
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Decision
+1 · Authority
+2 · Consequence thresholds
+3 · Evidence expectation
+4 · Shortfall tolerance
+5 · Unknowns
+6 · Location and concentration
+7 · Triggers
+8 · Change and review
+Cell
+Whole decision
+Decision 1 · Underwriting and pricing · Own staff
+Decision 1 · Underwriting and pricing · Inside a provider
+Decision 1 · Underwriting and pricing · Platform behind a provider
+Decision 1 · Claims · Own staff
+Decision 1 · Claims · Inside a provider
+Decision 1 · Claims · Platform behind a provider
+Decision 1 · Fraud and investigations · Own staff
+Decision 1 · Fraud and investigations · Inside a provider
+Decision 1 · Fraud and investigations · Platform behind a provider
+Decision 1 · Policy administration · Own staff
+Decision 1 · Policy administration · Inside a provider
+Decision 1 · Policy administration · Platform behind a provider
+Decision 1 · Complaints and disputes · Own staff
+Decision 1 · Complaints and disputes · Inside a provider
+Decision 1 · Complaints and disputes · Platform behind a provider
+Decision 1 · Customer communications · Own staff
+Decision 1 · Customer communications · Inside a provider
+Decision 1 · Customer communications · Platform behind a provider
+Decision 1 · Finance and reserving · Own staff
+Decision 1 · Finance and reserving · Inside a provider
+Decision 1 · Finance and reserving · Platform behind a provider
+Decision 1 · Legal and compliance · Own staff
+Decision 1 · Legal and compliance · Inside a provider
+Decision 1 · Legal and compliance · Platform behind a provider
+Decision 1 · Technology operations · Own staff
+Decision 1 · Technology operations · Inside a provider
+Decision 1 · Technology operations · Platform behind a provider
+Point
+Add to log
+← Checks
+Outputs →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

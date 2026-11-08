@@ -1848,6 +1848,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU };
+window.RAF = { get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0]() };
 boot();
 })();

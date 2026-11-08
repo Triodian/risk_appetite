@@ -1,0 +1,68 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Engagement plan
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+This plan follows the framework’s process. It is for everyone taking part: what happens when, who attends, what the insurer is asked to provide, and where each sign-off stands.
+
+## Steps
+
+| Step | When | Activity | Output | Where it stands |
+| --- | --- | --- | --- | --- |
+| 1. Prepare | Week 1, days 1 to 3 | Read I1 to I10. Fill every starting position that an existing document already answers. List conflicts between existing documents | Pre-read pack: the eight decisions with starting positions filled, and a list of what the insurer has already decided | 11 of 11 inputs received or recorded as not held |
+| 2. Session 1 | Week 1, day 4 or 5, two hours | Decisions 1 to 3. Each position recorded with who proposed it and any dissent | Draft authority ceilings, consequence thresholds and expectation table | Dated 15 October 2026 |
+| 3. Session 2 | Week 2, two hours | Decisions 4 to 8. Review session 1 positions in light of them | Draft tolerances, triggers and review terms | Dated 22 October 2026 |
+| 4. Consistency check | Week 2 | Triodian runs the checks in section 10.1. Conflicts go back to the CRO | Check report. Revised positions | 7 of 10 checks pass |
+| 5. Working appetite | End of week 2 | CRO agrees the working appetite. Calibration set issued to the assessment | Calibration set, marked working | Not yet |
+| 6. Challenge | Week 3 | Second line and each accountable person review the positions in their area | Challenge log, with each point accepted or answered |  |
+| 7. Statement | Week 3 | External counsel settles the statement and the schedule in a form the board can approve | AI risk appetite statement and schedule, final draft |  |
+| 8. Approval | Next risk committee or board meeting | Board approves, amends or returns | Approved statement. Calibration set re-issued, marked approved | Not yet |
+
+## Sessions and who attends
+
+| Session | When | Covers | Attends |
+| --- | --- | --- | --- |
+| Session 1 | 15 October 2026, two hours | Decisions 1 Authority, 2 Consequence thresholds, 3 Evidence expectation | The CRO and the insurer risk function, who propose positions; counsel, who facilitates; Triodian, who records |
+| Session 2 | 22 October 2026, two hours | Decisions 4 Shortfall tolerance, 5 Unknowns, 6 Location and concentration, 7 Triggers, 8 Change and review; session 1 positions reviewed in their light | As session 1 |
+| Challenge | Week 3 | Each area’s positions | Second line and each accountable person, with the CRO |
+| Approval | Next risk committee or board meeting | The statement and schedule | The board; the CRO presents, counsel settles the wording |
+
+## Attendees by role
+
+| Role | Named |
+| --- | --- |
+| Counsel (facilitator) | Meredith Vance (Askew Lane Partners) |
+| Triodian (recorder) | Sam Okoro (Triodian) |
+| CRO | Priya Natarajan (Corvane General) |
+| Insurer risk function | Tom Ellery (Corvane General · operational risk); Ana Duarte (Corvane General · claims executive); Marcus Lee (Corvane General · chief underwriting officer) |
+| Independent reviewer | Lena Hartmann (Independent reviewer) |
+| Board record | Board secretariat (Corvane General) |
+
+## Inputs needed from the insurer
+
+Requested through external counsel before session 1.
+
+| Ref | Input | Used in | Status |
+| --- | --- | --- | --- |
+| I1 | Board risk appetite statement, current version | All decisions and the consistency checks | Received 9 October 2026 |
+| I2 | Operational risk incident thresholds and reporting definitions | Decision 2 | Received 9 October 2026 |
+| I3 | Conduct and breach reporting definitions | Decision 2 | Received 9 October 2026 |
+| I4 | Critical operations register, with the tolerance level for each | Decisions 2 and 7 | Received 9 October 2026 |
+| I5 | Material service provider register | Decisions 1 and 6 | Received 9 October 2026 |
+| I6 | Outsourcing and offshoring policy | Decisions 4 and 6 | Received 9 October 2026 |
+| I7 | AI governance framework, permitted-use policy and AI inventory | Decision 1 | Received 9 October 2026 |
+| I8 | Delegated authority schedules for binders and claims agreements | Decision 1 | Received 9 October 2026 |
+| I9 | Accountability map, showing which accountable person holds each function | The owner of every position | Received 9 October 2026 |
+| I10 | Incident notification procedure and its timings | Decision 7 | Received 9 October 2026 |
+| I11 | Board and risk committee calendar | Timing of board approval | Received 9 October 2026 |
+
+## Sign-off points
+
+| Sign-off | By | Where it stands |
+| --- | --- | --- |
+| Working appetite agreed (the calibration set issued to the assessment, marked working) | The CRO, once checks K1 to K9 pass | Not yet |
+| Statement and schedule settled for the board | External counsel | Before approval |
+| Board approval (the calibration set re-issued, marked approved) | The board, recorded with the minute reference | Not yet |

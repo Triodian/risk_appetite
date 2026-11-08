@@ -1,0 +1,75 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Checks K1 to K10
+Consistency checks
+
+3 of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.
+
+The checks run after every change. A failed check is referred to the CRO; Triodian does not resolve it.
+
+Needs attention · 3
+K1
+Complete
+failed
+
+2 items failing.
+
+Fails when: A cell is blank and has not been recorded as "not set" with an owner and a due date
+
+Decision 3 · A6 Changes systems · C1 Immaterial · blank
+Decision 7 · TR8 Location change · Notify within (hours) · blank
+K7
+Testable
+failed
+
+1 item failing.
+
+Fails when: A condition on a ceiling cannot be checked against documents
+
+Decision 1 · Customer communications · Own staff · condition not marked as capable of being checked against documents
+K9
+Timed
+failed
+
+2 items failing.
+
+Fails when: A trigger has no time limit, or a time limit longer than the insurer's own notification procedure allows
+
+Decision 7 · TR7 Sub-contractor change · Notify within (hours) · 96 hours exceeds the 72-hour notification procedure (I10)
+Decision 7 · TR8 Location change · Notify within (hours) · no time recorded
+passed
+7 checks passed: K2, K3, K4, K5, K6, K8, K10
+← Decision 8
+Challenge →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

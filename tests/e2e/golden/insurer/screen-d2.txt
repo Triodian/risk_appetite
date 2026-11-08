@@ -1,0 +1,112 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decision 2 · session 1
+Consequence thresholds
+
+At what point does a failure count as a financial loss, as harm to policyholders, or as disruption to a critical operation?
+
+Complete
+Answered as: A threshold for each of C3 Financial loss, C4 Policyholder harm and C5 Critical disruption
+Purpose of this decision
+Starting position
+I2 · received
+I3 · received
+I4 · received
+
+The insurer's existing operational risk and conduct thresholds, unchanged. A new threshold is set only where none exists. Where one is needed, the independent reviewer advises the CRO on the figure. The independent reviewer advises on this decision only.
+
+Existing C2 Contract breach threshold
+Existing C3 Financial loss threshold
+Existing C4 Policyholder harm threshold
+Use starting position
+Fills empty cells only. Nothing is filled in automatically.
+The insurer’s positions
+
+Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
+
+Level	Generic definition	What the insurer sets	Insurer’s setting	Usual source
+C1 Immaterial	No effect outside the team using it.	Nothing. C1 Immaterial covers anything below C2 Contract breach	Whatever falls below C2 Contract breach	n/a
+C2 Contract breach
+Insurer’s existing threshold: Breach of a material outsourcing term
+	The provider or insurer would be in breach of an agreement term.	Whether any class of breach is treated as more serious
+⋯
+	Outsourcing policy
+C3 Financial loss
+Insurer’s existing threshold: $250,000 single event; $1m in a quarter
+	Loss to the insurer above its reporting threshold for the operation.	An amount for a single event and an amount for a period
+⋯
+	Operational risk incident thresholds
+C4 Policyholder harm
+Insurer’s existing threshold: 10 or more policyholders affected, or any single case of serious financial hardship
+	A policyholder is wrongly declined, delayed, charged or paid.	The number of policyholders affected, and the kinds of harm, at which this level applies
+⋯
+	Conduct and breach reporting definitions
+C5 Critical disruption: Claims payment
+Approved tolerance level: No more than 2 business days without the ability to pay claims
+	A critical operation moves outside the tolerance the board has set.	The tolerance level the board has already approved for each critical operation in scope
+⋯
+	Critical operations register v3
+C5 Critical disruption: Policy issuance and renewal
+Approved tolerance level: No more than 3 business days
+	A critical operation moves outside the tolerance the board has set.	The tolerance level the board has already approved for each critical operation in scope
+⋯
+	Critical operations register v3
+C5 Critical disruption: Premium collection
+Approved tolerance level: No more than 5 business days
+	A critical operation moves outside the tolerance the board has set.	The tolerance level the board has already approved for each critical operation in scope
+⋯
+	Critical operations register v3
+Give every recorded position without an owner this owner:
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Apply
+Questions to open the discussion · 3
+Questions for counsel
+recorded for counsel, not decided in the session
+
+None logged.
+
+New question
+Log question
+← Decision 1
+Every cell set or recorded as not set
+Decision 3 →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

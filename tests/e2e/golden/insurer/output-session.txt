@@ -1,0 +1,228 @@
+Privileged and confidential · prepared at the direction of counsel · worked example
+
+# Session record
+
+**Uncalibrated** · WORKED EXAMPLE, FICTIONAL INSURER
+
+Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+A working paper, not a board paper. To be handled as counsel directs.
+
+## Decision 1: Authority (session 1)
+
+**Starting position.** The starting position is the current state: the point at which a person signs off today in each function. The session asks whether the board accepts that point as the ceiling.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 1 · Underwriting and pricing · Own staff | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Underwriting and pricing · Inside a provider | A3 Decides | A3 Decides | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Underwriting and pricing · Platform behind a provider | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Claims · Own staff | A3 Decides | A3 Decides | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Claims · Inside a provider | A4 Moves money | A4 Moves money | Ana Duarte | Triodian | Ana Duarte | Up to $5,000 per claim; above that a person approves |  |
+| Decision 1 · Claims · Platform behind a provider | A3 Decides | A3 Decides | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Fraud and investigations · Own staff | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Tom Ellery |  |  |
+| Decision 1 · Fraud and investigations · Inside a provider | A3 Decides | A3 Decides | Priya Natarajan | Triodian | Tom Ellery |  |  |
+| Decision 1 · Fraud and investigations · Platform behind a provider | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Tom Ellery |  |  |
+| Decision 1 · Policy administration · Own staff | A4 Moves money | A4 Moves money | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Policy administration · Inside a provider | A4 Moves money | A4 Moves money | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Policy administration · Platform behind a provider | A3 Decides | A3 Decides | Priya Natarajan | Triodian | Marcus Lee |  |  |
+| Decision 1 · Complaints and disputes · Own staff | A2 Recommends | A2 Recommends | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Complaints and disputes · Inside a provider | A2 Recommends | A2 Recommends | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Complaints and disputes · Platform behind a provider | A1 Assists | A1 Assists | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Customer communications · Own staff | A3 Decides | A3 Decides | Ana Duarte | Triodian | Ana Duarte | Templates approved by Compliance |  |
+| Decision 1 · Customer communications · Inside a provider | A3 Decides | A3 Decides | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Customer communications · Platform behind a provider | A2 Recommends | A2 Recommends | Ana Duarte | Triodian | Ana Duarte |  |  |
+| Decision 1 · Finance and reserving · Own staff | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Finance and reserving · Inside a provider | A2 Recommends | A2 Recommends | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Finance and reserving · Platform behind a provider | A1 Assists | A1 Assists | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Legal and compliance · Own staff | A1 Assists | A1 Assists | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Legal and compliance · Inside a provider | A1 Assists | A1 Assists | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Legal and compliance · Platform behind a provider | A1 Assists | A1 Assists | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 1 · Technology operations · Own staff | A4 Moves money | A4 Moves money | Priya Natarajan | Triodian | Tom Ellery |  |  |
+| Decision 1 · Technology operations · Inside a provider | A4 Moves money | A4 Moves money | Priya Natarajan | Triodian | Tom Ellery |  |  |
+| Decision 1 · Technology operations · Platform behind a provider | A3 Decides | A3 Decides | Priya Natarajan | Triodian | Tom Ellery |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.** None.
+
+## Decision 2: Consequence thresholds (session 1)
+
+**Starting position.** The insurer's existing operational risk and conduct thresholds, unchanged. A new threshold is set only where none exists. Where one is needed, the independent reviewer advises the CRO on the figure. The independent reviewer advises on this decision only.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 2 · C2 Contract breach · Insurer’s setting | Breach of a material outsourcing term | Breach of a material outsourcing term | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 2 · C3 Financial loss · Insurer’s setting | $250,000 single event; $1m in a quarter | $250,000 single event; $1m in a quarter | Priya Natarajan | Triodian | Priya Natarajan |  | The independent reviewer noted the period figure was set before the 2025 portfolio growth. |
+| Decision 2 · C4 Policyholder harm · Insurer’s setting | 10 or more policyholders affected, or any single case of serious financial hardship | 10 or more policyholders affected, or any single case of serious financial hardship | Lena Hartmann | Triodian | Priya Natarajan |  |  |
+| Decision 2 · C5 Critical disruption · Claims payment · Insurer’s setting | No more than 2 business days without the ability to pay claims | No more than 2 business days without the ability to pay claims | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 2 · C5 Critical disruption · Policy issuance and renewal · Insurer’s setting | No more than 3 business days | No more than 3 business days | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 2 · C5 Critical disruption · Premium collection · Insurer’s setting | No more than 5 business days | No more than 5 business days | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.** None.
+
+## Decision 3: Evidence expectation (session 1)
+
+**Starting position.** The starting position is the current state. Before the session, each cell is filled with the evidence the insurer holds today for uses of that kind, drawn from the inputs in section 7.1 and from the assessment register where mapping has begun. Cells with no current use are left blank. The session asks whether the board accepts the evidence it holds today as its expectation. A reference table from the assessment framework is in Appendix A. It is shown only if the insurer asks for it.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 3 · A1 Assists · C1 Immaterial | E0 None | E0 None | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A1 Assists · C2 Contract breach | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A1 Assists · C3 Financial loss | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A1 Assists · C4 Policyholder harm | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A1 Assists · C5 Critical disruption | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A2 Recommends · C1 Immaterial | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A2 Recommends · C2 Contract breach | E1 Disclosure | E1 Disclosure | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A2 Recommends · C3 Financial loss | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A2 Recommends · C4 Policyholder harm | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A2 Recommends · C5 Critical disruption | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A3 Decides · C1 Immaterial | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A3 Decides · C2 Contract breach | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A3 Decides · C3 Financial loss | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A3 Decides · C4 Policyholder harm | E3 Event notice | E4 Audit right | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A3 Decides · C5 Critical disruption | E3 Event notice | E4 Audit right | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A4 Moves money · C1 Immaterial | E2 Attestation | E2 Attestation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A4 Moves money · C2 Contract breach | E3 Event notice | E3 Event notice | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A4 Moves money · C3 Financial loss | E3 Event notice | E3 Event notice | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A4 Moves money · C4 Policyholder harm | E3 Event notice | E4 Audit right | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A4 Moves money · C5 Critical disruption | E4 Audit right | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A5 Acts unattended · C1 Immaterial | — | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A5 Acts unattended · C2 Contract breach | — | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A5 Acts unattended · C3 Financial loss | — | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A5 Acts unattended · C4 Policyholder harm | — | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A5 Acts unattended · C5 Critical disruption | — | E5 Live telemetry | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A6 Changes systems · C2 Contract breach | — | E6 Action control | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A6 Changes systems · C3 Financial loss | — | E6 Action control | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A6 Changes systems · C4 Policyholder harm | — | E6 Action control | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 3 · A6 Changes systems · C5 Critical disruption | — | E6 Action control | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.**
+
+- QC-01 (open): Once the board records an expectation above what it holds today, is every shortfall measured against the board’s own words? Advice needed before the statement goes to the board.
+
+**Reference table (Appendix A).** Not shown.
+
+## Decision 4: Shortfall tolerance (session 2)
+
+**Starting position.** The framework's priority table, and the starting time limits and interim positions in section 5.4.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 4 · 1 rung · C1 Immaterial or C2 Contract breach | Low | Low | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 1 rung · C3 Financial loss | Low | Low | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 1 rung · C4 Policyholder harm or C5 Critical disruption | Medium | Medium | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 2 rungs · C1 Immaterial or C2 Contract breach | Low | Low | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 2 rungs · C3 Financial loss | Medium | Medium | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 2 rungs · C4 Policyholder harm or C5 Critical disruption | High | High | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 3 or more rungs · C1 Immaterial or C2 Contract breach | Medium | Medium | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 3 or more rungs · C3 Financial loss | High | High | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · 3 or more rungs · C4 Policyholder harm or C5 Critical disruption | High | High | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 4 · High · Time limit | Reported to the next board risk committee meeting, with a plan | Reported to the next board risk committee meeting, with a plan | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 4 · High · Interim position | One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person | One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 4 · Medium · Time limit | Closed by the next contract renewal or variation for the arrangement | Closed by the next contract renewal or variation for the arrangement | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 4 · Medium · Interim position | Accept, recorded with an owner | Accept, recorded with an owner | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 4 · Low · Time limit | Reviewed at the next annual review | Reviewed at the next annual review | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 4 · Low · Interim position | Accept | Accept | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.** None.
+
+## Decision 5: Unknowns (session 2)
+
+**Starting position.** The framework table, with the number and the date left for the session to decide.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 5 · C1 Immaterial or C2 Contract breach · Not-known facts allowed per entry | No limit | No limit | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C1 Immaterial or C2 Contract breach · F4 finding allowed to stand | Until the next annual review | Until the next annual review | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C1 Immaterial or C2 Contract breach · Minimum confidence | Low | Low | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C3 Financial loss · Not-known facts allowed per entry | — | 2 | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C3 Financial loss · F4 finding allowed to stand | Until the next contract renewal or variation | Until the next contract renewal or variation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C3 Financial loss · Minimum confidence | Medium | Medium | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C4 Policyholder harm or C5 Critical disruption · Not-known facts allowed per entry | None among the facts that determine the authority level | None among the facts that determine the authority level | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C4 Policyholder harm or C5 Critical disruption · F4 finding allowed to stand | — | 30 June 2027; then the provider is asked | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 5 · C4 Policyholder harm or C5 Critical disruption · Minimum confidence | Medium | Medium | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.** None.
+
+## Decision 6: Location and concentration (session 2)
+
+**Starting position.** For location, the insurer's existing offshoring position. There is no starting position for concentration, because most insurers will not yet have measured it.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 6 · Australia · Provider established | Accepted | Accepted | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · Australia · AI runs | Accepted | Accepted | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · New Zealand · Provider established | Accepted | Accepted | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · New Zealand · AI runs | Accepted | Accepted | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · United States · Provider established | Escalate | Escalate | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · United States · AI runs | Escalate | Accepted | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · India · Provider established | Escalate | Escalate | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · India · AI runs | Escalate | Escalate | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 6 · Concentration limit | — | not set | — | Triodian | — |  |  |
+
+**Not set.** Decision 6 · Concentration limit: Tom Ellery, by 30 November 2026
+
+**Questions for counsel.** None.
+
+## Decision 7: Triggers (session 2)
+
+**Starting position.** The eight triggers, with thresholds and time limits left for the session to decide.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 7 · TR1 Authority change · Threshold | Any move to A3 Decides or above | Any move to A3 Decides or above | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR1 Authority change · Notify within (hours) | — | 48 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR1 Authority change · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR2 Evidence lapse · Threshold | Days past due | Days past due | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR2 Evidence lapse · Notify within (hours) | — | 48 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR2 Evidence lapse · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR3 Tolerance signal · Threshold | Set per measure | Set per measure | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR3 Tolerance signal · Notify within (hours) | — | 48 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR3 Tolerance signal · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR4 AI incident · Threshold | Any | Any | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR4 AI incident · Notify within (hours) | — | 12 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR4 AI incident · Notified to | — | CRO and the accountable person for the function | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR5 Other AI incident · Threshold | As defined | As defined | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR5 Other AI incident · Notify within (hours) | — | 48 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR5 Other AI incident · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR6 Model or platform change · Threshold | Any, for A3 Decides or above | Any, for A3 Decides or above | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR6 Model or platform change · Notify within (hours) | — | 48 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR6 Model or platform change · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR7 Sub-contractor change · Threshold | Any, for a critical operation | Any, for a critical operation | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR7 Sub-contractor change · Notify within (hours) | — | 96 | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR7 Sub-contractor change · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR8 Location change · Threshold | Any | Any | Tom Ellery | Triodian | Priya Natarajan |  |  |
+| Decision 7 · TR8 Location change · Notified to | — | Arrangement owner | Tom Ellery | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.**
+
+- QC-02 (answered): Does 12 hours for TR4 leave enough room to meet the insurer’s own notification obligations? Response: Yes, on the current procedure. Confirm if I10 changes.
+
+## Decision 8: Change and review (session 2)
+
+**Starting position.** A review at least once a year, in the same cycle as the board's risk appetite statement.
+
+| Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Decision 8 · A new arrangement where AI is at A3 Decides or above · What is revisited | That arrangement is assessed before it starts | That arrangement is assessed before it starts | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · Trigger TR1, TR6, TR7 or TR8 occurs · What is revisited | The register entry is reassessed and its finding set again | The register entry is reassessed and its finding set again | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · An arrangement reaches renewal or variation of its contract · What is revisited | Its evidence terms are reviewed against the board's expectation | Its evidence terms are reviewed against the board's expectation | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · A material AI incident, at the insurer or in its supply chain · What is revisited | Decisions 1, 3 and 7 | Decisions 1, 3 and 7 | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · New regulatory guidance on AI or outsourcing · What is revisited | All eight decisions, on counsel's advice | All eight decisions, on counsel's advice | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · The review interval set by the board has passed · What is revisited | All eight decisions | All eight decisions | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+| Decision 8 · Review interval · Interval | Annual | Annual, in the same cycle as the main risk appetite statement | Priya Natarajan | Triodian | Priya Natarajan |  |  |
+
+**Not set.** None.
+
+**Questions for counsel.** None.

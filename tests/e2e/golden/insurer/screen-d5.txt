@@ -1,0 +1,107 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decision 5 · session 2
+Unknowns
+
+How much may we not know about the AI used in our supply chain?
+
+Complete
+Answered as: A limit on facts that are not known, and a minimum confidence, for each consequence level
+Purpose of this decision
+Starting position
+
+The framework table, with the number and the date left for the session to decide.
+
+Use starting position
+Fills empty cells only. Nothing is filled in automatically.
+The insurer’s positions
+
+Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
+
+Consequence of the arrangement	Not-known facts allowed per entry	F4 finding allowed to stand	Minimum confidence in the obtainable rung
+C1 Immaterial or C2 Contract breach
+⋯
+
+⋯
+
+—
+Low
+Medium
+High
+⋯
+
+C3 Financial loss
+⋯
+
+⋯
+
+—
+Low
+Medium
+High
+⋯
+
+C4 Policyholder harm or C5 Critical disruption
+⋯
+
+⋯
+
+—
+Low
+Medium
+High
+⋯
+Give every recorded position without an owner this owner:
+—
+Priya Natarajan
+Tom Ellery
+Ana Duarte
+Marcus Lee
+Meredith Vance
+Sam Okoro
+Lena Hartmann
+Board secretariat
+Apply
+Questions to open the discussion · 2
+Questions for counsel
+recorded for counsel, not decided in the session
+
+None logged.
+
+New question
+Log question
+← Decision 4
+Every cell set or recorded as not set
+Decision 6 →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed

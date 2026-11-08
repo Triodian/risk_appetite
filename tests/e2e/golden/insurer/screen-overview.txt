@@ -1,0 +1,94 @@
+AI Risk Appetite
+My actions 2
+Decisions
+Checks
+Challenge
+Outputs
+Practice · not saved
+3 checks failing
+DH
+☰
+Privileged and confidential · prepared at the direction of counsel · worked example
+Askew Lane Partners (fictional)
+Worked example
+Acting as
+Priya Natarajan · CRO
+Tom Ellery · Insurer risk
+Ana Duarte · Insurer risk
+Marcus Lee · Insurer risk
+Meredith Vance · Counsel
+Sam Okoro · Triodian
+Lena Hartmann · Independent reviewer
+Board secretariat · Board record
+Counsel (facilitator)
+Triodian (recorder)
+CRO
+Insurer risk function
+Independent reviewer
+Board record
+Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
+Leave the worked example
+Decisions
+Eight appetite decisions
+
+Each decision is one question, answered on a fixed scale in a session led by counsel. Each answer is recorded with who proposed it and an accountable owner.
+
+Next: decision 3 · Evidence expectation
+
+1 of 30 positions still to record, and 1 more decision has blank positions.
+
+Open decision 3 →
+Session 1 · decisions 1 to 3
+
+CRO, General Counsel, operational risk, AI governance, function owners; independent reviewer for decision 2
+
+1
+Fails checks
+Authority
+How much authority may AI hold in each function, whether it is used by our own staff, by a provider, or by a platform the provider relies on?
+27 of 27 recorded
+2
+Complete
+Consequence thresholds
+At what point does a failure count as a financial loss, as harm to policyholders, or as disruption to a critical operation?
+6 of 6 recorded
+3
+In progress
+Evidence expectation
+For each level of authority and consequence, what evidence do we expect to hold?
+29 of 30 recorded
+1 open question for counsel
+Session 2 · decisions 4 to 8
+
+The same group, plus procurement or vendor management; ends by reviewing the session 1 positions
+
+4
+Complete
+Shortfall tolerance
+When the evidence falls short of what we expect, how serious is the shortfall and how long may it continue?
+15 of 15 recorded
+5
+Complete
+Unknowns
+How much may we not know about the AI used in our supply chain?
+9 of 9 recorded
+6
+Some not set
+Location and concentration
+Where may AI acting for us operate, and how much may depend on a single platform?
+9 of 9 recorded
+7
+In progress
+Triggers
+Which events must be reported to us, and how quickly?
+23 of 24 recorded
+8
+Complete
+Change and review
+Which changes bring an arrangement back for approval, and how often is the appetite reviewed?
+7 of 7 recorded
+Decision 1 →
+RAF-01 · framework 12 October 2026
+User guide
+Reference
+Working appetite not yet agreed
