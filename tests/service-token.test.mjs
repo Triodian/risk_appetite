@@ -40,4 +40,8 @@ check('a token with neither email nor Client ID is refused', r.status === 401);
 // the board directions (task 3.5): read over the BOARD binding for people signed in, never for the service token
 r = await call('/api/directions-from-board', { common_name: CID, sub: '' });
 check('the Use Assessment token cannot read the board directions', r.status === 403);
+r = await call('/api/feedback-from-assessment', { common_name: CID, sub: '' });
+check('nor the in-use feed', r.status === 403);
+r = await call('/api/board-view', { common_name: CID, sub: '' });
+check('nor the board view', r.status === 403);
 console.log(fails ? fails + ' failed' : 'all passed'); if (fails) process.exit(1);

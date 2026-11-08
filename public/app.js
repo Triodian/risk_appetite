@@ -104,6 +104,41 @@ function directionsPanel(did) {
     ${list.map(x => `<p class="small" style="margin:8px 0 2px"><strong>${esc(x.id)} ${esc(x.name || '')}</strong></p><ul class="small" style="margin:0 0 0 18px">${row(x)}</ul>`).join('')}</div></details>`;
 }
 
+/* ---------- the assessment register extract, v1 or v2 (tasks 3.7) ----------
+   Read on decision 3 (the current state for K10) and, for v2, on decision 8 and in the board view (the measures, gaps
+   by priority and overdue items). Loaded from AI Use Assessment over the ASSESSMENT service binding, or from a file. */
+const EXTRACTS = ['triodian.aua.extract.v1', 'triodian.aua.extract.v2'];
+function useExtract(o, source) {
+  if (!o || !EXTRACTS.includes(o.schema) || !Array.isArray(o.entries)) { toast('Rejected: not a register extract (schema triodian.aua.extract.v1 or v2).'); return false; }
+  if (!canEdit('d3')) { toast(blockReason('d3')); return false; }
+  const cnt = {}; let max = null; o.entries.forEach(x => { if (x && x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x && x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
+  const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
+  const reg = { on: today(), entries: o.entries.length, pair: top ? top[0].replace('.', ' × ') : '', maxReceived: max };
+  if (o.schema === 'triodian.aua.extract.v2') {
+    const txt = (v, n) => String(v == null ? '' : v).slice(0, n);
+    Object.assign(reg, { schema: o.schema, source, generated: txt(o.generated, 40),
+      measures: (Array.isArray(o.measures) ? o.measures : []).slice(0, 20).filter(m => m && /^M\d{1,2}$/.test(m.ref)).map(m => { const c = C.measures.find(x => x.ref === m.ref) || {}; return { ref: m.ref, measure: c.measure || '', limit: c.limit || '', value: typeof m.value === 'number' && isFinite(m.value) ? m.value : null, basis: txt(m.basis, 400) }; }),
+      gapsByPriority: Object.fromEntries(['High', 'Medium', 'Low'].map(k => [k, Math.max(0, parseInt((o.gapsByPriority || {})[k], 10) || 0)])),
+      overdue: (Array.isArray(o.overdue) ? o.overdue : []).slice(0, 100).map(x => ({ entry: txt(x && x.entry, 64), item: txt(x && x.item, 200) })) });
+  }
+  S.current.register = reg;
+  log('registerExtract', 'd3', null, o.entries.length + ' entries' + (reg.schema ? ', in-use feed v2' : ''));
+  toast(reg.schema ? 'In-use feed loaded: K10 uses it, and decision 8 shows the measures.' : 'Register extract loaded. K10 uses it.');
+  return true;
+}
+/* The measures in use now, beside the limits the schedule sets (decision 8, the board view). */
+function inUseRows() {
+  const r = S.current.register; if (!r || !r.measures) return [];
+  return C.measures.map(m => { const x = r.measures.find(y => y.ref === m.ref); return { ref: m.ref, measure: m.measure, limit: m.limit, value: x ? x.value : null, basis: x ? x.basis : 'Not in the in-use feed' }; });
+}
+function inUsePanel(did) {
+  const r = S.current.register; if (did !== 'd8' || !r || !r.measures) return '';
+  const rows = inUseRows(), g = r.gapsByPriority || {};
+  return `<details class="pr about" open><summary>In use now · from the AI Use Assessment in-use feed, ${esc(dAU(r.on))}</summary><div class="about-in measure">
+    <p class="small soft" style="margin:0 0 8px">Counted from the assessment register when the feed was issued. A measure with no value cannot be counted from the register; the reason is shown. Gaps by priority: ${['High', 'Medium', 'Low'].map(k => `${k} ${g[k] || 0}`).join(' · ')}.${(r.overdue || []).length ? ` Overdue: ${r.overdue.length}.` : ''}</p>
+    <div class="tw"><table class="lg"><thead><tr><th>Ref</th><th>Measure</th><th>Limit</th><th>In use now</th></tr></thead><tbody>${rows.map(x => `<tr><td class="code">${esc(x.ref)}</td><td>${esc(withLabels(x.measure, 'C'))}</td><td>${esc(x.limit || '—')}</td><td>${x.value == null ? `<span class="soft">Not counted · ${esc(x.basis)}</span>` : `<strong>${esc(String(x.value))}${x.ref === 'M6' ? '%' : ''}</strong> <span class="mini">${esc(x.basis)}</span>`}</td></tr>`).join('')}</tbody></table></div></div></details>`;
+}
+
 function blankPos() { return { value: null, condition: '', testable: false, reason: '', boardRevisit: '', proposedBy: '', recordedBy: '', owner: '', dissent: '', status: 'unset', notSetOwner: '', notSetDue: '', source: '' }; }
 function newEngagement() {
   return {
@@ -781,7 +816,7 @@ function startPanel(d) {
       <div class="row" style="margin-top:12px"><span class="small">Most common combination of authority and consequence (used by check K10):</span>
       <select class="in" style="width:auto" id="cp-tier" data-path="current.commonPair.tier" aria-label="Most common tier" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${AT.map(a => scaleOption(a, pr.tier === a)).join('')}</select>
       <select class="in" style="width:auto" id="cp-cons" data-path="current.commonPair.consequence" aria-label="Most common consequence" ${canEdit('d3') ? '' : 'disabled'}><option value="">—</option>${CO.map(c => scaleOption(c, pr.consequence === c)).join('')}</select></div>
-      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-act="loadExtract" ${canEdit('d3') ? '' : 'disabled'}>Load assessment register extract</button><button class="btn sm ghost" data-act="loadFeed" ${canEdit('d3') ? '' : 'disabled'}>Load from AI Use Assessment</button><span class="mini">${S.current.register ? esc(withLabels('Loaded ' + dAU(S.current.register.on) + ': ' + S.current.register.entries + ' entries · most common pair ' + (S.current.register.pair || '—') + ' · highest rung received ' + (S.current.register.maxReceived || 'none'))) : 'From the AI Use Assessment app (triodian.aua.extract.v1)'} · <a href="/user-guide/#informs" target="_blank" rel="noopener">How the assessment informs the appetite</a></span></div></div></details>
       <div class="row" style="margin-top:12px"><button class="btn sm" data-act="showRef" aria-expanded="${UI.showRef}">${UI.showRef ? 'Hide reference table' : 'Show reference table'}</button><span class="mini">Shown only if the ${N.entity} asks for it. Each time it is shown is recorded in the session record.</span></div>
       ${UI.showRef ? `<div class="card" style="margin-top:10px"><h3 class="sh">Appendix A: reference table of expected evidence</h3><p class="small soft">${esc(C.appendixANote)}</p><div class="tw"><table class="lg"><thead><tr><th>Authority</th>${CO.map(c => `<th title="${esc(scaleTip(c))}">${c}<div class="mini" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(scaleLabel(c))}</div></th>`).join('')}</tr></thead><tbody>${AT.map(a => `<tr><td class="small"><span class="mono">${a}</span> ${esc(scaleLabel(a))}</td>${C.appendixA[a].map(e => `<td class="code" title="${esc(scaleTip(e))}">${esc(scaleOpt(e))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}`;
   }
@@ -853,7 +888,7 @@ function screenDecision(did, ck) {
   <div class="stack">
     <details class="pr about"><summary>Purpose of this decision</summary><div class="about-in measure"><p class="purpose">${purpose}</p>${d.recorded ? `<p class="small soft">${esc(withLabels(d.recorded, 'C'))}</p>` : ''}${d.note && did !== 'd7' ? `<p class="small soft">${esc(withLabels(d.note, 'C'))}</p>` : ''}</div></details>
     <section>${did === 'd6' ? `<div class="tw" style="margin-top:8px"><table class="lg"><thead><tr><th>Marking</th><th>Meaning in the assessment</th></tr></thead><tbody>${d.markings.map(m => `<tr><td class="code">${m.id}</td><td>${esc(m.meaning)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
-    ${directionsPanel(did)}${startPanel(d)}
+    ${directionsPanel(did)}${inUsePanel(did)}${startPanel(d)}
     <section><h2 class="sh">The ${N.entity}’s positions</h2><p class="small soft" style="margin:4px 0 14px">Record the position the ${N.entity} proposes in each cell. Select a cell, or use <span class="detic-k" aria-hidden="true">⋯</span> beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on <span class="detic-k" aria-hidden="true">⋯</span> means the position has a dissent, a reason, a challenge or a question for counsel.</p>${canEdit(did) ? '' : `<p class="err small">${esc(editBlockReason(did))} ${whyLink()}</p>`}
       ${body}
       ${canEdit(did) ? `<div class="row" style="margin-top:12px"><span class="small soft">Give every recorded position without an owner this owner:</span><select class="in" id="bulkOwner" style="width:auto"><option value="">—</option>${activePeople().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="bulkOwner" data-d="${did}">Apply</button></div>` : ''}
@@ -981,6 +1016,44 @@ function mdStatement() {
   return m;
 }
 function irContributed() { const ir = S.people.filter(p => rolesOf(p).includes('independent')).map(p => p.id); if (!ir.length) return false; return cellsFor('d2').some(c => { const p = P(c.id); return p && ir.includes(p.proposedBy); }) || S.challenge.some(c => c.decision === 'd2' && ir.includes(c.raisedBy)); }
+/* The board paper in plain words (task 3.8): what the board is asked to resolve, the eight positions as sentences, and
+   what changed since last year's approved appetite. It states what was recorded and who proposed it, never what the
+   law requires. A position shown as [ ] is blank; "not set" names who sets it and by when. */
+function mdPaper() {
+  const e = S.engagement, c = S.calibration, bm = e.boardMemo || {}, ck = runChecks(), bl = blocking(ck), ins = e.insurer || '[' + N.entity + ']', v = c.version || 1;
+  const w = code => code ? `${code} ${String(scaleName(code) || '').toLowerCase()}`.trim() : '';
+  const pw = id => { const x = val(id); return x != null && /^[ACE]\d$/.test(x) ? w(x) : pv(id); };
+  const cond = id => { const p = P(id); return p && p.status === 'set' && p.condition ? ` (${p.condition.replace(/\.$/, '')})` : ''; };
+  let m = mdHead('Board paper: the AI risk appetite in plain words');
+  m += `- **To:** ${bm.to || 'The Board'}\n- **Meeting:** ${bm.meeting || '[meeting and date]'}\n- **Subject:** AI risk appetite, version ${v}, for ${ins}\n\n`;
+  m += `## What the board is asked to resolve\n\n${bm.decision || `That the ${bm.to || 'Board'} approve the AI risk appetite (version ${v}) set out in this paper, with its tolerance and trigger schedule.`}\n\n`;
+  const notes = [];
+  if (bl.length) notes.push(`${bl.length} consistency ${bl.length === 1 ? 'check is' : 'checks are'} not passing (${bl.map(k => k.id).join(', ')}). The appetite cannot be agreed until ${KB()} pass.`);
+  const bd = DIRS() ? cellsFor('d1').filter(x => { const p = P(x.id); return p && p.status === 'set' && beyond(x.id, p.value); }) : [];
+  if (bd.length) notes.push(`${bd.length} ${bd.length === 1 ? 'ceiling goes' : 'ceilings go'} past the board’s direction (BD1). Each records a reason and when the board revisits it: ${bd.map(x => { const p = P(x.id); return `${cellLabel(x.id).replace(/^D\d · /, '')}, ${p.value} (${p.reason || 'no reason'}; revisit ${p.boardRevisit || 'not recorded'})`; }).join('; ')}.`);
+  const ns = allCells().filter(x => { const p = P(x.id); return p && p.status === 'notSet'; });
+  if (ns.length) notes.push(`${ns.length} ${ns.length === 1 ? 'position is' : 'positions are'} recorded as not set, each with an owner and a due date.`);
+  if (notes.length) m += `The board should also note:\n\n${notes.map(x => '- ' + x).join('\n')}\n\n`;
+  m += `## The eight positions\n\n`;
+  m += `### 1. Authority\n\nThe most authority AI may hold in each function.\n\n` + S.functions.map(f => `- **${f.name}.** ${C.locations.map(l => { const id = `d1.${f.id}.${l.id}`; return `${l.name}: ${val(id) ? 'up to ' + pw(id) + cond(id) : pv(id)}`; }).join('. ')}.`).join('\n') + '\n\n';
+  m += `### 2. Consequence thresholds\n\nWhen a failure counts as each level of consequence.\n\n` + cellsFor('d2').map(x => `- **${x.rowLabel}:** ${pv(x.id)}`).join('\n') + '\n\n';
+  m += `### 3. Evidence expected\n\nThe evidence the board expects ${ins} to hold, by how much authority the AI has and how serious a failure would be.\n\n` + AT.map(a => `- **${w(a)}:** ${CO.map(co => `${co} ${pw(`d3.${a}.${co}`)}`).join(' · ')}`).join('\n') + '\n\n';
+  m += `### 4. Shortfall tolerance\n\nWhen the evidence falls short, how serious the shortfall is and how long it may continue.\n\n` + D('d4').priorities.map(pr => `- **${pr.id} priority:** ${pv(`d4.time.${pr.id}`)}. While the gap stands: ${pv(`d4.interim.${pr.id}`)}.`).join('\n') + '\n\n';
+  m += `### 5. Unknowns\n\nHow much ${ins} may not know about AI in its supply chain.\n\n` + D('d5').bands.map(b => `- **${b.name}:** not-known facts allowed per entry: ${pv(`d5.${b.id}.notKnown`)}. How long an F4 finding may stand: ${pv(`d5.${b.id}.f4`)}. Minimum confidence: ${pv(`d5.${b.id}.conf`)}.`).join('\n') + '\n\n';
+  const J = S.decisions.d6.jurisdictions, by = mk => J.filter(j => [val(`d6.j.${j.id}.established`), val(`d6.j.${j.id}.runs`)].includes(mk)).map(j => j.name);
+  m += `### 6. Location and concentration\n\n` + (J.length ? `Accepted: ${by('Accepted').join(', ') || 'none'}. Escalated to counsel: ${by('Escalate').join(', ') || 'none'}. Not accepted: ${by('Not accepted').join(', ') || 'none'}. ` : 'No jurisdictions were recorded. ') + (val('d6.concentration') != null ? `No more than ${val('d6.concentration')}% of critical operations may depend on a single platform or AI provider.` : `The concentration limit is ${pv('d6.concentration')}.`) + `\n\n`;
+  m += `### 7. Triggers\n\nThe events to be reported to ${ins}, and how quickly.\n\n` + S.decisions.d7.triggers.map(t => `- **${t.ref} ${t.name}:** ${val(`d7.${t.ref}.time`) ? 'within ' + val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`)}, to ${pv(`d7.${t.ref}.to`)}.`).join('\n') + '\n\n';
+  m += `### 8. Change and review\n\nReview interval: ${pv('d8.interval')}. The appetite, or an arrangement, comes back before then when:\n\n` + S.decisions.d8.events.map(x => `- ${x.event}: ${pv(`d8.ev.${x.id}`)}`).join('\n') + '\n\n';
+  m += `## Changes since last year\n\n`;
+  const prev = S.previous;
+  if (!prev || !prev.cells) m += `This is ${ins}'s first AI risk appetite, so there is no earlier approved version to compare.\n\n`;
+  else {
+    const rows = Object.entries(prev.cells).map(([id, x]) => [id, Array.isArray(x) ? x[0] : x]).filter(([id, was]) => { const now = val(id); return (now == null ? 'not set' : String(now)) !== String(was == null ? 'not set' : was); });
+    m += `The board approved version ${prev.version}${prev.approvedOn ? ' on ' + dAU(prev.approvedOn) : ''}${prev.minuteRef ? ' (minute ' + prev.minuteRef + ')' : ''}. ` + (rows.length ? `${rows.length} ${rows.length === 1 ? 'position has' : 'positions have'} changed since then:\n\n` + tbl(['Position', 'Last year', 'Now'], rows.map(([id, was]) => [cellLabel(id), was == null ? 'not set' : String(was), pv(id)])) : 'No position has changed since then.\n\n');
+  }
+  return m;
+}
+
 /* One board paper: cover memo, statement, schedule, check summary and glossary. */
 const bodyOf = md => { const i = md.indexOf('\n## '); return i < 0 ? '' : md.slice(i + 1); };
 function mdPack() {
@@ -1101,10 +1174,10 @@ function mdPlan() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
+function outputFor(tab) { const L = fn => () => datesAU(withLabels(fn())); return { pack: [L(mdPack), 'board-pack'], paper: [L(mdPaper), 'board-paper'], statement: [L(mdStatement), 'statement'], schedule: [L(mdSchedule), 'schedule'], session: [L(mdSession), 'session-record'], calibration: [L(mdCalibration), 'calibration-set'], checks: [L(mdChecks), 'check-report'], plan: [L(mdPlan), 'engagement-plan'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['pack', 'Board pack'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
+  const tabs = [['pack', 'Board pack'], ['paper', 'Board paper (plain words)'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || !rolesOf(who).includes('cro') ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);
@@ -1817,6 +1890,7 @@ function onClick(e) {
     addEvent: () => { S.decisions.d8.events.push({ id: 'e' + uid(), event: 'New event', revisit: '', custom: true }); log('addEvent', 'd8'); render(); },
     gotoCell: () => gotoCell(d.cell), loadExtract: () => document.getElementById('extractIn').click(),
     loadDirFile: () => document.getElementById('dirIn').click(),
+    loadFeed: async () => { if (practice()) return toast('In the worked example, load a file instead.'); toast('Reading the in-use feed from AI Use Assessment…'); const r = await api('GET', '/api/feedback-from-assessment'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useExtract(r.body, 'assessment')) render(); },
     loadDirBoard: async () => { if (practice()) return toast('The worked example has no board directions to load.'); toast('Reading the board directions from AI Board Direction…'); const r = await api('GET', '/api/directions-from-board'); if (!r.ok) return toast(r.code === 'not_linked' ? r.error : 'Could not load: ' + r.error); if (useDirections(r.body, 'board')) { render(); toast('Board directions loaded: version ' + (r.body.version || '')); } },
     clearDir: () => { if (!can('setup')) return toast(blockReason('setup')); const from = S.boardDirections ? S.boardDirections.file.version : null; delete S.boardDirections; log('boardDirections', 'setup', from, 'removed'); render(); },
     agree: () => agreeWorking(), approve: () => recordApproval(document.getElementById('ap-date').value, document.getElementById('ap-min').value.trim(), document.getElementById('ap-by').value.trim()),
@@ -1845,10 +1919,7 @@ function changeHandler(e) {
   if (d.act === 'chDec') { UI.chDec = t.value; render(); return; }
   if (t.id === 'fileIn') { if (t.files[0]) openFile(t.files[0]); t.value = ''; return; }
   if (t.id === 'dirIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (e) { return toast('That file is not JSON.'); } if (useDirections(o, 'file')) { render(); toast('Board directions loaded: version ' + (o.version || '')); } }; fr.readAsText(f); return; }
-  if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { try { const o = JSON.parse(fr.result); if (!o || o.schema !== 'triodian.aua.extract.v1' || !Array.isArray(o.entries)) throw new Error('not a register extract (schema triodian.aua.extract.v1)');
-    const cnt = {}; let max = null; o.entries.forEach(x => { if (x.tier && x.consequence) { const k = x.tier + '.' + x.consequence; cnt[k] = (cnt[k] || 0) + 1; } if (x.received && /^E\d$/.test(x.received) && (!max || x.received > max)) max = x.received; });
-    const top = Object.entries(cnt).sort((p, q) => q[1] - p[1])[0]; if (top) { const [ti, co] = top[0].split('.'); S.current.commonPair = { tier: ti, consequence: co }; }
-    S.current.register = { on: today(), entries: o.entries.length, pair: top ? top[0].replace('.', ' × ') : '', maxReceived: max }; log('registerExtract', 'd3', null, o.entries.length + ' entries'); render(); toast('Register extract loaded. K10 uses it.'); } catch (er) { toast('Rejected: ' + er.message); } }; fr.readAsText(f); return; }
+  if (t.id === 'extractIn') { const f = t.files[0]; t.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { let o; try { o = JSON.parse(fr.result); } catch (er) { return toast('Rejected: the file is not JSON.'); } if (useExtract(o, 'file')) render(); }; fr.readAsText(f); return; }
   if (d.cell && !d.pf) { if (t.value === '__ns') return; setValue(d.cell, t.value.trim ? t.value.trim() : t.value); UI.sel = d.cell; render(); return; }
   if (d.pf) { const v = t.type === 'checkbox' ? t.checked : t.value; const p = getPos(d.cell); const from = p[d.pf]; if (from === v) return; setField(d.cell, d.pf, v, from); render(); return; }
   if (d.cur) { const did = d.cur.split('.')[0]; if (!canEdit(did) || did === 'd2') { toast(blockReason(did)); render(); return; } if (t.value) S.current[did][d.cur] = t.value; else delete S.current[did][d.cur]; log('currentState', d.cur, null, t.value || null); render(); return; }
