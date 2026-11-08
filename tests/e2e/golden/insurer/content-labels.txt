@@ -95,6 +95,11 @@
    "fails": "The expected evidence for the most common combination of authority and consequence is higher than any evidence the insurer currently obtains",
    "id": "K10",
    "name": "Reachable"
+  },
+  {
+   "fails": "A ceiling in decision 1 is above the highest tier the board's posture accepts for that function (BD1), and no reason and board revisit are recorded. Runs only when board directions are loaded.",
+   "id": "K11",
+   "name": "Within the board's direction"
   }
  ],
  "decisions": [
