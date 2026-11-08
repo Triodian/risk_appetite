@@ -17,12 +17,14 @@
 <input type="file" id="fileIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
 <input type="file" id="extractIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
 <input type="file" id="dirIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
+<input type="file" id="limitsIn" accept=".csv,text/csv" class="vh" tabindex="-1" aria-hidden="true">
+<input type="file" id="soaIn" accept=".csv,text/csv" class="vh" tabindex="-1" aria-hidden="true">
 <input type="file" id="feedIn" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
 <script src="/content.js"></script>
 <script src="/shared/packs.js"></script>
 <script src="/brand.js"></script>
 <script src="/export.js"></script>
-<script type="module">import { merge3 } from "/shared/merge.js"; import * as directions from "/shared/directions.js"; window.RAFMerge = { merge3 }; window.RAFDirections = directions;</script>
+<script type="module">import { merge3 } from "/shared/merge.js"; import * as directions from "/shared/directions.js"; import * as imp from "/shared/import.js"; window.RAFMerge = { merge3 }; window.RAFDirections = directions; window.RAFImport = imp;</script>
 <script src="/app.js"></script>
 <script src="/suite.js" data-current="ra"></script>
 </body>
