@@ -7,7 +7,7 @@
 import { whoIs, handleAuth, gate, markDemo } from '../lib/identity/session.js';
 import { d1Store } from '../lib/store/d1.js';
 import { identityUsers, withIdentity } from '../lib/identity/people.js';
-import { handle, issuedCalibration, boardView } from '../lib/core/api.js';
+import { handle, issuedCalibration, boardView, appetiteEvidence } from '../lib/core/api.js';
 import { dueReminders, deliver } from '../lib/core/notify.js';
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
@@ -50,6 +50,24 @@ function feedbackReader(env) {
     catch (e) { console.error(e); return { status: 503, error: 'The Use Assessment app could not be reached through the ASSESSMENT service binding. Check that the binding names the Use Assessment Worker deployed in this account.' }; }
     return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'The Use Assessment app gave no answer.' };
   };
+}
+
+/** Reads the AI Use Assessment's artefacts for the evidence index (task R.2), through the ASSESSMENT binding. */
+function assessmentEvidenceReader(env) {
+  if (!env.ASSESSMENT) return null;
+  return async () => {
+    let r;
+    try { r = await env.ASSESSMENT.evidence(); }
+    catch (e) { console.error(e); return { status: 503, error: 'the Use Assessment app could not be reached through the ASSESSMENT service binding, or its version does not list artefacts yet.' }; }
+    return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'the Use Assessment app gave no answer.' };
+  };
+}
+
+/** The artefacts for the APRA letter evidence index, for the AI Board Direction app over a service binding (task R.2). */
+export async function evidenceForService(env) {
+  if (!env.DB) return { status: 503, body: { error: 'The database is not connected to the Risk Appetite app yet.' } };
+  try { return await appetiteEvidence(d1Store(env.DB), assessmentEvidenceReader(env)); }
+  catch (e) { console.error(e); return { status: 500, body: { error: 'The Risk Appetite app hit an error listing its artefacts.' } }; }
 }
 
 /** The board view for another Triodian app over a service binding (src/service.js; plan task 3.6). */

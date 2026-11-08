@@ -66,6 +66,9 @@ Session record
 Calibration set
 Check report
 Engagement plan
+
+Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2
+
 Overall position · in the board’s words, written by counsel
 
 The overall position is written by counsel, the GC or the CRO. Why
@@ -82,6 +85,8 @@ AI risk appetite statement
 Uncalibrated · WORKED EXAMPLE, FICTIONAL INSURER
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
+
+Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.
 
 1. Purpose and scope
 

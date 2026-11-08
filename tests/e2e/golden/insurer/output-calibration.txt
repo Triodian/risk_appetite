@@ -6,6 +6,8 @@ Privileged and confidential · prepared at the direction of counsel · worked ex
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
 
+Evidence for: APRA letter B2, G4, A4 · ISO/IEC 42001 6.1.2, A.5.
+
 Status: default · version 0
 
 The calibration set contains no client facts. It holds only positions and thresholds. Values marked *(default)* were not set, and the framework default applies.
