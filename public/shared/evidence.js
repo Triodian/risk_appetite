@@ -99,8 +99,21 @@ export function tagLine(app, id) {
   return ['APRA letter ' + t.letter.join(', '), t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', 'ISO/IEC 42001 ' + t.iso.join(', ')].filter(Boolean).join(' · ');
 }
 
+/** ", minute 2026/12-04", or the reference as written when it already says what it is ("Board minute 2026/12-04"). */
+const minuteText = ref => (!ref ? '' : /\bminute\b/i.test(ref) ? ', ' + ref : ', minute ' + ref);
 const ymd = s => (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : null);
 const art = (app, id, name, status, asOf, note) => ({ app, id, name, status, asOf: ymd(asOf), note: note || '', ...tagsFor(app, id) });
+
+/** In Lite scope (task R.3) the assessment covers only the arrangements behind critical operations, so its artefacts
+ *  say so: the same rule as the app, an arrangement is in scope when one of its entries names a critical operation in
+ *  field 5. Empty in full scope. */
+function liteNote(d) {
+  if (((d.engagement || {}).scope) !== 'lite') return '';
+  const f5 = e => { const f = (e.fields || {})[5]; return f && !f.notKnown ? String(f.value || '') : ''; };
+  const opOf = e => { const v = f5(e), m = v.match(/critical operation:\s*(.+)$/i), op = m ? m[1] : (v.includes('·') ? v.split('·').pop() : ''); return /^\s*(none)?\s*$/i.test(op) ? '' : op.trim(); };
+  const arrs = d.arrangements || [], inIds = new Set((d.entries || []).filter(opOf).map(e => e.arrangementId)), n = arrs.filter(a => inIds.has(a.id)).length, left = arrs.length - n;
+  return `Lite scope: ${n} of ${arrs.length} arrangement${arrs.length === 1 ? '' : 's'}, those behind critical operations${left ? `; ${left} left out for later triage` : ''}`;
+}
 
 /** AI Use Assessment's artefacts, from the stored assessment. status: recorded (signed off), draft or none. */
 export function assessmentArtefacts(d, updatedAt) {
@@ -122,14 +135,15 @@ export function assessmentArtefacts(d, updatedAt) {
     ['EP', 'Engagement plan', by('Set agreed (R1)', !!d.engagement)],
     ['FN', 'Findings F1 to F4, as issued in the in-use feed', f ? ['recorded', f.generated || f.on, 'Issued to AI Risk Appetite'] : ['none', null, '']],
   ];
-  return rows.map(([id, name, [s, at, note]]) => art('UA', id, name, s, at, note));
+  const lite = liteNote(d), scoped = id => lite && id !== 'EP'; // the engagement plan covers the engagement, not the register
+  return rows.map(([id, name, [s, at, note]]) => art('UA', id, name, s, at, scoped(id) && s !== 'none' ? [note, lite].filter(Boolean).join(' · ') : note));
 }
 
 /** AI Risk Appetite's artefacts, from the stored engagement. The outputs share the calibration set's approval. */
 export function appetiteArtefacts(d, updatedAt) {
   d = d || {};
   const c = d.calibration || {}, approved = c.status === 'approved', started = approved || c.status === 'working' || c.status === 'agreed' || !!c.agreedOn || (c.version || 0) > 0;
-  const withCal = has => approved ? ['recorded', c.approvedOn, 'Approved by the board' + (c.minuteRef ? ', minute ' + c.minuteRef : '')] : (has || started) ? ['draft', c.agreedOn || updatedAt, c.agreedOn ? 'Agreed by the CRO; not yet approved by the board' : 'Not yet approved by the board'] : ['none', null, ''];
+  const withCal = has => approved ? ['recorded', c.approvedOn, 'Approved by the board' + minuteText(c.minuteRef)] : (has || started) ? ['draft', c.agreedOn || updatedAt, c.agreedOn ? 'Agreed by the CRO; not yet approved by the board' : 'Not yet approved by the board'] : ['none', null, ''];
   const lim = ((d.aims || {}).limits || []), inUse = d.inUse;
   const rows = [
     ['pack', 'Board pack', withCal()], ['paper', 'Board paper (plain words)', withCal()], ['statement', 'AI risk appetite statement', withCal()],
@@ -146,7 +160,7 @@ export function appetiteArtefacts(d, updatedAt) {
 export function boardArtefacts(d) {
   d = d || {};
   const e = d.engagement || {}, mode = e.mode || 'standalone', res = d.resolution || {}, resolved = !!res.by, dir = d.directions || {}, inv = d.inventory || [];
-  const draftOr = (has, at) => resolved ? ['recorded', res.on, 'Resolved by the board' + (res.minuteRef ? ', minute ' + res.minuteRef : '')] : has ? ['draft', at || null, 'Draft until the board resolves'] : ['none', null, ''];
+  const draftOr = (has, at) => resolved ? ['recorded', res.on, 'Resolved by the board' + minuteText(res.minuteRef)] : has ? ['draft', at || null, 'Draft until the board resolves'] : ['none', null, ''];
   const edu = Object.values(d.education || {}), done = edu.filter(x => x && x.completedOn), bv = d.boardViews || [];
   const rows = [
     ['inventory', 'AI inventory (B1)', inv.length], ['statement', 'AI risk appetite statement', true], ['directions', 'Board directions paper', true],
