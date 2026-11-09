@@ -6,6 +6,8 @@ Privileged and confidential · prepared at the direction of counsel · worked ex
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
 
+Evidence for: APRA letter B1, B2 · ISO/IEC 42001 5.1, 6.2.
+
 - **To:** The Board
 - **Meeting:** [meeting and date]
 - **Subject:** AI risk appetite, version 1, for Corvane General Insurance (fictional)

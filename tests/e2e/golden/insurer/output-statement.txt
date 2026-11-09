@@ -6,6 +6,8 @@ Privileged and confidential · prepared at the direction of counsel · worked ex
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
 
+Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.
+
 ## 1. Purpose and scope
 
 This statement covers AI used by Corvane General Insurance (fictional), by its material service providers, and by the platforms behind them. It sits within Corvane General Insurance (fictional)'s board-approved risk appetite statement, and uses the loss thresholds and critical operation tolerance levels the board has already approved.
