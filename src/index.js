@@ -2,3 +2,4 @@
 // Kept apart so the unit tests can load src/worker.js without the Cloudflare runtime.
 export { default } from './worker.js';
 export { AppetiteService } from './service.js';
+export { StatusService } from './status-service.js';
