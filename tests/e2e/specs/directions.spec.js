@@ -13,7 +13,7 @@ test('decision 1 shows the board’s directions, and K11 holds back a ceiling ab
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto('/');
-  await expect(p.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await expect(p.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   const before = await p.evaluate(() => window.RAF.checks().map(k => k.id));
   expect(before).not.toContain('K11'); // no directions loaded: K11 does not run
 

@@ -514,14 +514,26 @@ function roleSelect(id) { const cur = UI.personId ? 'p:' + UI.personId : 'r:' + 
   return `<select id="${id}" data-act="role" aria-label="Acting as">${S.people.length ? `<optgroup label="People">${S.people.map(p => `<option value="p:${esc(p.id)}" ${cur === 'p:' + p.id ? 'selected' : ''}>${esc(p.name || 'Unnamed')} · ${esc(rolesText(p))}</option>`).join('')}</optgroup>` : ''}<optgroup label="Role only">${C.roles.map(r => `<option value="r:${r.id}" ${cur === 'r:' + r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup></select>`; }
 const stepOf = s => s === 'overview' || /^d\d$/.test(s) ? 'decisions' : s;
 /* Privilege marking and the appetite's status, shown under the header on every engagement screen. */
+/* The demo band (public/suite.js, on the demo and test sites) carries the worked example's note, so the app shows no
+   band of its own for it there. A client site has no demo band and keeps the app's band. */
+const suiteBand = () => (document.documentElement.getAttribute('data-suite-demo') || 'on') !== 'off';
+const EXAMPLE_NOTE = 'Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.';
+function suiteNote() {
+  const h = S && S.engagement.example && suiteBand() ? `<span class="examplenote"><span class="tsu-long">${EXAMPLE_NOTE}</span><span class="tsu-short">Worked example, fictional. Nothing is saved.</span><button data-act="leavePractice">Leave<span class="tsu-long"> the worked example</span></button></span>` : '';
+  if (window.TriodianSuiteNote !== h) { window.TriodianSuiteNote = h; window.dispatchEvent(new Event('triodian:note')); }
+}
+/* In the header the worked example is named once, by its note. The names and the marking keep their "fictional" and
+   "worked example" wording everywhere else (the outputs and set-up); the header shows them without the repeat. */
+const hdrName = s => practice() ? String(s || '').replace(/\s*\(fictional\)\s*$/, '') : s;
+const hdrMarking = s => practice() ? String(s || '').replace(/\s*·\s*worked example\s*$/i, '') : s;
 function docband() {
   if (!S) return '';
   const e = S.engagement, admin = SRV.user && SRV.user.isAdmin && !practice();
-  const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(e.privilegeMarking)}</span>`
+  const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(hdrMarking(e.privilegeMarking))}</span>`
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
-  const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>` : e.example ? `<span class="stat pr-ctl"><span class="pr-tag">Worked example</span><label class="chip pchip"><span>Acting as</span>${roleSelect('role-hdr')}</label></span>`
-    : `<span class="stat">${e.insurer ? `<strong>${esc(e.insurer)}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>`;
-  return `<div class="docband ${e.example || UI.archived ? 'practice' : ''}"><div class="docband-in"><span style="display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap">${priv}${TriodianBrand.chip(e.practitioner)}</span>${right}</div></div>`;
+  const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>`
+    : `<span class="stat">${e.insurer ? `<strong>${esc(hdrName(e.insurer))}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>${e.example ? `<label class="chip pchip actingas"><span>Acting as</span>${roleSelect('role-hdr')}</label>` : ''}`;
+  return `<div class="docband ${UI.archived ? 'practice' : ''}"><div class="docband-in"><span class="docband-l">${TriodianBrand.chip(e.practitioner && practice() ? Object.assign({}, e.practitioner, { firm: hdrName(e.practitioner.firm) }) : e.practitioner)}${priv}</span>${right}</div></div>`;
 }
 function header(ck) {
   const b = bp(), fails = blocking(ck).length, cur = stepOf(UI.screen);
@@ -538,7 +550,7 @@ function header(ck) {
       ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
     </div></div>${docband()}</header>
-    ${S && S.engagement.example ? '<div class="examplebar">Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved. <button class="lnk" data-act="leavePractice">Leave the worked example</button></div>' : ''}`;
+    ${S && S.engagement.example && !suiteBand() ? `<div class="examplebar examplenote">${EXAMPLE_NOTE} <button class="lnk" data-act="leavePractice">Leave the worked example</button></div>` : ''}`;
 }
 function drawer() {
   if (!UI.drawer) return '';
@@ -647,7 +659,7 @@ function guideOverlay() {
       <li>The board has not yet approved the appetite.</li>
     </ul>
     <div class="guide-box"><h2 class="sh">In practice mode</h2><ul>
-      <li>You can act as any role, using “Acting as” in the yellow bar, to see what each role can and cannot change.</li>
+      <li>You can act as any role, using “Acting as” under the header, to see what each role can and cannot change.</li>
       <li>Nothing you do is saved. You can leave practice mode at any time from the same bar.</li></ul></div>
     <div class="row between guide-acts">${close}<button class="btn primary" data-act="example">Open the worked example</button></div>`;
   }
@@ -1359,6 +1371,7 @@ function switchPack(from) {
 }
 function applyPack() { const id = packId(); if (C && C.pack === id) return; C = TriodianPacks.resolve(BASE, id); N = BASE.packs[C.pack].nouns; ROLE_NAME.risk = N.Entity + ' risk'; }
 function doRender() {
+  suiteNote();
   applyPack();
   const app = document.getElementById('app'); lastBp = bp();
   if (AREA !== 'app') return renderArea(app);
@@ -1777,7 +1790,7 @@ function saveLabel() {
   if (!SRV.on) return ['b-ochre', 'Not saved', 'The server is not reachable. Download a copy from the menu to keep your work.'];
   return { saved: ['b-green', 'Saved', SRV.lastAt ? 'Saved ' + fmtLocal(SRV.lastAt) + ' by ' + SRV.lastBy : 'Saved'], pending: ['b-grey', 'Saving…', 'Changes will be saved in a moment'], saving: ['b-grey', 'Saving…', 'Saving'], error: ['b-red', 'Not saved', SRV.err], conflict: ['b-red', 'Changed elsewhere', SRV.err] }[SRV.state] || ['b-grey', '', ''];
 }
-function saveChip() { const l = saveLabel(); if (!l || !l[1]) return ''; return `<button class="badge ${l[0]}" id="savechip" data-act="saveChip" title="${esc(l[2])}" aria-label="${esc(l[1])}" style="cursor:pointer"><span class="sdot" aria-hidden="true"></span><span class="st">${esc(l[1])}</span></button>`; }
+function saveChip() { const l = saveLabel(); if (!l || !l[1] || practice()) return ''; return `<button class="badge ${l[0]}" id="savechip" data-act="saveChip" title="${esc(l[2])}" aria-label="${esc(l[1])}" style="cursor:pointer"><span class="sdot" aria-hidden="true"></span><span class="st">${esc(l[1])}</span></button>`; }
 function paintSave() { const el = document.getElementById('savechip'); if (el) el.outerHTML = saveChip(); }
 /* Loads the saved engagement (or the start screen if none). */
 async function loadReal(quiet) {

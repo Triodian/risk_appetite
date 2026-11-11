@@ -26,9 +26,9 @@ test('the worked example carries the practitioner’s branding in the header and
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(String(e))); page.on('dialog', d => d.accept());
   await page.goto('/');
-  await expect(page.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   const chip = page.locator('.brandchip').first();
-  await expect(chip).toContainText(FIRM);
+  await expect(chip).toContainText('Askew Lane Partners'); // the header names the worked example once, in its note, so the name drops "(fictional)" there
   await expect(chip.locator('img')).toHaveCount(1);
   const dl = page.waitForEvent('download');
   await DOWNLOAD(page);

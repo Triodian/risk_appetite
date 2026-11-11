@@ -4,13 +4,12 @@ Decisions
 Checks
 Challenge
 Outputs
-Practice · not saved
 3 checks failing
 DH
 ☰
-Privileged and confidential · prepared at the direction of counsel · worked example
-Askew Lane Partners (fictional)
-Worked example
+Askew Lane Partners
+Privileged and confidential · prepared at the direction of counsel
+Corvane General Insurance · RAF-CGI-2026-01
 Acting as
 Priya Natarajan · CRO
 Tom Ellery · Insurer risk
@@ -26,8 +25,6 @@ CRO
 Insurer risk function
 Independent reviewer
 Board record
-Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.
-Leave the worked example
 Decision 7 · session 2
 Triggers
 

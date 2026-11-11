@@ -15,7 +15,7 @@ test('the limits register and the Statement of Applicability load, and K11 names
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 1280, height: 900 } });
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto('/'); await expect(p.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await p.goto('/'); await expect(p.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   let limits = fx('ai-limits.csv'); SUPER.forEach((n, i) => { limits = limits.split(n).join(INS[i]); });
   await p.evaluate(({ limits, soa }) => { window.RAF.useAims('limits', limits, 'ai-limits.csv'); window.RAF.useAims('soa', soa, 'statement-of-applicability.csv'); }, { limits, soa: fx('statement-of-applicability.csv') });
   const r = await p.evaluate(() => ({ aims: window.RAF.state.aims, res: window.RAF.limits(), k11: window.RAF.checks().find(k => k.id === 'K11') }));

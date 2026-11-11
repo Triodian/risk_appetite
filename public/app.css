@@ -463,3 +463,10 @@ table.redline ins{color:var(--green);text-decoration:none;font-weight:600}
 .acts .act:hover{border-color:var(--ink-soft)}
 /* Admin and profile header on a phone: the tabs take the free width and scroll, so none is hidden behind the avatar. */
 @media (max-width:639px){body:has(.area-tabs) .hdr-in .apptitle,body:has(.area-tabs) .hdr-in .vrule,body:has(.area-tabs) #savechip{display:none}.area-tabs{flex:1 1 auto;min-width:0}.area-tabs button{padding-left:8px;padding-right:8px}}
+
+/* Header band: the firm, then the marking; the review and the practice chooser on the right. */
+.docband-l{display:inline-flex;align-items:center;gap:6px 14px;min-width:0}
+.docband .stat{margin-left:auto;flex:0 1 auto}
+.docband .actingas{flex:0 0 auto;text-transform:none;letter-spacing:0;padding:2px 8px;font-weight:500;border-radius:6px}
+.docband .actingas select{max-width:190px;text-overflow:ellipsis}
+@media (max-width:1023px){.docband-l{flex-wrap:wrap}}
