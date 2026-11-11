@@ -532,7 +532,7 @@ function docband() {
   const priv = e.privilegeMarking ? `<span class="priv" title="Privilege marking · printed as the first line of every output">${esc(hdrMarking(e.privilegeMarking))}</span>`
     : `<span class="priv none">No privilege marking set.${admin ? ' <a href="/admin/#set-up">Set it in Admin</a>' : ' Counsel directs the marking.'}</span>`;
   const right = UI.archived ? `<span class="stat pr-ctl"><span class="pr-tag">Earlier review · ${esc(UI.archived.label)} · read only</span><button class="lnk" data-act="leaveArchive">Back to the current review</button></span>`
-    : `<span class="stat">${e.insurer ? `<strong>${esc(hdrName(e.insurer))}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>${e.example ? `<label class="chip pchip actingas"><span>Acting as</span>${roleSelect('role-hdr')}</label>` : ''}`;
+    : `<span class="stat">${e.insurer ? `<strong>${esc(hdrName(e.insurer))}</strong>${e.reference ? ' · ' + esc(e.reference) : ''}` : ''}</span>${e.example ? `<label class="chip pchip actingas" title="Acting as · practice only: choose whose view to try"><span aria-hidden="true">⌾</span>${roleSelect('role-hdr')}</label>` : ''}`;
   return `<div class="docband ${UI.archived ? 'practice' : ''}"><div class="docband-in"><span class="docband-l">${TriodianBrand.chip(e.practitioner && practice() ? Object.assign({}, e.practitioner, { firm: hdrName(e.practitioner.firm) }) : e.practitioner)}${priv}</span>${right}</div></div>`;
 }
 function header(ck) {
