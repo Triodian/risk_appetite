@@ -8,7 +8,7 @@ test('the board paper generates from the worked example', async ({ browser }) =>
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 1280, height: 900 }, timezoneId: 'Australia/Brisbane' });
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto('/'); await expect(p.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await p.goto('/'); await expect(p.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   const md = await p.evaluate(() => window.RAF.output('paper'));
   if (process.env.SHOW_PAPER) writeFileSync(process.env.SHOW_PAPER, md);
   expect(md.split('\n')[0]).not.toBe('');

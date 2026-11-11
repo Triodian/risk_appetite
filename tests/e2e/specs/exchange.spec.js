@@ -9,7 +9,7 @@ test('writes: the calibration set and the board view, from the worked example', 
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN } });
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const p = await ctx.newPage(); await p.goto('/');
-  await expect(p.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await expect(p.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   const { set, state } = await p.evaluate(() => ({ set: window.RAF.calibrationSet(), state: JSON.parse(JSON.stringify(window.RAF.state)) }));
   expect(exchangeErrors('calibration-set-v1.schema.json', set)).toEqual([]);
   // the board view as GET /api/board-view answers it for that engagement, once agreed and approved

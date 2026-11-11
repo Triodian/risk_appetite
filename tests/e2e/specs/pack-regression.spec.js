@@ -16,7 +16,7 @@ async function capture(browser) {
   await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); } catch (e) {} });
   const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(String(e)));
   await page.goto('/');
-  await expect(page.locator('.examplebar', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
   const got = await page.evaluate(async ({ SCREENS, OUTPUTS }) => {
     const d = new Date(), M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const p2 = (n) => String(n).padStart(2, '0');
