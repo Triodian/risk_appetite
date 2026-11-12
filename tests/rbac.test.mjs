@@ -75,6 +75,13 @@ const req = (path, body) => ({ method: 'POST', path, email: 'admin@x.com', text:
   ok('an unknown role is refused', b.status === 400 && /Unknown engagement role/.test(b.body.error));
   const c = await handle(req('/api/admin/users', { email: 'x3@x.com', name: 'Y', role: 'risk' }), store);
   ok('an older client sending one role still works', c.status === 201 && s.users.find(x => x.email === 'x3@x.com').roles.join() === 'risk');
-  ok('the audit records the roles', s.audits.some(x => x.action === 'user.create' && (x.detail.roles || []).join() === 'gc,cro')); }
+  ok('the audit records the roles', s.audits.some(x => x.action === 'user.create' && (x.detail.roles || []).join() === 'gc,cro'));
+  // Independence (development plan task 7.5): the risk or AI governance function proposes; it does not also review.
+  const d = await handle(req('/api/admin/users', { email: 'x4@x.com', name: 'Z', roles: ['risk', 'independent'] }), store);
+  ok('a person in the risk or AI governance function cannot also be the independent reviewer', d.status === 400 && /cannot also be the independent reviewer/.test(d.body.error) && !s.users.some(x => x.email === 'x4@x.com'));
+  const e = await handle(req('/api/admin/users', { email: 'x5@x.com', name: 'W', roles: ['independent'] }), store);
+  ok('the independent reviewer on their own is added as before', e.status === 201);
+  const { ROLES } = await import('../lib/core/roles.js');
+  ok('the risk seat keeps its id and is named for both functions', ROLES.find(r => r.id === 'risk').name === 'Risk or AI governance function'); }
 
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);
