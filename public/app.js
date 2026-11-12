@@ -1990,7 +1990,7 @@ const EXAMPLES = [
 const EX_SECTOR = 'triodian.example.sector';
 function exampleChoice() {
   let id = '';
-  try { const q = new URLSearchParams(location.search).get('example'); if (q) { sessionStorage.setItem(EX_SECTOR, q); markExampleLeft(false); history.replaceState(null, '', location.pathname + location.hash); } id = sessionStorage.getItem(EX_SECTOR) || ''; } catch (e) {}
+  try { const u = new URLSearchParams(location.search), q = u.get('example'); if (q) { sessionStorage.setItem(EX_SECTOR, q); markExampleLeft(false); u.delete('example'); const rest = u.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); } id = sessionStorage.getItem(EX_SECTOR) || ''; } catch (e) {}
   return EXAMPLES.find(x => x.id === id) || EXAMPLES[0];
 }
 const setExampleChoice = id => { try { sessionStorage.setItem(EX_SECTOR, id); } catch (e) {} };

@@ -18,6 +18,9 @@ test('?example=superannuation opens Coastline Super with the super pack, the boa
   const { ctx, p } = await start(browser, '/?example=superannuation');
   await expect(p.locator('.examplenote').first()).toContainText('a fictional superannuation trustee, Coastline Super');
   await expect(p).toHaveURL(/\/(#.*)?$/);
+  await p.goto('/?other=1&example=superannuation');                // only its own parameter is removed, so the suite's stays for the suite to read
+  await expect(p).toHaveURL(/\/\?other=1(#.*)?$/);
+  await expect(p.locator('.examplenote', { hasText: 'Coastline Super' }).first()).toBeVisible({ timeout: 15_000 });
   const s = await p.evaluate(() => { const S = window.RAF.state, ck = window.RAF.checks(); const last = S.calibration.issued[S.calibration.issued.length - 1];
     return { name: S.engagement.insurer, pack: S.engagement.sectorPack, fns: S.functions.map(f => f.id).join(), cal: S.calibration.status, issued: S.calibration.issued.map(i => i.status).join(), failing: ck.filter(k => k.state === 'fail').map(k => k.id),
       dir: S.boardDirections.file.company + ' ' + S.boardDirections.file.version, claims: last.set.parameters.P1['Claims and group insurance'], k11: (ck.find(k => k.id === 'K11') || {}).state,
