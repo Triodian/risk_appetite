@@ -517,9 +517,9 @@ const stepOf = s => s === 'overview' || /^d\d$/.test(s) ? 'decisions' : s;
 /* The demo band (public/suite.js, on the demo and test sites) carries the worked example's note, so the app shows no
    band of its own for it there. A client site has no demo band and keeps the app's band. */
 const suiteBand = () => (document.documentElement.getAttribute('data-suite-demo') || 'on') !== 'off';
-const EXAMPLE_NOTE = 'Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.';
+const exampleNote = () => exampleChoice().note;
 function suiteNote() {
-  const h = S && S.engagement.example && suiteBand() ? `<span class="examplenote"><span class="tsu-long">${EXAMPLE_NOTE}</span><span class="tsu-short">Worked example, fictional. Nothing is saved.</span><button data-act="leavePractice">Leave<span class="tsu-long"> the worked example</span></button></span>` : '';
+  const h = S && S.engagement.example && suiteBand() ? `<span class="examplenote"><span class="tsu-long">${esc(exampleNote())}</span><span class="tsu-short">Worked example, fictional. Nothing is saved.</span><button data-act="leavePractice">Leave<span class="tsu-long"> the worked example</span></button></span>` : '';
   if (window.TriodianSuiteNote !== h) { window.TriodianSuiteNote = h; window.dispatchEvent(new Event('triodian:note')); }
 }
 /* In the header the worked example is named once, by its note. The names and the marking keep their "fictional" and
@@ -550,7 +550,7 @@ function header(ck) {
       ${avatar()}
       <button class="iconbtn" data-act="drawer" aria-label="Menu" aria-expanded="${UI.drawer}">☰</button>
     </div></div>${docband()}</header>
-    ${S && S.engagement.example && !suiteBand() ? `<div class="examplebar examplenote">${EXAMPLE_NOTE} <button class="lnk" data-act="leavePractice">Leave the worked example</button></div>` : ''}`;
+    ${S && S.engagement.example && !suiteBand() ? `<div class="examplebar examplenote">${esc(exampleNote())} <button class="lnk" data-act="leavePractice">Leave the worked example</button></div>` : ''}`;
 }
 function drawer() {
   if (!UI.drawer) return '';
@@ -565,7 +565,7 @@ function drawer() {
     <div class="grp">Engagement</div>
     <button class="item" data-act="guide" data-g="setup" data-explicit="1">How an engagement runs</button>
     <div class="grp">Practice</div>
-    ${practice() ? '<button class="item" data-act="leavePractice">Leave the worked example</button>' : '<button class="item" data-act="example">Open the worked example</button>'}
+    ${EXAMPLES.map(x => practice() && exampleChoice().id === x.id ? '' : `<button class="item" data-act="example" data-ex="${x.id}">Open the worked example · ${esc(x.name)}</button>`).join('')}${practice() ? '<button class="item" data-act="leavePractice">Leave the worked example</button>' : ''}
     <p class="small soft" style="padding:0 10px">The worked example is fictional and runs in this browser only. Nothing in it is saved.</p>
     ${SRV.on ? '' : '<p class="small soft" style="padding:4px 10px">The server is not reachable.</p><button class="item" data-act="save">Download a copy to keep your work (.json)</button>'}
     <div class="grp">Apps</div>
@@ -592,7 +592,7 @@ function entry() {
   const u = SRV.user;
   let acts = '', note = '';
   const opt = (attrs, title, text) => `<${attrs.startsWith('href') ? 'a' : 'button'} class="act" ${attrs} ${attrs.startsWith('href') ? 'style="text-decoration:none"' : ''}><span><strong>${title}</strong><br><span class="small soft">${text}</span></span><span class="act-go" aria-hidden="true"></span></${attrs.startsWith('href') ? 'a' : 'button'}>`;
-  const practice = opt('data-act="example"', 'Open the worked example', 'A fictional general insurer, part-way through the second session. Nothing you do there is saved.');
+  const practice = EXAMPLES.map(x => opt(`data-act="example" data-ex="${x.id}"`, 'Open the worked example · ' + esc(x.name), esc(x.offer) + ' Nothing you do there is saved.')).join('');
   if (!SRV.checked) note = 'Connecting…';
   else if (SRV.code === 'no_access') note = `${esc(SRV.reason)} <a href="/auth/logout">Sign out</a>`;
   else if (!SRV.on) { note = `The server could not be reached (${esc(SRV.reason)}). You can still use the worked example.`; acts = practice; }
@@ -627,7 +627,7 @@ function exampleSummary() {
     return { X, ck, failing, decs, people: X.people.length, inputs: X.inputs.filter(i => i.status === 'received').length,
       chOpen: X.challenge.filter(c => c.status === 'open').length, chAll: X.challenge.length,
       qcOpen: X.questionsForCounsel.filter(q => q.status !== 'answered').length, qcAll: X.questionsForCounsel.length };
-  } finally { S = old; UI.role = oldRole; UI.forceRole = oldForce; }
+  } finally { S = old; UI.role = oldRole; UI.forceRole = oldForce; applyPack(); }
 }
 function guideOverlay() {
   const g = UI.guide, close = `<span class="row" style="gap:16px"><button class="btn" data-act="guideBack">Back</button><a href="/user-guide/${g === 'setup' ? '#fit' : '#start'}">Read the full user guide</a></span>`;
@@ -644,19 +644,19 @@ function guideOverlay() {
   } else {
     const x = exampleSummary(), e = x.X.engagement, done = x.decs.filter(o => o.st.gate), open = x.decs.filter(o => !o.st.gate);
     body = `<h1 id="entry-h" class="h1">The worked example</h1>
-    <p class="sub" style="font-size:18px">${esc(e.insurer.replace(/\s*\(fictional\)/i, ''))} is a fictional general insurer. The example shows an engagement part-way through the second session, so you can see each screen with realistic content.</p>
+    <p class="sub" style="font-size:18px">${esc(e.insurer.replace(/\s*\(fictional\)/i, ''))} is ${esc(exampleChoice().what)}. ${x.X.calibration.status === 'approved' ? 'The example shows an engagement after the board has approved the appetite' : 'The example shows an engagement part-way through the second session'}, so you can see each screen with realistic content.</p>
     <h2 class="sh" style="margin-top:22px">What has been done</h2>
     <ul class="done">
-      <li><strong>Set-up is complete.</strong> ${cap(numW(x.people))} people are recorded, including the CRO, three members of the ${N.entity} risk function, counsel from ${esc(e.counselFirm)}, the Triodian recorder and an independent reviewer. ${cap(numW(x.X.criticalOperations.length))} critical operations are recorded with their tolerance levels, and ${x.inputs === 11 ? 'all 11 inputs are' : x.inputs + ' of the 11 inputs are'} marked as received.</li>
-      <li><strong>Session 1 is complete</strong> (dated ${esc(fmtDate(e.sessionDates[0]))}), and <strong>session 2 is under way</strong> (dated ${esc(fmtDate(e.sessionDates[1]))}).</li>
+      <li><strong>Set-up is complete.</strong> ${cap(numW(x.people))} people are recorded, including the CRO, ${numW(x.X.people.filter(p => rolesOf(p).includes('risk')).length)} members of the ${N.entity} risk function, counsel from ${esc(e.counselFirm)}, the Triodian recorder and an independent reviewer. ${cap(numW(x.X.criticalOperations.length))} critical operations are recorded with their tolerance levels, and ${x.inputs === 11 ? 'all 11 inputs are' : x.inputs + ' of the 11 inputs are'} marked as received.</li>
+      <li><strong>Session 1 is complete</strong> (dated ${esc(fmtDate(e.sessionDates[0]))}), and <strong>session 2 is ${x.X.calibration.status === 'default' ? 'under way' : 'complete'}</strong> (dated ${esc(fmtDate(e.sessionDates[1]))}).</li>
       <li><strong>Positions are recorded</strong> on all eight decisions. ${done.length ? `Decision${done.length === 1 ? '' : 's'} ${listN(done.map(o => o.d.n))} ${done.length === 1 ? 'is' : 'are'} complete.` : ''} ${open.length ? `Decision${open.length === 1 ? '' : 's'} ${listN(open.map(o => o.d.n))} still ${open.length === 1 ? 'has' : 'have'} gaps.` : ''}</li>
-      <li><strong>Challenge has started.</strong> ${cap(numW(x.chAll))} challenge point${x.chAll === 1 ? ' has' : 's have'} been raised (${numW(x.chOpen)} still open), and ${numW(x.qcAll)} question${x.qcAll === 1 ? ' has' : 's have'} been recorded for counsel (${numW(x.qcOpen)} awaiting an answer).</li>
+      <li><strong>${x.chOpen ? 'Challenge has started.' : 'Challenge is closed.'}</strong> ${cap(numW(x.chAll))} challenge point${x.chAll === 1 ? ' has' : 's have'} been raised (${numW(x.chOpen)} still open), and ${numW(x.qcAll)} question${x.qcAll === 1 ? ' has' : 's have'} been recorded for counsel (${numW(x.qcOpen)} awaiting an answer).</li>
     </ul>
     <h2 class="sh" style="margin-top:18px">What is left to do</h2>
     <ul class="todo">
       ${x.failing.length ? `<li>${cap(numW(x.failing.length))} of the nine blocking checks fail: ${esc(listN(x.failing.map(k => k.id + ' (' + k.name + ')')))}. On the Checks page, each failure links to the position concerned.</li>` : '<li>All blocking checks pass.</li>'}
-      <li>The CRO has not yet agreed the working appetite, so the calibration set is still uncalibrated.</li>
-      <li>The board has not yet approved the appetite.</li>
+      ${x.X.calibration.status === 'default' ? '<li>The CRO has not yet agreed the working appetite, so the calibration set is still uncalibrated.</li>' : `<li>The CRO agreed the working appetite on ${esc(fmtDate(x.X.calibration.agreedOn))}.</li>`}
+      ${x.X.calibration.status === 'approved' ? `<li>The board approved it on ${esc(fmtDate(x.X.calibration.approvedOn))}, so the calibration set is issued to the AI Use Assessment.</li>` : '<li>The board has not yet approved the appetite.</li>'}
     </ul>
     <div class="guide-box"><h2 class="sh">In practice mode</h2><ul>
       <li>You can act as any role, using “Acting as” under the header, to see what each role can and cannot change.</li>
@@ -1825,7 +1825,7 @@ async function leave(what) {
 const EX_LEFT = 'triodian.example.left';
 const exampleLeft = () => { try { return sessionStorage.getItem(EX_LEFT) === '1'; } catch (e) { return false; } };
 const markExampleLeft = left => { try { if (left) sessionStorage.setItem(EX_LEFT, '1'); else sessionStorage.removeItem(EX_LEFT); } catch (e) {} };
-const openExampleByDefault = () => !exampleLeft() && location.hash !== '#actions';
+const openExampleByDefault = () => { exampleChoice(); return !exampleLeft() && location.hash !== '#actions'; };   // a sector link from Triodian Start always opens the example
 function startPractice() { S = buildExample(); UI.personId = ''; UI.role = 'triodian'; UI.dirty = false; UI.sel = null; lastSig = null; go('overview'); }
 function startEngagement(state) {
   S = state; S.engagement.example = false; S.engagement.autosave = false; S.people = SRV.people.map(p => ({ ...p, areas: [] }));
@@ -1833,7 +1833,8 @@ function startEngagement(state) {
 }
 
 /* ---------- worked example (fictional) ---------- */
-function buildExample() {
+function buildExampleInsurer() {
+  setPack('generalInsurer');
   const X = newEngagement();
   Object.assign(X.engagement, { insurer: 'Corvane General Insurance (fictional)', reference: 'RAF-CGI-2026-01', counselFirm: 'Askew Lane Partners (fictional)', practitioner: { firm: 'Askew Lane Partners (fictional)', line: 'Prepared by Askew Lane Partners using the Triodian method', logo: TriodianBrand.EXAMPLE_LOGO }, privilegeMarking: 'Privileged and confidential · prepared at the direction of counsel · worked example', sessionDates: ['2026-10-15', '2026-10-22'], example: true, notificationHours: '72' });
   X.people = [
@@ -1895,6 +1896,107 @@ function buildExample() {
   S = old; UI.role = role; UI.forceRole = force; return X;
 }
 
+
+/* The superannuation worked example: Coastline Super, a fictional trustee, the same fund as the worked examples in AI
+   Board Direction and AI Use Assessment. The board's directions are loaded, every ceiling at decision 1 sits within
+   them except one, which carries its reason and the board's revisit, and the board has approved the appetite. So the
+   calibration set here is the one the assessment's example is measured against. */
+const SUPER_DIRECTIONS = {"format": "triodian.bd.directions.v1", "engagementId": "example-super", "company": "Coastline Super", "jurisdiction": "AU", "sector": "AU-SUPERANNUATION", "entityType": "superannuationTrustee", "sectorPack": "superTrustee", "version": "V2", "recordedOn": "2026-10-28T16:05:00Z", "recordedBy": "Helen Marchetti", "status": "confirmed", "beingRevised": false, "note": "The board’s directions, as the chair recorded them. They are read on the AI risk appetite decisions named on each. A position there that goes past a direction cannot form part of the working appetite until a reason is recorded and the board revisits it.", "directions": {"BD1": {"name": "Posture by area", "readOn": ["d1"], "areas": [{"id": "A1", "name": "Member services and communications", "posture": "S3", "postureLabel": "Open", "maxTier": "A4", "condition": "General information only; anything about a member’s own choices goes to a person"}, {"id": "A2", "name": "Claims and group insurance", "posture": "S2", "postureLabel": "Cautious", "maxTier": "A2", "condition": "A person decides every death or disablement claim"}, {"id": "A3", "name": "Advice", "posture": "S2", "postureLabel": "Cautious", "maxTier": "A2", "condition": "A person reviews anything that goes beyond general information"}, {"id": "A4", "name": "Investments", "posture": "S3", "postureLabel": "Open", "maxTier": "A4", "condition": "Within the investment delegations; no AI places or changes an investment"}, {"id": "A5", "name": "Administration and payments", "posture": "S3", "postureLabel": "Open", "maxTier": "A4", "condition": "Within the payment limits in the administration agreement; a person releases any held payment"}, {"id": "A6", "name": "Complaints and disputes", "posture": "S2", "postureLabel": "Cautious", "maxTier": "A2", "condition": ""}, {"id": "A7", "name": "Finance and reporting", "posture": "S2", "postureLabel": "Cautious", "maxTier": "A2", "condition": ""}, {"id": "A8", "name": "Legal and compliance", "posture": "S1", "postureLabel": "Avoid", "maxTier": "A1", "condition": ""}, {"id": "A9", "name": "Technology operations", "posture": "S3", "postureLabel": "Open", "maxTier": "A4", "condition": "No AI holds credentials to production systems unattended"}], "goals": [{"id": "GL1", "goal": "Use AI to give members faster, clearer service, without it standing in for a person where a member’s money or cover is decided", "owner": "Lucy Tran", "measure": "BM1: AI uses in the inventory, and how many are new since the last report"}, {"id": "GL2", "goal": "No member waits longer, or is paid wrongly, because of AI: ours or a provider’s", "owner": "Daniel Okafor", "measure": "BM3: material AI incidents"}, {"id": "GL3", "goal": "Know what AI the administrator, the group insurer and our other providers use on our members", "owner": "Anjali Deshmukh", "measure": "BM6: material providers whose use of AI on members is not known"}]}, "BD2": {"name": "Red lines", "readOn": ["d1", "d6"], "lines": [{"id": "RL1", "use": "AI declining a death or disablement claim with no person reviewing it", "scope": "Claims and group insurance", "appliesTo": "The trustee and its providers"}, {"id": "RL2", "use": "AI deciding a member’s severe financial hardship release with no person reviewing it", "scope": "Administration and payments", "appliesTo": "The trustee and its providers"}, {"id": "RL3", "use": "AI telling a member what to do with their super with no person reviewing it", "scope": "Member services and communications; Advice", "appliesTo": "The trustee and its providers"}, {"id": "RL4", "use": "Board, investment committee or transaction information (G6) entered into any tool outside the trustee’s own estate", "scope": "All areas", "appliesTo": "The trustee and its advisers"}]}, "BD3": {"name": "Reserved decisions", "readOn": ["d1", "d4"], "events": [{"id": "RV1", "event": "A new AI use at A3 (Decides) or above", "timing": "Before it starts", "by": "CEO"}, {"id": "RV2", "event": "A new AI use in an area marked Avoid", "timing": "Before it starts", "by": "CEO"}, {"id": "RV3", "event": "An exception to a red line", "timing": "Before it starts", "by": "CEO"}, {"id": "RV4", "event": "The administrator or the group insurer changing the AI it uses on members’ claims or payments", "timing": "Before it starts, where the agreement allows; otherwise told at the next meeting", "by": "CRO"}, {"id": "RV5", "event": "A material AI incident", "timing": "Told within 24 hours", "by": "CEO"}, {"id": "RV6", "event": "A change to the directions or the measures", "timing": "Before it takes effect", "by": "Chair"}], "reservedFrom": "A3"}, "BD4": {"name": "Confidential information", "readOn": [], "markings": {"G1:K1": "P", "G1:K2": "P", "G1:K3": "P", "G1:K4": "P", "G1:K5": "P", "G1:K7": "P", "G2:K1": "P", "G2:K2": "P", "G2:K3": "P", "G2:K4": "C", "G2:K5": "N", "G2:K7": "P", "G3:K1": "P", "G3:K2": "C", "G3:K3": "C", "G3:K4": "N", "G3:K5": "N", "G3:K7": "C", "G4:K1": "C", "G4:K2": "C", "G4:K3": "C", "G4:K4": "N", "G4:K5": "N", "G4:K7": "C", "G5:K1": "C", "G5:K2": "C", "G5:K3": "N", "G5:K4": "N", "G5:K5": "N", "G5:K7": "C", "G6:K1": "C", "G6:K2": "N", "G6:K3": "N", "G6:K4": "N", "G6:K5": "N", "G6:K7": "N"}, "conditions": ["With conditions means: only in a tool the trustee or a material service provider has under agreement, that does not train on members’ information, and only for the people who already have access to it.", "Members’ health and hardship information (G5) goes only into a provider’s tool named in its agreement with the trustee.", "Meeting AI may not run in board or investment committee meetings."]}, "BD5": {"name": "Harm not tolerated", "readOn": ["d2"], "harms": [{"id": "H1", "harmTo": "Customers or members", "notTolerated": "A member wrongly denied, delayed or paid a benefit or an insurance claim", "threshold": "Any single death, disablement or hardship payment; 10 or more members for any other payment"}, {"id": "H2", "harmTo": "Staff and applicants", "notTolerated": "A staff member or applicant treated unfairly by AI", "threshold": "Any pattern across a hiring or review round"}, {"id": "H3", "harmTo": "The company’s money", "notTolerated": "A wrong payment out of the fund", "threshold": "$250,000 in a single event or $1m in a quarter"}, {"id": "H4", "harmTo": "Operations", "notTolerated": "A critical operation stopped", "threshold": "Beyond its tolerance in the critical operations register"}, {"id": "H5", "harmTo": "Legal and regulatory standing", "notTolerated": "A breach of a law, a licence condition or a prudential standard", "threshold": "Any"}, {"id": "H6", "harmTo": "Reputation and trust", "notTolerated": "A public failure attributed to our use of AI, or a provider’s on our members", "threshold": "Any media or regulator attention"}]}, "BD6": {"name": "Reporting expected", "readOn": ["d7"], "measures": [{"id": "BM1", "measure": "AI uses in the inventory, and how many are new since the last report", "limit": "n/a", "owner": "CEO"}, {"id": "BM2", "measure": "Uses that cross a red line or exceed their area’s posture without board approval", "limit": "0", "owner": "CEO"}, {"id": "BM3", "measure": "Material AI incidents", "limit": "0", "owner": "CEO"}, {"id": "BM4", "measure": "Known uses of information marked N in B5", "limit": "0", "owner": "CEO"}, {"id": "BM5", "measure": "Actions on the 90-day list overdue", "limit": "2", "owner": "CEO"}, {"id": "BM6", "measure": "Material providers whose use of AI on members is not known", "limit": "0 by 30 June 2027", "owner": "CRO"}], "events": [{"id": "EV1", "event": "A material AI incident", "to": "Chair", "within": "24 hours"}, {"id": "EV2", "event": "A red line crossed", "to": "Chair", "within": "24 hours"}, {"id": "EV3", "event": "A regulator, a member or a provider raises AI use with the trustee", "to": "Chair and GC", "within": "2 working days"}, {"id": "EV4", "event": "A provider changes the AI it uses for an area marked Avoid or Cautious", "to": "CRO", "within": "10 working days"}]}, "BD7": {"name": "Accountability", "readOn": [], "owners": [{"id": "AC1", "role": "Board committee that oversees AI", "named": "Risk committee"}, {"id": "AC2", "role": "Director who leads on AI", "named": "David Oyelaran"}, {"id": "AC3", "role": "Executive accountable for AI overall", "named": "Grant Pfeiffer, CEO"}, {"id": "AC4", "role": "Owner of each area’s positions", "named": "Each executive for their area"}, {"id": "AC5", "role": "Who may approve an exception, and within what limit", "named": "The CEO with the CRO, for up to 90 days, reported under BM2"}]}}};
+function buildExampleSuper() {
+  setPack('superTrustee');
+  const X = newEngagement();
+  Object.assign(X.engagement, { insurer: 'Coastline Super (fictional)', reference: 'RAF-CS-2026-01', counselFirm: 'Askew Lane Partners (fictional)', practitioner: { firm: 'Askew Lane Partners (fictional)', line: 'Prepared by Askew Lane Partners using the Triodian method', logo: TriodianBrand.EXAMPLE_LOGO }, privilegeMarking: 'Privileged and confidential · prepared at the direction of counsel · worked example', sessionDates: ['2026-11-03', '2026-11-10'], example: true, notificationHours: '72',
+    overallPosition: 'Coastline Super accepts AI that assists and recommends across the fund, and AI that decides or moves money only in member services, investments support, administration and technology, within stated limits and where the trustee can see what it did. A person decides every death, disablement and hardship outcome. Where a provider’s AI acts on members, the trustee expects evidence it can check, not a statement it has to take on trust.' });
+  X.people = [
+    { id: 'p1', name: 'Anjali Deshmukh', organisation: 'Coastline Super', role: 'cro', areas: ['fi', 'lc'] },
+    { id: 'p2', name: 'Callum Brandt', organisation: 'Coastline Super · AI governance', role: 'risk', areas: ['to', 'ad'] },
+    { id: 'p3', name: 'Peter Andrianakis', organisation: 'Coastline Super · head of insurance and claims', role: 'risk', areas: ['ci', 'cd'] },
+    { id: 'p4', name: 'Daniel Okafor', organisation: 'Coastline Super · chief operating officer', role: 'risk', areas: ['ap', 'ms'] },
+    { id: 'p9', name: 'Sofia Lindqvist', organisation: 'Coastline Super · chief investment officer', role: 'risk', areas: ['iv'] },
+    { id: 'p5', name: 'Meredith Vance', organisation: 'Askew Lane Partners', role: 'counsel', areas: [] },
+    { id: 'p10', name: 'Rohan Castellano', organisation: 'Coastline Super · general counsel', role: 'gc', areas: [] },
+    { id: 'p6', name: 'Sam Okoro', organisation: 'Triodian', role: 'triodian', areas: [] },
+    { id: 'p7', name: 'Ingrid Solberg', organisation: 'Independent reviewer', role: 'independent', areas: [] },
+    { id: 'p8', name: 'Board secretariat', organisation: 'Coastline Super', role: 'board', areas: [] }
+  ];
+  X.functionsConfirmed = true;
+  X.criticalOperations = [
+    { id: 'o1', name: 'Benefit payments', tolerance: 'No more than 2 business days without the ability to pay benefits', source: 'Critical operations register v4' },
+    { id: 'o2', name: 'Contribution and rollover processing', tolerance: 'No more than 3 business days', source: 'Critical operations register v4' },
+    { id: 'o3', name: 'Insurance claims handling', tolerance: 'No more than 5 business days', source: 'Critical operations register v4' },
+    { id: 'o4', name: 'Member contact and enquiries', tolerance: 'No more than 2 business days', source: 'Critical operations register v4' }
+  ];
+  const rec = { I1: 'v2026.2, approved August 2026', I4: 'Four critical operations', I5: '38 providers, 7 material: the administrator, the group insurer, the custodian and four others', I6: 'Offshoring to approved jurisdictions only', I7: 'AI inventory of 13 uses, confirmed by the chief technology officer', I8: 'Administration agreement 2024; group policy renews 1 July 2027', I10: 'Material incidents to the regulator within 72 hours', I11: 'Risk committee 18 Nov 2026' };
+  X.inputs.forEach(i => { i.status = 'received'; i.date = '2026-10-30'; i.note = rec[i.ref] || ''; });
+  X.boardDirections = { source: 'board', loadedOn: '2026-10-29', file: JSON.parse(JSON.stringify(SUPER_DIRECTIONS)) };
+  // functions, in the pack's order: ms ci ad iv ap cd fi lc to. What the documents allow today, then the ceilings proposed.
+  const cur1 = { own: 'A2 A2 A2 A1 A2 A2 A1 A1 A2', provider: 'A2 A3 A2 A2 A4 A2 A1 A1 A3', platform: 'A1 A2 A1 A1 A3 A1 A1 A1 A2' };
+  X.functions.forEach((f, i) => C.locations.forEach(l => { X.current.d1[`d1.${f.id}.${l.id}`] = cur1[l.id].split(' ')[i]; }));
+  const cur3 = { A1: 'E0 E1 E1 E1 E1', A2: 'E1 E1 E2 E2 E2', A3: 'E1 E2 E2 E2 E3', A4: 'E2 E2 E3 E3 E3', A5: '', A6: '' };
+  AT.forEach(a => { if (cur3[a]) cur3[a].split(' ').forEach((e, j) => X.current.d3[`d3.${a}.${CO[j]}`] = e); });
+  X.current.commonPair = { tier: 'A3', consequence: 'C4' };
+  X.current.d2 = { C2: 'Breach of a material term of the administration agreement or the group policy', C3: '$250,000 in a single event; $1m in a quarter', C4: '10 or more members affected, or any single death, disablement or hardship payment wrongly denied or delayed' };
+  X.current.offshoring = 'Material service providers in Australia accepted. The administrator’s contact centre in the Philippines is accepted for calls only. Any other jurisdiction needs CRO approval and a legal review of audit and data access rights.';
+  X.decisions.d6.jurisdictions = [ { id: 'j1', name: 'Australia', start: 'Accepted' }, { id: 'j2', name: 'Philippines', start: 'Escalate' }, { id: 'j3', name: 'United States', start: 'Escalate' }, { id: 'j4', name: 'India', start: 'Escalate' } ];
+  const old = S; S = X; const role = UI.role, force = UI.forceRole; UI.role = 'cro'; UI.forceRole = true;
+  const put = (id, v, who, extra) => { const p = getPos(id); Object.assign(p, { value: v, status: 'set', proposedBy: who || 'p1', recordedBy: 'triodian', owner: defaultOwner(id), source: 'session' }, extra || {}); };
+  const who1 = { ms: 'p4', ci: 'p3', ad: 'p2', iv: 'p9', ap: 'p4', cd: 'p3', fi: 'p1', lc: 'p1', to: 'p2' };
+  const d1 = cur1;   // the board's directions leave room above some of these; the trustee proposes no more than its documents allow today
+  X.functions.forEach((f, i) => C.locations.forEach(l => put(`d1.${f.id}.${l.id}`, d1[l.id].split(' ')[i], who1[f.id])));
+  Object.assign(getPos('d1.ci.provider'), { reason: 'Triage only: the group insurer’s model sorts claims into fast-track or full review, and an assessor decides every decline', boardRevisit: 'Board meeting 25 November 2026', condition: 'No claim is declined without an assessor’s decision', testable: true });
+  Object.assign(getPos('d1.ap.provider'), { condition: 'Matching and payment within the limits in schedule 3 of the administration agreement; a person releases any held payment', testable: true, reason: 'The administrator’s matching engine already allocates contributions within those limits' });
+  Object.assign(getPos('d1.ms.provider'), { condition: 'General information only, as schedule 6 of the administration agreement defines it', testable: true, reason: 'The member portal assistant answers account questions and hands anything else to a person' });
+  Object.assign(getPos('d1.iv.provider'), { reason: 'Investment managers use research and screening tools that recommend; the trustee’s own team uses AI only to summarise' });
+  Object.assign(getPos('d1.to.provider'), { reason: 'The cloud platform’s monitoring acts on alerts without a person; a change to the trustee’s systems needs one' });
+  ['C2', 'C3', 'C4'].forEach(c => put(`d2.${c}`, X.current.d2[c], c === 'C3' ? 'p1' : c === 'C4' ? 'p7' : 'p4'));
+  X.criticalOperations.forEach(o => put(`d2.op.${o.id}`, o.tolerance, 'p1'));
+  Object.assign(getPos('d2.C4'), { dissent: 'The independent reviewer asked that a single delayed hardship payment count on its own, and the definition was changed to say so.' });
+  AT.forEach((a, i) => CO.forEach((c, j) => { const id = `d3.${a}.${c}`; const cv = X.current.d3[id]; let v = cv || (a === 'A5' ? 'E5' : 'E6'); if ((a === 'A3' || a === 'A4') && j >= 3) v = EV[Math.min(6, rk(EV, cv) + 1)]; put(id, v, 'p1'); }));
+  D('d4').gaps.forEach(g => D('d4').bands.forEach(b => put(`d4.${g.id}.${b.id}`, D('d4').matrix[g.id][b.id], 'p2')));
+  D('d4').priorities.forEach(p => { put(`d4.time.${p.id}`, p.limit, 'p1'); put(`d4.interim.${p.id}`, p.interim, 'p1'); });
+  D('d5').bands.forEach(b => { put(`d5.${b.id}.notKnown`, b.notKnown || (b.id === 'b3' ? '2' : ''), 'p1'); put(`d5.${b.id}.f4`, b.f4 || '30 June 2027; then the provider is asked', 'p1'); put(`d5.${b.id}.conf`, b.conf, 'p1'); });
+  [['j1', 'Accepted', 'Accepted'], ['j2', 'Escalate', 'Accepted'], ['j3', 'Escalate', 'Escalate'], ['j4', 'Escalate', 'Escalate']].forEach(([j, a, b]) => { put(`d6.j.${j}.established`, a, 'p1'); put(`d6.j.${j}.runs`, b, 'p1'); });
+  Object.assign(getPos('d6.concentration'), { status: 'notSet', notSetOwner: 'p1', notSetDue: '2027-03-31', recordedBy: 'triodian' });
+  const hrs = { TR1: '48', TR2: '48', TR3: '48', TR4: '12', TR5: '48', TR6: '48', TR7: '72' };
+  X.decisions.d7.triggers.forEach(t => { put(`d7.${t.ref}.threshold`, t.threshold, 'p2'); put(`d7.${t.ref}.time`, hrs[t.ref] || '48', 'p2'); put(`d7.${t.ref}.to`, t.ref === 'TR4' ? 'CRO and the accountable person for the function' : 'Arrangement owner', 'p2'); });
+  X.decisions.d8.events.forEach(e => put(`d8.ev.${e.id}`, e.revisit, 'p1'));
+  put('d8.interval', 'Annual, in the same cycle as the main risk appetite statement', 'p1');
+  X.questionsForCounsel = [
+    { ref: 'QC-01', decision: 'd2', cell: 'd2.C4', question: 'The board’s direction treats any single death, disablement or hardship payment wrongly denied or delayed as harm it will not tolerate. Does the definition at C4 need to change to match it before the statement goes to the board?', response: 'Yes: use the board’s words. Done at session 2.', status: 'answered' },
+    { ref: 'QC-02', decision: 'd7', cell: 'd7.TR4.time', question: 'Does 12 hours for TR4 leave enough room to meet the trustee’s own notification obligations?', response: 'Yes, on the current procedure. Confirm if I10 changes.', status: 'answered' }
+  ];
+  X.challenge = [
+    { ref: 'CH-01', raisedBy: 'p3', decision: 'd1', cell: 'd1.ci.provider', point: 'A3 inside the group insurer is above the board’s direction for claims. The reason should say what the model decides and what it does not.', response: 'Reason and condition updated: triage only, an assessor decides every decline. The board revisits it on 25 November.', status: 'accepted' },
+    { ref: 'CH-02', raisedBy: 'p7', decision: 'd2', cell: 'd2.C4', point: 'Ten or more members is a pattern. One member in hardship who waits because of AI is harm on its own.', response: 'Accepted. C4 now counts any single death, disablement or hardship payment.', status: 'accepted' }
+  ];
+  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1', M10: 'p1' };
+  X.history = [{ at: '2026-11-03T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-11-10T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
+  // The CRO agreed the working appetite and the board approved it, as agreeWorking() and recordApproval() record them.
+  if (!blocking(runChecks()).length) {
+    const c = X.calibration; c.version = 1; c.status = 'working'; c.agreedBy = 'Anjali Deshmukh'; c.agreedById = 'p1'; c.agreedOn = '2026-11-12';
+    c.issued.push({ version: 1, status: 'working', on: c.agreedOn, by: c.agreedBy, snapshot: snapshotNow() }); c.issued[0].set = calibrationSet();
+    c.status = 'approved'; c.approvedOn = '2026-11-25'; c.minuteRef = 'Board minute 2026/11-07'; c.approvedBy = 'The Board';
+    c.issued.push({ version: 1, status: 'approved', on: c.approvedOn, minuteRef: c.minuteRef, by: c.approvedBy, snapshot: snapshotNow() }); c.issued[1].set = calibrationSet();
+    X.history.push({ at: '2026-11-12T11:20:00.000Z', by: 'Anjali Deshmukh', action: 'agreeWorking', target: 'calibration', from: 'default v0', to: 'working v1', version: 1 }, { at: '2026-11-25T15:30:00.000Z', by: 'Board secretariat', action: 'approve', target: 'calibration', from: 'working v1', to: 'approved v1 · Board minute 2026/11-07', version: 1 });
+  }
+  S = old; UI.role = role; UI.forceRole = force; return X;
+}
+/* The worked examples this app has, by sector. The sector ids are the same in every Triodian app and in Triodian
+   Start, which opens an app on one with ?example=<id>; the choice is kept for this browser session. */
+const EXAMPLES = [
+  { id: 'insurance', name: 'Insurance', note: 'Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.', what: 'a fictional general insurer', offer: 'A fictional general insurer, part-way through the second session.', build: buildExampleInsurer },
+  { id: 'superannuation', name: 'Superannuation trustee', note: 'Worked example: a fictional superannuation trustee, Coastline Super, for practice only. Nothing is saved.', what: 'a fictional superannuation trustee', offer: 'A fictional superannuation trustee, with the board’s directions loaded and the appetite approved by its board.', build: buildExampleSuper },
+];
+const EX_SECTOR = 'triodian.example.sector';
+function exampleChoice() {
+  let id = '';
+  try { const u = new URLSearchParams(location.search), q = u.get('example'); if (q) { sessionStorage.setItem(EX_SECTOR, q); markExampleLeft(false); u.delete('example'); const rest = u.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); } id = sessionStorage.getItem(EX_SECTOR) || ''; } catch (e) {}
+  return EXAMPLES.find(x => x.id === id) || EXAMPLES[0];
+}
+const setExampleChoice = id => { try { sessionStorage.setItem(EX_SECTOR, id); } catch (e) {} };
+function setPack(id) { C = TriodianPacks.resolve(BASE, id); N = BASE.packs[C.pack].nouns; ROLE_NAME.risk = N.Entity + ' risk'; }
+function buildExample() { return exampleChoice().build(); }
+
 /* ---------- events ---------- */
 function onClick(e) {
   if (UI.acct && !e.target.closest('.acct')) { UI.acct = false; render(); }
@@ -1924,7 +2026,7 @@ function onClick(e) {
     admDismiss: async () => { await api('POST', '/api/admin/access-requests/dismiss', { email: d.email }); loadAdmin(); },
     cancelEmail: async () => { const r = await api('DELETE', '/api/me/email'); if (r.ok) { SRV.user = r.body.user; PRF.msg = 'Email change cancelled.'; } else PRF.err = r.error; render(); },
     new: () => { if (SRV.exists || AREA !== 'admin') return; startEngagement(newEngagement()); go('setup'); },
-    example: () => leave('open the worked example').then(ok => { if (ok) { UI.guide = null; markExampleLeft(false); startPractice(); } }),
+    example: () => leave('open the worked example').then(ok => { if (ok) { if (d.ex) setExampleChoice(d.ex); UI.guide = null; markExampleLeft(false); startPractice(); } }),
     guide: () => {
       if (introHidden() && !d.explicit) { if (d.g === 'practice') return A.example(); if (d.g === 'setup' && SRV.user && SRV.user.isAdmin) { location.href = '/admin/#set-up'; return; } }
       UI.guide = d.g; UI.drawer = false; render(); const o = document.querySelector('.overlay'); if (o) o.scrollTop = 0; },
