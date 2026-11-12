@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -28,11 +28,11 @@ Board record
 Checks K1 to K10
 Consistency checks
 
-3 of nine blocking checks failing. The working appetite cannot be agreed until K1 to K9 pass.
+4 of ten blocking checks failing. The working appetite cannot be agreed until K1 to K9 and K11 pass.
 
 The checks run after every change. A failed check is referred to the CRO; Triodian does not resolve it.
 
-Needs attention · 3
+Needs attention · 4
 K1
 Complete
 failed
@@ -62,6 +62,16 @@ Fails when: A trigger has no time limit, or a time limit longer than the insurer
 
 Decision 7 · TR7 Sub-contractor change · Notify within (hours) · 96 hours exceeds the 72-hour notification procedure (I10)
 Decision 7 · TR8 Location change · Notify within (hours) · no time recorded
+K11
+Within the board's direction
+failed
+
+2 items failing.
+
+Fails when: A ceiling in decision 1 is above the highest tier the board's posture accepts for that function (BD1), and no reason and board revisit are recorded. Runs only when board directions are loaded.
+
+Decision 1 · Claims · Own staff · A3 is above A2, the highest tier the board’s Cautious posture for Claims accepts (BD1), with no reason and board revisit recorded
+Decision 1 · Claims · Platform behind a provider · A3 is above A2, the highest tier the board’s Cautious posture for Claims accepts (BD1), with no reason and board revisit recorded
 passed
 7 checks passed: K2, K3, K4, K5, K6, K8, K10
 ← Decision 8

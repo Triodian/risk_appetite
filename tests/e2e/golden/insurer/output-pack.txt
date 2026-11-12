@@ -23,7 +23,7 @@ That the Board approve the AI risk appetite statement (version 1) and the tolera
 
 ## How the positions were reached
 
-The positions were proposed by Corvane General Insurance (fictional)'s CRO and risk function in sessions facilitated by Askew Lane Partners (fictional), with the independent reviewer advising on the consequence thresholds. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks show 3 checks failing (K1, K7, K9); these must be resolved before approval. The CRO has not yet agreed the working appetite.
+The positions were proposed by Corvane General Insurance (fictional)'s CRO and risk function in sessions facilitated by Askew Lane Partners (fictional), with the independent reviewer advising on the consequence thresholds. Each position is recorded with who proposed it and an accountable owner. The app's consistency checks show 4 checks failing (K1, K7, K9, K11); these must be resolved before approval. The CRO has not yet agreed the working appetite.
 
 ---
 
@@ -233,6 +233,7 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | K8 | Owned | passed |
 | K9 | Timed | failed |
 | K10 | Reachable | passed |
+| K11 | Within the board's direction | failed |
 
 # Attachment D. Glossary
 

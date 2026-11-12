@@ -18,7 +18,8 @@ That the Board approve the AI risk appetite (version 1) set out in this paper, w
 
 The board should also note:
 
-- 3 consistency checks are not passing (K1, K7, K9). The appetite cannot be agreed until K1 to K9 pass.
+- 4 consistency checks are not passing (K1, K7, K9, K11). The appetite cannot be agreed until K1 to K9 and K11 pass.
+- 5 ceilings go past the board’s direction (BD1). For each, the reason and when the board revisits it: Decision 1 · Underwriting and pricing · Inside a provider, A3 Decides (Rating engine at the MGA already prices within approved bands; revisit Board meeting 30 November 2026); Decision 1 · Claims · Own staff, A3 Decides (no reason; revisit not recorded); Decision 1 · Claims · Inside a provider, A4 Moves money (Matches the binder schedule for the claims TPA, clause 4.2; revisit Board meeting 30 November 2026); Decision 1 · Claims · Platform behind a provider, A3 Decides (no reason; revisit not recorded); Decision 1 · Fraud and investigations · Inside a provider, A3 Decides (Fraud screening vendor triages; decisions return to our investigators; revisit Board meeting 30 November 2026).
 - 1 position is recorded as not set, each with an owner and a due date.
 
 ## The eight positions

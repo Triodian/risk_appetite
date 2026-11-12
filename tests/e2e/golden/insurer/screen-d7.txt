@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -33,6 +33,22 @@ Which events must be reported to us, and how quickly?
 In progress
 Answered as: A list of triggers, each with a measure, a threshold and a time limit
 Purpose of this decision
+The board’s direction for this decision · BD6
+
+From AI Board Direction, Corvane General Insurance · version V2, recorded by the chair. A position that goes past a direction cannot form part of the working appetite until a reason and a board revisit are recorded (check K11).
+
+BD6 Reporting expected
+
+AI uses in the inventory, and how many are new since the last report · limit n/a
+Uses that cross a red line or exceed their area’s posture without board approval · limit 0
+Material AI incidents · limit 0
+Known uses of information marked N in B5 · limit 0
+Actions on the 90-day list overdue · limit 2
+Material providers whose use of AI on customers is not known · limit 0 by 31 March 2027
+A material AI incident · to Chair within 24 hours
+A red line crossed · to Chair within 24 hours
+A regulator, a customer or a provider raises AI use with the insurer · to Chair and GC within 2 working days
+A provider changes the AI it uses for an area marked Avoid or Cautious · to CRO within 10 working days
 Starting position
 I4 · received
 I10 · received

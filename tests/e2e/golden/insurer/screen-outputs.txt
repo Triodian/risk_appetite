@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -38,7 +38,7 @@ This becomes version 1.
 
 Agree working appetite
 
-Only the CRO can agree: choose the CRO under “Acting as” above. Checks K1, K7 and K9 must pass first. Open checks
+Only the CRO can agree: choose the CRO under “Acting as” above. Checks K1, K7, K9 and K11 must pass first. Open checks
 
 Record board approval
 

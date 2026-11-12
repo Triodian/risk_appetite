@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -33,6 +33,18 @@ At what point does a failure count as a financial loss, as harm to policyholders
 Complete
 Answered as: A threshold for each of C3 Financial loss, C4 Policyholder harm and C5 Critical disruption
 Purpose of this decision
+The board’s direction for this decision · BD5
+
+From AI Board Direction, Corvane General Insurance · version V2, recorded by the chair. A position that goes past a direction cannot form part of the working appetite until a reason and a board revisit are recorded (check K11).
+
+BD5 Harm not tolerated
+
+Customers or members: A customer wrongly declined, delayed, charged or paid · Any single claim wrongly declined; 10 or more customers for any other error
+Staff and applicants: A staff member or applicant treated unfairly by AI · Any pattern across a hiring or review round
+The company’s money: A wrong claim payment or a premium charged in error · $250,000 in a single event or $1m in a quarter
+Operations: A critical operation stopped · Beyond its tolerance in the critical operations register
+Legal and regulatory standing: A breach of a law, a licence condition or a prudential standard · Any
+Reputation and trust: A public failure attributed to our use of AI, or a provider’s on our customers · Any media or regulator attention
 Starting position
 I2 · received
 I3 · received

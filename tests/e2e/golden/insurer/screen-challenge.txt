@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -30,7 +30,7 @@ Challenge round
 
 The second line and each accountable person review the positions in their area. Each point raised is either accepted or answered.
 
-Challenge log · 2
+Challenge log · 3
 Questions for counsel · 2
 Filter by accountable person
 Everyone
@@ -51,6 +51,11 @@ accepted
 answered
 
 CH-02	Tom Ellery	Decision 2 · C4 Policyholder harm · Insurer’s setting	The hardship part of C4 Policyholder harm has no definition. Two people assessing the same case could reach different levels.
+open
+accepted
+answered
+
+CH-03	Priya Natarajan	Decision 1 · Claims · Own staff	The board’s direction for Claims is Cautious: a person decides every decline. Our own triage at A3 and the platform behind it sit above that. Either lower both ceilings or record why, and take them to the board on 30 November.
 open
 accepted
 answered
