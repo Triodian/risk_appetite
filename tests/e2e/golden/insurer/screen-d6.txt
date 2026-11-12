@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -37,6 +37,16 @@ Marking	Meaning in the assessment
 Accepted	Recorded. No further step is needed
 Escalate	A question for counsel is raised for every entry in that location
 Not accepted	The entry is flagged in the same way as a use above the authority ceiling
+The board’s direction for this decision · BD2
+
+From AI Board Direction, Corvane General Insurance · version V2, recorded by the chair. A position that goes past a direction cannot form part of the working appetite until a reason and a board revisit are recorded (check K11).
+
+BD2 Red lines
+
+AI declining a claim with no person reviewing the decision (Claims)
+AI deciding a claimant is fraudulent with no person reviewing it (Fraud and investigations)
+AI setting a premium outside the rating guide with no underwriter approving it (Underwriting and pricing)
+Board, committee or transaction information (G6) entered into any tool outside the insurer’s own estate (All areas)
 Starting position
 I6 · received
 

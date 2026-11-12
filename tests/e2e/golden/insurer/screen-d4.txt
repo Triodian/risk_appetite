@@ -4,7 +4,7 @@ Decisions
 Checks
 Challenge
 Outputs
-3 checks failing
+4 checks failing
 DH
 ☰
 Askew Lane Partners
@@ -33,6 +33,18 @@ When the evidence falls short of what we expect, how serious is the shortfall an
 Complete
 Answered as: A priority for each size of shortfall and consequence, and a time limit for each priority
 Purpose of this decision
+The board’s direction for this decision · BD3
+
+From AI Board Direction, Corvane General Insurance · version V2, recorded by the chair. A position that goes past a direction cannot form part of the working appetite until a reason and a board revisit are recorded (check K11).
+
+BD3 Reserved decisions
+
+A new AI use at A3 (Decides) or above · Before it starts, brought by CEO
+A new AI use in an area marked Avoid · Before it starts, brought by CEO
+An exception to a red line · Before it starts, brought by CEO
+A claims manager or an underwriting agency changing the AI it uses on customers’ claims or premiums · Before it starts, where the agreement allows; otherwise told at the next meeting, brought by CRO
+A material AI incident · Told within 24 hours, brought by CEO
+A change to the directions or the measures · Before it takes effect, brought by Chair
 Starting position
 I6 · received
 

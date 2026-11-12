@@ -51,6 +51,10 @@ test('the default is the insurer example; the menu switches between them, each w
   const { ctx, p } = await start(browser, '/');
   await expect(p.locator('.examplenote').first()).toContainText('a fictional general insurer, Corvane General');
   expect(await p.evaluate(() => window.RAF.state.engagement.sectorPack)).toBe('generalInsurer');
+  // the insurer example reads the directions the Board Direction insurer example records; K11 holds back two claims ceilings
+  const ins = await p.evaluate(() => { const S = window.RAF.state, k = window.RAF.checks().find(x => x.id === 'K11'); return { dir: S.boardDirections.file.company + ' ' + S.boardDirections.file.version, state: k.state, off: k.off.map(x => x.id),
+    carried: ['d1.uw.provider', 'd1.cl.provider', 'd1.fr.provider'].every(id => S.decisions.d1.cells[id].reason && S.decisions.d1.cells[id].boardRevisit) }; });
+  expect(ins).toEqual({ dir: 'Corvane General Insurance V2', state: 'fail', off: ['d1.cl.own', 'd1.cl.platform'], carried: true });
   await p.click('header [data-act="drawer"]');
   await expect(p.locator('.drawer [data-act="example"][data-ex="insurance"]')).toHaveCount(0);   // already open
   await p.locator('.drawer [data-act="example"][data-ex="superannuation"]').click();

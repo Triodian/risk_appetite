@@ -14,8 +14,9 @@ test('decision 1 shows the board’s directions, and K11 holds back a ceiling ab
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto('/');
   await expect(p.locator('.examplenote', { hasText: 'Worked example:' })).toBeVisible({ timeout: 15_000 });
-  const before = await p.evaluate(() => window.RAF.checks().map(k => k.id));
-  expect(before).not.toContain('K11'); // no directions loaded: K11 does not run
+  // The worked example now comes with its board's directions; without any, K11 does not run.
+  const before = await p.evaluate(() => { delete window.RAF.state.boardDirections; return window.RAF.checks().map(k => k.id); });
+  expect(before).not.toContain('K11');
 
   await p.evaluate((F) => { const S = window.RAF.state; S.boardDirections = { source: 'file', loadedOn: '2026-11-10', file: F }; const c = S.decisions.d1.cells; c['d1.cl.own'] = { ...(c['d1.cl.own'] || {}), value: 'A3', status: 'set', reason: '', boardRevisit: '' }; window.RAF.render(); window.RAF.go('d1'); }, F);
   await expect(p.locator('body')).toContainText('The board’s directions for this decision · BD1, BD2, BD3');

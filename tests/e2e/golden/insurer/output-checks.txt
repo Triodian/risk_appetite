@@ -20,5 +20,6 @@ Evidence for: APRA letter A1 · ISO/IEC 42001 6.1.3.
 | K8 | Owned | passed | Passed. |
 | K9 | Timed | failed | Decision 7 · TR7 Sub-contractor change · Notify within (hours): 96 hours exceeds the 72-hour notification procedure (I10); Decision 7 · TR8 Location change · Notify within (hours): no time recorded |
 | K10 | Reachable | passed | E2 Attestation for A3 Decides × C3 Financial loss is within what is obtained today (highest E4 Audit right). |
+| K11 | Within the board's direction | failed | Decision 1 · Claims · Own staff: A3 Decides is above A2 Recommends, the highest tier the board’s Cautious posture for Claims accepts (BD1), with no reason and board revisit recorded; Decision 1 · Claims · Platform behind a provider: A3 Decides is above A2 Recommends, the highest tier the board’s Cautious posture for Claims accepts (BD1), with no reason and board revisit recorded |
 
 K10 does not indicate an error. It tells the board that, from the first day, its expectation will show as a gap for most arrangements, so that the board sets the position knowing this.
