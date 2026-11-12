@@ -10,7 +10,7 @@ let N = {};              // the pack's nouns: N.entity is "insurer" in the gener
 let S = null;            // engagement
 const UI = { screen: 'entry', role: 'triodian', personId: '', sel: null, open: null, drawer: false, pop: null, sheet: null, outTab: 'statement', chTab: 'challenge', chFilter: '', refQ: '', present: false, showRef: false, dirty: false, err: {}, focusVal: null };
 const AT = ['A1','A2','A3','A4','A5','A6'], CO = ['C1','C2','C3','C4','C5'], EV = ['E0','E1','E2','E3','E4','E5','E6'], PRI = ['Low','Medium','High'], CONF = ['Low','Medium','High'], MARK = ['Accepted','Escalate','Not accepted'];
-const ROLE_NAME = { counsel: 'Counsel', gc: 'GC', triodian: 'Triodian', cro: 'CRO', risk: 'Risk function', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
+const ROLE_NAME = { counsel: 'Counsel', gc: 'GC', triodian: 'Triodian', cro: 'CRO', risk: 'Risk or AI governance function', independent: 'Independent reviewer', board: 'Board record', none: 'No engagement role' };
 /* Three areas share this script: the app (/), Admin (/admin/: set-up, users, activity) and the profile page (/profile/). */
 const AREA = /^\/admin(\/|$)/.test(location.pathname) ? 'admin' : /^\/profile(\/|$)/.test(location.pathname) ? 'profile' : 'app';
 const ADMIN_SCREENS = ['setup', 'users', 'activity', 'notifications'];
