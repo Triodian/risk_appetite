@@ -1,0 +1,197 @@
+{
+  "id": "bpCiCorporate",
+  "name": "Critical infrastructure, corporate-managed (best-practice baseline)",
+  "jurisdiction": "any",
+  "entityTypes": [],
+  "baseline": "BP-CI-CORPORATE",
+  "governingBody": "board",
+  "note": "Generated from Triodian Metamodel 2.8.0 (reference-data/baseline-profiles.json) by tools/build-baseline-packs.mjs; do not edit by hand. A best-practice baseline for utilities, transport, water and networks run by a company or under concession that holds in any jurisdiction; it names no regulator, and the jurisdiction's own obligations come from the matter brief.",
+  "nouns": {
+    "entity": "operator",
+    "Entity": "Operator",
+    "entities": "operators",
+    "Entities": "Operators",
+    "anEntity": "an operator",
+    "AnEntity": "An operator",
+    "customer": "customer",
+    "Customer": "Customer",
+    "customers": "customers and the community",
+    "Customers": "Customers and the community",
+    "aCustomer": "a customer",
+    "ACustomer": "A customer",
+    "customerHarm": "Customers or the community lose an essential service, or are put at risk.",
+    "regulator": "the infrastructure regulator"
+  },
+  "replace": {
+    "functions": [
+      {
+        "id": "no",
+        "name": "Network operations"
+      },
+      {
+        "id": "am",
+        "name": "Asset maintenance"
+      },
+      {
+        "id": "ccs",
+        "name": "Customer and community service"
+      },
+      {
+        "id": "er",
+        "name": "Emergency response"
+      },
+      {
+        "id": "sm",
+        "name": "Supplier management"
+      },
+      {
+        "id": "it",
+        "name": "Information technology"
+      },
+      {
+        "id": "ot",
+        "name": "Operational technology"
+      },
+      {
+        "id": "co",
+        "name": "Commercial operations"
+      }
+    ],
+    "inputs": [
+      {
+        "ref": "I1",
+        "name": "Board risk appetite statement, current version",
+        "usedIn": "All decisions and the consistency checks"
+      },
+      {
+        "ref": "I2",
+        "name": "Operational risk incident thresholds and reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I3",
+        "name": "Conduct and breach reporting definitions",
+        "usedIn": "Decision 2"
+      },
+      {
+        "ref": "I4",
+        "name": "Critical operations register, with the tolerance for each",
+        "usedIn": "Decisions 2 and 7"
+      },
+      {
+        "ref": "I5",
+        "name": "Register of material service providers and outsourcing arrangements",
+        "usedIn": "Decisions 1 and 6"
+      },
+      {
+        "ref": "I6",
+        "name": "Outsourcing and offshoring policy",
+        "usedIn": "Decisions 4 and 6"
+      },
+      {
+        "ref": "I7",
+        "name": "AI governance framework, permitted-use policy and AI inventory",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I8",
+        "name": "Delegations, and the authority each provider holds under its agreement",
+        "usedIn": "Decision 1"
+      },
+      {
+        "ref": "I9",
+        "name": "Responsibilities of senior managers, as mapped under the accountability rules that apply to it",
+        "usedIn": "The owner of every position"
+      },
+      {
+        "ref": "I10",
+        "name": "Incident notification procedure and its timings",
+        "usedIn": "Decision 7"
+      },
+      {
+        "ref": "I11",
+        "name": "Board and risk committee calendar",
+        "usedIn": "Timing of board approval"
+      }
+    ]
+  },
+  "override": {
+    "decisions.0.prompts.1": "Would we accept a provider's AI making a decision about one of our {customers}, or a service they rely on, without a person reviewing it? If so, within what limit?",
+    "decisions.1.prompts.1": "Does a single wrong decision about one of our {customers} count as harm, or only a pattern of them?",
+    "decisions.2.prompts.0": "For a provider's AI that makes decisions about our {customers} or our services, is a signed quarterly statement enough, or do we expect to be told whenever a limit is crossed?",
+    "decisions.3.priorities.0.interim": "One of: limit the AI's use; suspend it; replace it with another provider or a manual process; add a compensating control; or accept, with a named accountable person",
+    "decisions.4.prompts.0": "If our documents do not show whether a provider uses AI to make decisions, how long are we prepared not to know?",
+    "decisions.5.prompts.1": "If one AI provider failed or changed its terms, how many critical operations would be affected? That count is measure M10.",
+    "decisions.6.purpose": "To define the events that must be reported to the {entity}, and how quickly, so that it can monitor the AI its providers use and meet its own incident notification obligations to {regulator}.",
+    "checks.4.fails": "A ceiling is higher than the delegations or the AI policy currently allow for that function"
+  },
+  "insert": [
+    {
+      "at": "measures",
+      "after": "M6",
+      "key": "ref",
+      "items": [
+        {
+          "ref": "M10",
+          "measure": "Critical business services that depend on any one AI provider, counted for each provider",
+          "limit": "[ ]",
+          "owner": "CRO",
+          "from": "Register: platform field, counted for each provider",
+          "reported": "Half-yearly"
+        }
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "at": "frameworkMarkdown",
+      "find": "underwriting and pricing; claims; fraud and investigations; policy administration; complaints and disputes; customer communications; finance and reserving; legal and compliance; technology operations",
+      "replace": "network operations; asset maintenance; customer and community service; emergency response; supplier management; information technology; operational technology; commercial operations"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| Underwriting and pricing |  |  |  |\n| Claims |  |  |  |\n| Fraud and investigations |  |  |  |\n| Policy administration |  |  |  |\n| Complaints and disputes |  |  |  |\n| Customer communications |  |  |  |\n| Finance and reserving |  |  |  |\n| Legal and compliance |  |  |  |\n| Technology operations |  |  |  |",
+      "replace": "| Network operations |  |  |  |\n| Asset maintenance |  |  |  |\n| Customer and community service |  |  |  |\n| Emergency response |  |  |  |\n| Supplier management |  |  |  |\n| Information technology |  |  |  |\n| Operational technology |  |  |  |\n| Commercial operations |  |  |  |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| I8 | Delegated authority schedules for binders and claims agreements |",
+      "replace": "| I8 | Delegations, and the authority each provider holds |"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "| M6 | Share of critical operations depending on one platform or model provider | \\[ \\]% | CRO | Register: platform field | Half-yearly |\n",
+      "replace": "| M6 | Share of critical operations depending on one platform or model provider | \\[ \\]% | CRO | Register: platform field | Half-yearly |\n| M10 | Critical business services depending on any one AI provider, counted for each provider | \\[ \\] | CRO | Register: platform field, counted for each provider | Half-yearly |\n"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Choose one: restrict the AI's authority · add a compensating control · accept, with a named accountable person",
+      "replace": "Choose one: limit the AI's use · suspend it · replace it with another provider or a manual process · add a compensating control · accept, with a named accountable person"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "{regulator}'s letter, as quoted in the counsel briefing, expects monitoring with \"clearly defined triggers\".",
+      "replace": "The triggers let the {entity} monitor the AI its providers use and meet its own incident notification obligations to {regulator}."
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "Would we accept a provider's AI declining or paying a claim with no person involved?",
+      "replace": "Would we accept a provider's AI making a decision about one of our {customers} with no person involved?"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "whether a claims manager uses AI to decide",
+      "replace": "whether a provider uses AI to decide"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "- Does one wrongly declined claim count as {customer} harm, or does it take a pattern?",
+      "replace": "- Does one wrong decision about one of our {customers} count as harm, or does it take a pattern?"
+    },
+    {
+      "at": "frameworkMarkdown",
+      "find": "- For a provider's AI that decides claims, is a signed statement each quarter enough, or do we expect to be told when a limit is crossed?",
+      "replace": "- For a provider's AI that makes decisions about our {customers}, is a signed statement each quarter enough, or do we expect to be told when a limit is crossed?"
+    }
+  ]
+}

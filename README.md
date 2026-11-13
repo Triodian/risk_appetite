@@ -32,6 +32,10 @@ Cloudflare account.
 The engagement apps are separate, each with its own repo and database. Deployed together they share one sign-in and
 reach each other through Cloudflare service bindings.
 
+## Best-practice baselines
+
+Beside the jurisdiction packs, set-up offers a pack for each [best-practice baseline](https://github.com/Triodian/Triodian_Metamodel/blob/main/docs/baselines.md): banking, insurance, securities and investment advice, health care, payments, critical infrastructure (run by government or by a company) and government in general. A baseline holds in any jurisdiction: it names no regulator, takes its functions from the baseline's areas, and leaves the jurisdiction's own obligations to the matter brief. Packs for a public body name the accountable authority where the app says "board", on screen and in every Markdown, Word and PDF download. The packs are written from the Metamodel with `node tools/build-baseline-packs.mjs ../triodian_metamodel && node tools/build-content.mjs`; do not edit `content/packs/bp*.json` by hand. To add a jurisdiction, see [adding a jurisdiction](https://github.com/Triodian/Triodian_Metamodel/blob/main/docs/adding-a-jurisdiction.md).
+
 ## How it is built
 
 Single-engagement web app: each deployment holds one engagement for one organisation.
