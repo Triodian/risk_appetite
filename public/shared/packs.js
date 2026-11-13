@@ -49,7 +49,7 @@
       setPath(c, e.at, cur.split(e.find).join(e.replace));
     }
     const out = walk(c, pack.nouns || {});
-    out.packs = base.packs; out.pack = pack.id;
+    out.packs = base.packs; out.pack = pack.id; out.governingBody = pack.governingBody || 'board';
     return out;
   }
   /** Tokens left unfilled in resolved content (a pack missing a noun, or a typo in a token). */
@@ -58,7 +58,8 @@
     (function w(o) { if (typeof o === 'string') { for (const m of o.matchAll(/\{([A-Za-z]+)\}/g)) if (NOUNS.includes(m[1]) || /^[a-z]+[A-Z]/.test(m[1])) left.add(m[1]); } else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => { if (k !== 'packs') w(v); }); })(resolved);
     return [...left];
   }
-  function list(base) { return Object.values((base && base.packs) || {}).map(p => ({ id: p.id, name: p.name, jurisdiction: p.jurisdiction, entityTypes: p.entityTypes || [] })); }
+  // Jurisdiction packs first, then the best-practice baselines (any jurisdiction).
+  function list(base) { return Object.values((base && base.packs) || {}).map(p => ({ id: p.id, name: p.name, jurisdiction: p.jurisdiction, entityTypes: p.entityTypes || [], baseline: p.baseline || '', governingBody: p.governingBody || 'board' })).sort((a, b) => (a.baseline ? 1 : 0) - (b.baseline ? 1 : 0)); }
   /** The pack that fits an entity type, if any. */
   function forEntityType(base, entityType) { return list(base).find(p => p.entityTypes.includes(entityType)) || null; }
 

@@ -46,3 +46,22 @@ test('choosing the super trustee pack changes the labels, functions and inputs; 
   expect(b.p._errors).toEqual([]);
   await b.ctx.close();
 });
+
+test('a baseline for a public body names the accountable authority; its functions are the baseline areas', async ({ browser }) => {
+  const { ctx, p, saves } = await adminPage(browser, null);
+  await p.locator('[data-act="new"]').click();
+  const pack = p.locator('#f_engagement_sectorPack');
+  await expect(pack.locator('option')).toHaveCount(12);
+  await pack.selectOption('bpGovernment');
+  await expect(p.locator('label:has(#f_engagement_insurer)').first()).toContainText('Agency');
+  await expect(p.locator('#app')).toContainText('accountable authority');
+  expect(await p.evaluate(() => /\bboards?\b/.test(document.getElementById('app').innerText))).toBe(false);
+  expect(await p.evaluate(() => window.RAF.state.functions.map(f => f.name)[0])).toBe('Service delivery');
+  await p.evaluate(() => window.RAF.save());
+  await expect.poll(() => saves.length && saves[saves.length - 1].engagement.sectorPack).toBe('bpGovernment');
+  // a company's pack names the board again
+  await pack.selectOption('bpCiCorporate');
+  await expect(p.locator('#app')).toContainText('board');
+  expect(p._errors).toEqual([]);
+  await ctx.close();
+});
