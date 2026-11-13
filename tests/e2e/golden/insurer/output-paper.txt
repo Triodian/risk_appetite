@@ -64,9 +64,9 @@ The evidence the board expects Corvane General Insurance (fictional) to hold, by
 
 When the evidence falls short, how serious the shortfall is and how long it may continue.
 
-- **High priority:** Reported to the next board risk committee meeting, with a plan. While the gap stands: One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person.
-- **Medium priority:** Closed by the next contract renewal or variation for the arrangement. While the gap stands: Accept, recorded with an owner.
-- **Low priority:** Reviewed at the next annual review. While the gap stands: Accept.
+- **Graded High:** Reported to the next board risk committee meeting, with a plan. While the gap stands: One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person.
+- **Graded Medium:** Closed by the next contract renewal or variation for the arrangement. While the gap stands: Accept, recorded with an owner.
+- **Graded Low:** Reviewed at the next annual review. While the gap stands: Accept.
 
 ### 5. Unknowns
 

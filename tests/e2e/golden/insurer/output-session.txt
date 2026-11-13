@@ -111,7 +111,7 @@ A working paper, not a board paper. To be handled as counsel directs.
 
 ## Decision 4: Shortfall tolerance (session 2)
 
-**Starting position.** The framework's priority table, and the starting time limits and interim positions in section 5.4.
+**Starting position.** The framework's grade table, and the starting time limits and interim positions in section 5.4.
 
 | Cell | Starting | Recorded | Proposed by | Recorded by | Owner | Condition | Dissent |
 | --- | --- | --- | --- | --- | --- | --- | --- |

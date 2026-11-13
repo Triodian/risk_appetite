@@ -6,7 +6,7 @@ Privileged and confidential · prepared at the direction of counsel · worked ex
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
 
-Evidence for: APRA letter B2, G4, A4 · ISO/IEC 42001 6.1.2, A.5.
+Evidence for: APRA letter B2, G4, A4 · ISO/IEC 42001 6.1.2.
 
 Status: default · version 0
 
@@ -46,7 +46,7 @@ The calibration set contains no client facts. It holds only positions and thresh
 | A5 Acts unattended | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry | E5 Live telemetry |
 | A6 Changes systems | E6 Action control *(default)* | E6 Action control | E6 Action control | E6 Action control | E6 Action control |
 
-### P4 · Gap priority
+### P4 · Evidence shortfall grade
 
 | Gap | C1 Immaterial or C2 Contract breach | C3 Financial loss | C4 Policyholder harm or C5 Critical disruption |
 | --- | --- | --- | --- |

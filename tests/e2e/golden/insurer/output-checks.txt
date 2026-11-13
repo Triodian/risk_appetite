@@ -12,7 +12,7 @@ Evidence for: APRA letter A1 · ISO/IEC 42001 6.1.3.
 | --- | --- | --- | --- |
 | K1 | Complete | failed | Decision 3 · A6 Changes systems · C1 Immaterial: blank; Decision 7 · TR8 Location change · Notify within (hours): blank |
 | K2 | Ordered | passed | Passed. |
-| K3 | Priority ordered | passed | Passed. |
+| K3 | Grade ordered | passed | Passed. |
 | K4 | Consistent with existing thresholds | passed | Passed. |
 | K5 | Consistent with existing authority | passed | Passed. |
 | K6 | Provider compared with own staff | passed | Passed. |

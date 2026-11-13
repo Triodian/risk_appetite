@@ -2,10 +2,12 @@
 //   1. AI arrangements and providers: the client's provider register, or a GRC export of it. AI Use Assessment loads it
 //      into its register, and AI Board Direction into its B1 inventory, keeping the client's ids so a re-export
 //      round-trips.
-//   2. AI limits: the limits register of the client's ISO/IEC 42001 AI management system. AI Risk Appetite maps each
-//      limit to a function and an authority ceiling (A1 to A6) or a consequence level (C1 to C5), and check K11 tests
-//      it against the board's direction and the calibration set.
-//   3. Statement of Applicability: the Annex A controls the client applies, which the limits name.
+//   2. AI limits: a limits register, which is a Triodian input and not part of any ISO/IEC 42001 document. The client
+//      lists its own AI limits by function, each an authority ceiling (A1 to A6) or a consequence level (C1 to C5), and
+//      check K11 tests each against the board's direction and the calibration set.
+//   3. Statement of Applicability: the document ISO/IEC 42001:2023 clause 6.1.3 asks for. It lists the Annex A
+//      controls, whether each applies, the justification, and how far it is implemented. It holds no limits. The
+//      evidence index sets each control against the suite's outputs (public/shared/evidence.js; plan task ISO.5).
 // Plain functions, no page code: the same file is in all three apps, and the tests run it in Node.
 // Each reader returns { rows, refused, error }: refused rows carry their line number and the reason, and are not loaded.
 
@@ -103,7 +105,7 @@ export function writeArrangements(rows) {
   return toCsv(ARR_HEAD, rows.map(r => [r.providerId, r.systemId, r.provider, r.system, r.arrangement, r.function, r.criticalOperation, r.boundary, r.where, r.platform, r.location, r.whatItDoes, r.human, r.credentials, r.onInventory, r.users, r.authority, r.consequence, r.information, r.kind, r.adm === true ? 'yes' : r.adm === false ? 'no' : '', r.owner]));
 }
 
-/* ---------- 2. AI limits (ISO/IEC 42001 limits register) ---------- */
+/* ---------- 2. AI limits (the limits register, a Triodian input) ---------- */
 export const LIMIT_COLUMNS = {
   limit_id: ['limit', 'id', 'limit ref'],
   function: ['business function', 'area'],
