@@ -31,7 +31,7 @@ Shortfall tolerance
 When the evidence falls short of what we expect, how serious is the shortfall and how long may it continue?
 
 Complete
-Answered as: A priority for each size of shortfall and consequence, and a time limit for each priority
+Answered as: An evidence shortfall grade for each size of shortfall and consequence, and a time limit for each grade
 Purpose of this decision
 The board’s direction for this decision · BD3
 
@@ -48,7 +48,7 @@ A change to the directions or the measures · Before it takes effect, brought by
 Starting position
 I6 · received
 
-The framework's priority table, and the starting time limits and interim positions in section 5.4.
+The framework's grade table, and the starting time limits and interim positions in section 5.4.
 
 Use starting position
 Fills empty cells only. Nothing is filled in automatically.
@@ -56,7 +56,7 @@ The insurer’s positions
 
 Record the position the insurer proposes in each cell. Select a cell, or use ⋯ beside it, for the proposer, owner, condition and dissent, or to record a position as not set. A dot on ⋯ means the position has a dissent, a reason, a challenge or a question for counsel.
 
-Priority for each shortfall, by size of shortfall and consequence
+Evidence shortfall grade for each shortfall, by size of shortfall and consequence
 Size of shortfall	C1 Immaterial or C2 Contract breach	C3 Financial loss	C4 Policyholder harm or C5 Critical disruption
 1 rung
 —
@@ -115,7 +115,7 @@ Medium
 High
 ⋯
 Time limit and interim position
-Priority	Time limit	Interim position while the gap stands
+Grade	Time limit	Interim position while the gap stands
 High
 ⋯
 

@@ -28,7 +28,7 @@ for (const [file, v2] of [['register-extract-v1.json', false], ['in-use-feed.jso
     await p.evaluate(() => window.RAF.go('d8'));
     if (v2) {
       await expect(p.locator('body')).toContainText('In use now · from the AI Use Assessment in-use feed');
-      await expect(p.locator('body')).toContainText('Gaps by priority: High 1 · Medium 2 · Low 0. Overdue: 1.');
+      await expect(p.locator('body')).toContainText('Gaps by grade: High 1 · Medium 2 · Low 0. Overdue: 1.');
       await expect(p.locator('body')).toContainText('67%');
     } else await expect(p.locator('body')).toContainText('In use now · no in-use feed loaded'); // a v1 extract has no measures
     expect(p._errors).toEqual([]);

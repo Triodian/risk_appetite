@@ -63,8 +63,9 @@ Session record
 Calibration set
 Check report
 Engagement plan
+Management review input
 
-Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2
+Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.2
 
 Overall position · in the board’s words, written by counsel
 
@@ -83,7 +84,7 @@ Uncalibrated · WORKED EXAMPLE, FICTIONAL INSURER
 
 Corvane General Insurance (fictional) · RAF-CGI-2026-01 · generated [today]
 
-Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.
+Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.2.
 
 1. Purpose and scope
 
@@ -133,7 +134,7 @@ Gap	C1 Immaterial or C2 Contract breach	C3 Financial loss	C4 Policyholder harm o
 1 rung	Low	Low	Medium
 2 rungs	Low	Medium	High
 3 or more rungs	Medium	High	High
-Priority	Time limit	Interim position
+Grade	Time limit	Interim position
 High	Reported to the next board risk committee meeting, with a plan	One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person
 Medium	Closed by the next contract renewal or variation for the arrangement	Accept, recorded with an owner
 Low	Reviewed at the next annual review	Accept

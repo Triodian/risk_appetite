@@ -96,3 +96,30 @@ test('?example=banking opens Wattlebrook Bank with the ADI pack, the board’s d
   expect(p._errors).toEqual([]);
   await ctx.close();
 });
+
+// ISO readiness (task ISO.6): the input to the AI management review (ISO/IEC 42001:2023, 9.3), and the competence of
+// each person, recorded in set-up and printed in the session record (7.2).
+test('the bank example produces the management review input and records competence for every role', async ({ browser }) => {
+  const { ctx, p } = await start(browser, '/?example=banking');
+  await expect(p.locator('.examplenote').first()).toContainText('Wattlebrook Bank');
+  await p.evaluate(() => window.RAF.go('outputs'));
+  await p.click('#tab-mgmtReview');
+  await expect(p.locator('#tab-mgmtReview')).toHaveAttribute('aria-selected', 'true');
+  const md = await p.locator('body').innerText();
+  for (const h of ['Input to the AI management review', 'Actions open from this engagement', 'Changes in external and internal issues', 'Changes in the needs and expectations of interested parties', 'Monitoring and measurement results', 'Nonconformities and corrective actions', 'Ceilings past the board’s direction', 'Audit results', 'Changes to the risk criteria', 'Opportunities for improvement'])
+    expect(md, h).toContain(h);
+  expect(md).toContain('Evidence for:');
+  expect(md).toContain('ISO/IEC 42001 9.3');
+  expect(md).toContain('Holds only: the payments provider’s model holds a payment for review');   // the one ceiling past BD1, with its reason
+  expect(md).toContain('Board minute 2026/11-09');
+  expect(md).toContain('Wattlebrook Bank version V2');
+  const s = await p.evaluate(() => { const S = window.RAF.state; return { people: S.people.filter(x => x.role && x.role !== 'none').length, comp: Object.values(S.engagement.competence || {}).filter(c => c.statement && c.evidence).length }; });
+  expect(s.comp).toBe(s.people);
+  const card = await p.evaluate(() => window.RAF.competenceCard());   // the card set-up shows (set-up is in Admin)
+  expect(card).toContain(`${s.people} of ${s.people} recorded`);
+  const session = await p.evaluate(() => window.RAF.output('session'));
+  expect(session).toContain('## Competence of the people in the engagement');
+  expect(session).toContain('| Leila Haddad | CRO | Holds the CRO role');
+  expect(p._errors).toEqual([]);
+  await ctx.close();
+});

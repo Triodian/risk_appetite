@@ -15,8 +15,8 @@ The measurable parts of the statement, kept in a separate schedule so that they 
 | Ref | Measure | Limit | Owner | Counted from | Reported |
 | --- | --- | --- | --- | --- | --- |
 | M1 | Register entries above the authority ceiling without an approved exception | [0] | Ana Duarte | Register: authority tier against P1 | Each risk committee |
-| M2 | High-priority gaps open beyond their time limit | [0] | Priya Natarajan | Findings: priority and date set | Each risk committee |
-| M3 | Medium-priority gaps still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
+| M2 | Gaps graded High open beyond their time limit | [0] | Priya Natarajan | Findings: grade and date set | Each risk committee |
+| M3 | Gaps graded Medium still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
 | M4 | F4 findings open beyond their permitted date, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Findings: type and date set | Each risk committee |
 | M5 | Expected items of evidence that are overdue | [ ] days | Tom Ellery | Technical schedule: item and due date | Monthly |
 | M6 | Share of critical operations that depend on a single platform or AI model provider | not set (Tom Ellery, by 30 November 2026) | Priya Natarajan | Register: platform field | Half-yearly |

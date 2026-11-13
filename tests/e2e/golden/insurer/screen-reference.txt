@@ -89,10 +89,13 @@ Framework name: continuous telemetry. A stream of aggregate measures against the
 E6
 Action control
 Framework name: deterministic actuation control. A control at the point of action, independent of the AI's reasoning, with a signed record of what was requested, what applied and what was allowed.
+The scales beside ISO vocabulary
+Authority tiers A1 to A6 beside ISO/IEC 22989:2022 and ISO/IEC TS 8200:2024
+Evidence rungs E0 to E6 beside ISO/IEC 27002:2022 supplier controls, ISO/IEC 27036-2:2022 and ISO/IEC 12792:2025
 Glossary
 Above ceiling	An AI use with more authority than the ceiling the board has set. It is reported separately from evidence shortfalls.	Decision 1, Assessment
 Accountable person	The senior person responsible for a function under the Financial Accountability Regime.	Set-up, Challenge
-AI risk appetite	The board's statement of how much authority AI may hold, what failures it will tolerate, and what evidence it expects the insurer to hold.	Throughout
+AI risk appetite	The board's statement of how much authority AI may hold, what failures it will tolerate, and what evidence it expects the insurer to hold. ISO Guide 73:2009 (now ISO 31073:2022) defines risk appetite as the amount and type of risk that an organisation is willing to pursue or retain; the eight decisions state it for AI.	Throughout
 Authority tier	How much AI may do without a person deciding, from A1 productivity to A6 actuation.	Decisions 1 and 3
 Calibration set	The eleven parameters, P1 to P11, that the AI Use Assessment reads.	Outputs
 Ceiling	The highest authority tier the board accepts for a function and location.	Decision 1
@@ -106,10 +109,11 @@ Critical operation	A business process whose disruption the insurer has assessed 
 Current state	What the insurer does or holds today. It is the starting point for decisions 1 and 3.	Decisions 1 and 3
 Evidence ladder	The seven evidence levels, in order of strength.	Decision 3
 Evidence rung	A level of evidence, from E0 none to E6 deterministic actuation control.	Decision 3
+Evidence shortfall grade	How serious a gap is, graded High, Medium or Low from its size and the consequence level. It is not a risk rating: likelihood is not assessed.	Decision 4
 Expected evidence	The evidence the board expects the insurer to hold for a given authority tier and consequence level.	Decision 3
 Gap	The number of evidence levels between required and obtainable evidence.	Decision 4
-Gap priority	How serious a gap is, based on its size and the consequence level.	Decision 4
 Interim position	What the insurer does while a gap remains open: restrict the AI's authority, add a compensating control, or accept the gap.	Decision 4
+Likelihood	Not assessed. The framework grades how far the evidence falls short (evidence shortfall grade); it does not estimate how likely a failure is, so no result here is a risk rating in the sense of ISO 31000:2018.	Throughout
 Material service provider	A provider the insurer relies on for a critical operation or to manage a material risk.	Decisions 1 and 6
 Not determinable (F4)	An assessment finding that the documents cannot show whether, or how, AI is used.	Decision 5
 Not known	A fact the insurer's documents do not show. Such facts are counted, not estimated.	Decision 5
@@ -118,10 +122,11 @@ Platform behind a provider	The technology, pricing service or AI model a provide
 Proposer	The person who put a position forward. On decisions 1 and 3 this must be the CRO or the insurer's risk function.	All decisions
 Required evidence	The evidence the insurer can reasonably require from a provider under its contract, as settled with counsel.	Assessment
 Risk appetite statement	The board-approved statement of the risk the insurer is prepared to accept. The AI risk appetite sits within it.	Set-up, Statement
+Risk criteria	ISO Guide 73: the terms of reference against which the significance of a risk is evaluated. The eight decisions set the insurer's risk criteria for AI (ISO 31000:2018, 6.3.4; ISO/IEC 42001:2023, 6.1.2), and the calibration set holds them.	Decisions 1 to 8
 Role limits	Administrators complete set-up. Counsel, Triodian, the CRO and the insurer's risk function record positions and starting data. The independent reviewer may change decision 2 only, including its starting data, questions and challenge. The board record role may complete the approval fields only. Only counsel or the CRO may write the overall position. Challenge responses and their status are recorded by counsel, the CRO or the risk function.	Every editable field
 Starting position	A value filled in before the session as a basis for discussion. It is not a recommendation.	All decisions
-Tolerance level	The maximum disruption to a critical operation the board accepts.	Decision 2
-Trigger	A defined event that must be reported to the insurer within a set time.	Decision 7
+Tolerance level	The maximum disruption to a critical operation the board accepts. This is the operational-risk sense. ISO Guide 73 defines risk tolerance more widely, as an organisation's or stakeholder's readiness to bear the risk after risk treatment in order to achieve its objectives; decisions 3 to 5 record that.	Decision 2
+Trigger	A defined event that must be reported to the insurer within a set time. ISO Guide 73 has no term of its own for it: it is a threshold on a monitoring measure (ISO 31000:2018, 6.6).	Decision 7
 Who may propose	On decisions 1 and 3, only the CRO or the insurer's risk function may propose a position. On decision 2, the independent reviewer may also propose. Counsel and Triodian explain and record positions; neither proposes them.	Framework 7.3
 Working appetite	Positions agreed by the CRO and used to calibrate the assessment before the board approves them.	Outputs
 Framework text
@@ -169,7 +174,7 @@ Each decision sets one or more parameters. Each parameter replaces a fixed rule 
 Assessment element	Framework section	Today	After calibration
 Failure consequence scale, C1 to C5	8.2	Generic definitions	The insurer's own thresholds for financial loss, policyholder harm and each critical operation
 Indicative rung	8.3	One rung per authority tier, plus a proposed adjustment	The board's evidence expectation for each tier and consequence
-Gap priority	9.2	A fixed matrix	The insurer's matrix, with a time limit for each priority
+Evidence shortfall grade	9.2	A fixed matrix	The insurer's matrix, with a time limit for each grade
 Not-known fields and F4 findings	6.3, 9.1	Counted and reported	Counted against a stated tolerance
 Confidence in obtainability	8.4	Reported beside the finding	Tested against a minimum for higher consequences
 Timely test, T5	8.4	Judged case by case	Tested against the notification times the board has set
@@ -186,6 +191,22 @@ Required rung	The evidence the insurer can reasonably require at this boundary	T
 Obtainable rung	The evidence that can in fact be produced and independently checked	Triodian, by test
 
 The board's expectation is an input to counsel's determination. It does not replace it. Where counsel finds the insurer cannot require what the board expects, that difference is itself reported.
+
+2.6 How this framework reads beside ISO vocabulary
+
+The framework uses its own scales. Where its outputs enter an insurer's risk framework or AI management system, they can be read against ISO terms as follows.
+
+Risk criteria. The eight decisions set the insurer's risk criteria for AI: the terms against which the significance of a result is judged. That is what ISO 31000:2018 clause 6.3.4 (defining risk criteria) and ISO/IEC 42001:2023 clause 6.1.2 ask an organisation to establish.
+
+Term here	ISO Guide 73:2009 (now ISO 31073:2022)	How the framework uses it
+AI risk appetite	Risk appetite: the amount and type of risk that an organisation is willing to pursue or retain	The eight decisions together, recorded in the AI risk appetite statement
+Tolerance level	Risk tolerance: an organisation's or stakeholder's readiness to bear the risk after risk treatment in order to achieve its objectives	Decision 2 uses the narrower operational-risk sense: the most disruption to a critical operation the board accepts. Decisions 3 to 5 record what the board is ready to bear while evidence is short or facts are not known
+The eight decisions	Risk criteria: the terms of reference against which the significance of a risk is evaluated	Decisions 1 to 8, held as the calibration set
+Trigger	No term of its own. A threshold on a monitoring measure, under ISO 31000:2018 clause 6.6 (monitoring and review)	Decision 7: a defined event reported to the insurer within a set time
+
+Uncertainty. Decision 5 (unknowns) and check K10 (reachable) record what is not known and whether an expectation can be met at all. ISO 31000:2018 clause 6.4.3 (risk analysis) asks for uncertainties to be considered; here they are counted and given a limit, not estimated.
+
+Likelihood. The suite does not assess likelihood. A grade here is the size of the gap between the evidence expected and the evidence obtainable, read against the consequence band. It is not a risk rating in the sense of ISO 31000:2018, and nothing in the outputs should be read as one.
 
 3. Roles
 Party	Role in setting the appetite	Where it stops
@@ -211,7 +232,7 @@ Each decision is one question to the board, answered on a fixed scale, recorded 
 1	Authority	How much authority may AI hold in each function, in our own hands, in a provider's and in a platform behind one?	A ceiling tier, A1 to A6, for each function and location in the chain	P1
 2	Consequence thresholds	At what point does a failure count as a financial loss, as policyholder harm, and as disruption of a critical operation?	A threshold for each of C3, C4 and C5	P2
 3	Evidence expectation	For each level of authority and consequence, what evidence do we expect to hold?	A rung, E0 to E6, for each tier and consequence	P3
-4	Shortfall tolerance	When the evidence falls short, how serious is it and how long may it stand?	A priority matrix and a time limit for each priority	P4, P5
+4	Shortfall tolerance	When the evidence falls short, how serious is it and how long may it stand?	A grade matrix and a time limit for each grade	P4, P5
 5	Unknowns	How much may we not know about AI in our chain?	A limit on not-known facts and a minimum confidence, by consequence	P6, P7
 6	Location and concentration	Where may AI that acts for us run, and how much may depend on one platform?	Each location marked accepted, escalate or not accepted; a concentration limit	P8, P9
 7	Triggers	What events must reach us, and how fast?	A list of triggers, each with a measure, a threshold and a time	P10
@@ -304,7 +325,7 @@ Rule. Moving right or down the table, the rung may stay level or rise. It may no
 
 Purpose. To state how seriously a shortfall is treated and how long it may stand.
 
-Priority. The gap is the number of rungs between what is required and what is obtainable.
+Evidence shortfall grade. The gap is the number of rungs between what is required and what is obtainable.
 
 Gap	C1 or C2	C3	C4 or C5
 1 rung	Low	Low	Medium
@@ -313,7 +334,7 @@ Gap	C1 or C2	C3	C4 or C5
 
 Time limit and interim position.
 
-Priority	Starting position for the time limit	Interim position while the gap stands
+Grade	Starting position for the time limit	Interim position while the gap stands
 High	Reported to the next board risk committee, with a plan	Choose one: restrict the AI's authority · add a compensating control · accept, with a named accountable person
 Medium	Closed by the next contracting point for the arrangement	Accept, recorded with an owner
 Low	Reviewed at the next annual review	Accept
@@ -321,7 +342,7 @@ Low	Reviewed at the next annual review	Accept
 Prompts.
 
 Are we prepared to ask a provider to switch a capability off until evidence exists?
-Who may accept a high-priority gap, and must that acceptance be reported to the board?
+Who may accept a gap graded High, and must that acceptance be reported to the board?
 Does an above-ceiling result follow the same limits, or a shorter one?
 6. Decisions 5 to 8
 6.1 Decision 5: unknowns
@@ -452,8 +473,8 @@ The measurable part of the statement, kept as a schedule so it can change withou
 
 Ref	Measure	Limit	Owner	Counted from	Reported
 M1	Entries above the authority ceiling without an approved exception	[0]	Accountable person for the function	Register: authority tier against P1	Each risk committee
-M2	High-priority gaps open beyond their time limit	[0]	CRO	Findings: priority and date set	Each risk committee
-M3	Medium-priority gaps open past the contracting point	[ ]	Arrangement owner	Findings and next contracting date	Quarterly
+M2	Gaps graded High open beyond their time limit	[0]	CRO	Findings: grade and date set	Each risk committee
+M3	Gaps graded Medium open past the contracting point	[ ]	Arrangement owner	Findings and next contracting date	Quarterly
 M4	F4 findings standing beyond their allowed date, at C4 or C5	[0]	CRO	Findings: type and date set	Each risk committee
 M5	Expected evidence items overdue	[ ] days	Arrangement owner	Technical schedule: item and due date	Monthly
 M6	Share of critical operations depending on one platform or model provider	[ ]%	CRO	Register: platform field	Half-yearly
@@ -473,8 +494,8 @@ ID	Parameter	From decision	Form	Default if not set	Used in the assessment
 P1	Authority ceilings	1	A tier, with optional condition, for each function and each of own staff, provider, platform	None. No above-ceiling result is produced	New flag on each register entry
 P2	Consequence thresholds	2	An amount for C3; a definition for C4; a tolerance per critical operation for C5	The generic definitions	Failure consequence, section 8.2
 P3	Evidence expectation	3	A rung for each of 30 tier and consequence pairs	The reference table in Appendix A	Expected rung, replacing the indicative rung in section 8.3
-P4	Gap priority	4	A priority for each gap size and consequence band	The matrix in section 5.4	Gap rating, section 9.2
-P5	Time limits and interim positions	4	A limit and an interim position per priority	None. Priority is reported without a due date	Finding worksheet, part I
+P4	Evidence shortfall grade	4	A grade for each gap size and consequence band	The matrix in section 5.4	Evidence shortfall grade, section 9.2
+P5	Time limits and interim positions	4	A limit and an interim position per grade	None. The grade is reported without a due date	Finding worksheet, part I
 P6	Not-known limits	5	A limit per consequence band, and how long an F4 may stand	None. Not-known facts are counted and reported only	Completion rules, section 6.3; F4, section 9.1
 P7	Minimum confidence	5	A minimum per consequence band	None. Confidence is reported beside the finding	Obtainability test, section 8.4
 P8	Location markings	6	Accepted, escalate or not accepted, per jurisdiction, for where the provider is and where the AI runs	All locations treated as escalate	Question 4; new flag on each entry
@@ -490,7 +511,7 @@ Default	No appetite has been set. The defaults above apply	"Uncalibrated" on eve
 Working	Agreed by the CRO, not yet approved	"Working appetite, version [n]"
 Approved	Approved by the board or its risk committee	"Approved appetite, version [n], [date]"
 9.3 Rules
-A change of version re-runs the rules. Expected rungs, flags, priorities and due dates are recalculated. Facts, classifications and counsel's determinations are not touched.
+A change of version re-runs the rules. Expected rungs, flags, grades and due dates are recalculated. Facts, classifications and counsel's determinations are not touched.
 The difference is reported. When a version changes, the assessment lists every entry whose result changed and why.
 Partial sets are allowed. A parameter left as not set falls back to its default, and the outputs say which ones did.
 The set carries no client facts. It holds positions and thresholds only, so it can be shared with the assessment team without the session record.
@@ -502,7 +523,7 @@ Run by Triodian on the recorded positions. A failed check goes back to the CRO; 
 #	Check	Fails when
 K1	Complete	Any cell is blank and not recorded as "not set" with an owner and date
 K2	Ordered	In the expectation table, a rung falls when moving to higher authority or higher consequence
-K3	Priority ordered	In the priority matrix, priority falls as the gap or the consequence grows
+K3	Grade ordered	In the grade matrix, the grade falls as the gap or the consequence grows
 K4	Consistent with existing thresholds	A consequence threshold differs from the insurer's existing one without a recorded reason
 K5	Consistent with existing authority	A ceiling is higher than the delegated authority or the AI policy currently allows for that function
 K6	Provider against own	A ceiling inside a provider is higher than for the insurer's own staff in the same function, without a recorded reason

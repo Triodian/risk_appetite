@@ -1,16 +1,24 @@
 // The APRA letter evidence index (development plan task R.2). Each output of the three engagement apps is tagged with
 // the bullet of APRA's 30 April 2026 letter on AI it serves (B1 to A4), the CPS 230 paragraph where one applies (the
-// numbering amended from 1 July 2026), and the ISO/IEC 42001 clause or Annex A control it can stand as evidence for.
+// numbering amended from 1 July 2026), and the ISO/IEC 42001:2023 clause or Annex A control it can stand as evidence for.
 // AI Board Direction, in connected mode, gathers the artefacts from AI Risk Appetite and AI Use Assessment over the
 // service bindings and lists them by letter bullet or by ISO/IEC 42001 control, each showing its evidence or "none yet".
 // Plain functions, no page code: the same file is in all three apps, and the server and the tests run it in Node.
 //
 // The letter has no paragraph numbers, names no prudential standard and does not mention FAR, so the links to CPS 230
-// and ISO/IEC 42001 are Triodian's reading. Counsel confirms them before they go into a response to APRA.
+// and ISO/IEC 42001 are Triodian's reading. Counsel confirms the CPS 230 links before they go into a response to APRA.
+// The ISO/IEC 42001 links are checked by the engagement's independent reviewer, or another person with ISO/IEC 42001
+// competence (development plan task ISO.2): which control an output evidences is not a legal question.
+//
+// What the tags do not claim (ISO.2). No output is tagged to A.5 or clause 6.1.4: nothing the suite produces is an AI
+// system impact assessment. AI Use Assessment's outputs are tagged to the supplier, operation, event-log and incident
+// controls (A.10.3, A.6.2.6, A.6.2.8, A.8.4). The board's harm thresholds (B6) are listed as an input to A.5.2 only.
+// Every Annex A control is listed in the ISO view, and one the suite does not evidence says so (ISO.5).
 
 export const FORMAT = 'triodian.evidence.v1';
 export const LETTER_NAME = 'APRA letter to industry on artificial intelligence, 30 April 2026';
-export const NOTE = 'The letter has no paragraph numbers, names no prudential standard and does not mention FAR. The links to CPS 230 (amended numbering) and to ISO/IEC 42001 are Triodian’s reading, for counsel to confirm.';
+export const NOTE = 'The letter has no paragraph numbers, names no prudential standard and does not mention FAR. The links to CPS 230 (amended numbering) are Triodian’s reading, for counsel to confirm. The links to ISO/IEC 42001:2023 are Triodian’s reading, for the engagement’s independent reviewer or another person with ISO/IEC 42001 competence to check.';
+export const NOT_EVIDENCED = 'Not evidenced by this suite';
 
 /** The letter's expectations, by section and bullet. cps: CPS 230 paragraphs, amended numbering. iso: clauses and Annex A controls. */
 export const LETTER = [
@@ -35,60 +43,86 @@ export const LETTER = [
   { id: 'A4', section: 'Assurance', text: 'Assessment before deployment and through the lifecycle; continuous, proportionate monitoring', cps: [], iso: ['6.1.4', 'A.5', '9.1'] },
 ];
 
-/** The ISO/IEC 42001 clauses and Annex A control objectives the tags use, in the standard's order. */
-export const ISO = [
+/** The ISO/IEC 42001:2023 clauses the tags use, in the standard's order. */
+export const CLAUSES = [
   ['4.3', 'Scope of the AI management system'], ['5.1', 'Leadership and commitment'], ['5.2', 'AI policy'], ['5.3', 'Roles, responsibilities and authorities'],
   ['6.1.2', 'AI risk assessment'], ['6.1.3', 'AI risk treatment'], ['6.1.4', 'AI system impact assessment'], ['6.2', 'AI objectives'], ['6.3', 'Planning of changes'],
-  ['7.2', 'Competence'], ['7.3', 'Awareness'], ['9.1', 'Monitoring, measurement, analysis and evaluation'], ['9.2', 'Internal audit'], ['9.3', 'Management review'],
-  ['A.2', 'Policies related to AI'], ['A.3', 'Internal organisation'], ['A.4', 'Resources for AI systems'], ['A.5', 'Assessing impacts of AI systems'], ['A.6', 'AI system life cycle'],
-  ['A.7', 'Data for AI systems'], ['A.9', 'Use of AI systems'], ['A.10', 'Third-party and customer relationships'],
+  ['7.2', 'Competence'], ['7.3', 'Awareness'], ['9.1', 'Monitoring, measurement, analysis and evaluation'], ['9.2', 'Internal audit'], ['9.3', 'Management review'], ['10.2', 'Nonconformity and corrective action'],
 ];
+/** The control objectives of Annex A, for the letter's bullets, which are mapped at this level. */
+export const OBJECTIVES = [
+  ['A.2', 'Policies related to AI'], ['A.3', 'Internal organization'], ['A.4', 'Resources for AI systems'], ['A.5', 'Assessing impacts of AI systems'], ['A.6', 'AI system life cycle'],
+  ['A.7', 'Data for AI systems'], ['A.8', 'Information for interested parties of AI systems'], ['A.9', 'Use of AI systems'], ['A.10', 'Third-party and customer relationships'],
+];
+/** Every control in Annex A of ISO/IEC 42001:2023 (38), by number and short title. A Statement of Applicability lists these. */
+export const ANNEX_A = [
+  ['A.2.2', 'AI policy'], ['A.2.3', 'Alignment with other organizational policies'], ['A.2.4', 'Review of the AI policy'],
+  ['A.3.2', 'AI roles and responsibilities'], ['A.3.3', 'Reporting of concerns'],
+  ['A.4.2', 'Resource documentation'], ['A.4.3', 'Data resources'], ['A.4.4', 'Tooling resources'], ['A.4.5', 'System and computing resources'], ['A.4.6', 'Human resources'],
+  ['A.5.2', 'AI system impact assessment process'], ['A.5.3', 'Documentation of AI system impact assessments'], ['A.5.4', 'Assessing AI system impact on individuals or groups of individuals'], ['A.5.5', 'Assessing societal impacts of AI systems'],
+  ['A.6.1.2', 'Objectives for responsible development of AI system'], ['A.6.1.3', 'Processes for responsible AI system design and development'],
+  ['A.6.2.2', 'AI system requirements and specification'], ['A.6.2.3', 'Documentation of AI system design and development'], ['A.6.2.4', 'AI system verification and validation'], ['A.6.2.5', 'AI system deployment'],
+  ['A.6.2.6', 'AI system operation and monitoring'], ['A.6.2.7', 'AI system technical documentation'], ['A.6.2.8', 'AI system recording of event logs'],
+  ['A.7.2', 'Data for development and enhancement of AI system'], ['A.7.3', 'Acquisition of data'], ['A.7.4', 'Quality of data for AI systems'], ['A.7.5', 'Data provenance'], ['A.7.6', 'Data preparation'],
+  ['A.8.2', 'System documentation and information for users'], ['A.8.3', 'External reporting'], ['A.8.4', 'Communication of incidents'], ['A.8.5', 'Information for interested parties'],
+  ['A.9.2', 'Processes for responsible use of AI systems'], ['A.9.3', 'Objectives for responsible use of AI system'], ['A.9.4', 'Intended use of the AI system'],
+  ['A.10.2', 'Allocating responsibilities'], ['A.10.3', 'Suppliers'], ['A.10.4', 'Customers'],
+];
+/** The clauses, then every Annex A control: the rows of the ISO view. */
+export const ISO = CLAUSES.concat(ANNEX_A);
+/** True when a reference at the level of an objective (A.6) or a control (A.6.2.6) covers this clause or control. */
+export const covers = (ref, id) => ref === id || String(id).startsWith(ref + '.');
 const isoOrder = id => { const i = ISO.findIndex(x => x[0] === id); return i < 0 ? 999 : i; };
-export const isoName = id => (ISO.find(x => x[0] === id) || [id, ''])[1];
+export const isoName = id => (ISO.concat(OBJECTIVES).find(x => x[0] === id) || [id, ''])[1];
 
-/** Each output's tags: letter bullets, CPS 230 paragraphs and ISO/IEC 42001 references. */
+/** Each output's tags: letter bullets, CPS 230 paragraphs and ISO/IEC 42001:2023 clauses or Annex A controls.
+ *  inputTo: controls the output is an input to without being evidence that the control is met. */
 export const TAGS = {
   RA: {
     pack: { letter: ['B2', 'G1'], cps: [], iso: ['6.2', '5.2'] },
     paper: { letter: ['B1', 'B2'], cps: [], iso: ['5.1', '6.2'] },
-    statement: { letter: ['B2', 'G1'], cps: [], iso: ['6.2', 'A.2'] },
+    statement: { letter: ['B2', 'G1'], cps: [], iso: ['6.2', 'A.2.2'] },
     schedule: { letter: ['B2', 'A4'], cps: [], iso: ['6.2', '9.1'] },
     session: { letter: ['B1'], cps: [], iso: ['7.2'] },
-    calibration: { letter: ['B2', 'G4', 'A4'], cps: [], iso: ['6.1.2', 'A.5'] },
+    calibration: { letter: ['B2', 'G4', 'A4'], cps: [], iso: ['6.1.2'] },
     checks: { letter: ['A1'], cps: [], iso: ['6.1.3'] },
     plan: { letter: ['G2'], cps: [], iso: ['5.3'] },
     inUse: { letter: ['B2', 'A4'], cps: [], iso: ['9.1'] },
     limits: { letter: ['A1', 'B2'], cps: [], iso: ['6.1.3', '6.2'] },
+    mgmtReview: { letter: ['B2', 'A4'], cps: [], iso: ['9.3'] },
   },
   UA: {
-    DL1: { letter: ['G3', 'P1', 'S4'], cps: ['47(c)', '52(b)'], iso: ['6.1.4', 'A.5', 'A.10'] },
-    DL2: { letter: ['P2', 'P3', 'A4'], cps: ['53', '54'], iso: ['A.10', '9.1'] },
+    DL1: { letter: ['G3', 'P1', 'S4'], cps: ['47(c)', '52(b)'], iso: ['A.10.3'] },
+    DL2: { letter: ['P2', 'P3', 'A4'], cps: ['53', '54'], iso: ['A.10.3', 'A.6.2.6', 'A.6.2.8', 'A.8.4', '9.1'] },
     DL3: { letter: ['A1'], cps: [], iso: ['6.1.3'] },
-    DL4: { letter: ['B2', 'A4'], cps: [], iso: ['6.2', '9.1'] },
-    DL5: { letter: ['P2', 'A1'], cps: ['53'], iso: ['A.10', '6.1.3'] },
-    DL6: { letter: ['G3'], cps: [], iso: ['A.4'] },
-    QS: { letter: ['P2'], cps: ['53'], iso: ['A.10'] },
-    RP: { letter: ['A3'], cps: [], iso: ['9.2'] },
+    DL4: { letter: ['B2', 'A4'], cps: [], iso: ['6.2', '9.1', 'A.6.2.6', 'A.8.4'] },
+    DL5: { letter: ['P2', 'A1'], cps: ['53'], iso: ['A.10.3', '6.1.3'] },
+    DL6: { letter: ['G3'], cps: [], iso: ['A.4.2'] },
+    QS: { letter: ['P2'], cps: ['53'], iso: ['A.10.3'] },
+    RP: { letter: ['A3'], cps: [], iso: [] },
     CM: { letter: ['A4', 'B2'], cps: [], iso: ['9.1'] },
     DR: { letter: ['A1'], cps: [], iso: ['6.3'] },
     EP: { letter: ['G2'], cps: [], iso: ['5.3'] },
-    FN: { letter: ['P2', 'P4', 'S4'], cps: ['53', '55(d)'], iso: ['A.10'] },
+    FN: { letter: ['P2', 'P4', 'S4'], cps: ['53', '55(d)'], iso: ['A.10.3'] },
+    NC: { letter: ['A1'], cps: [], iso: ['10.2'] },
   },
   BD: {
-    inventory: { letter: ['G3'], cps: [], iso: ['4.3', 'A.4'] },
-    statement: { letter: ['B2', 'G1'], cps: [], iso: ['A.2', '5.2'] },
-    directions: { letter: ['B2', 'G1', 'G4'], cps: [], iso: ['A.2', '5.2'] },
-    aupOutline: { letter: ['G1', 'G5'], cps: [], iso: ['A.2', 'A.9'] },
+    inventory: { letter: ['G3'], cps: [], iso: ['4.3', 'A.4.2'] },
+    statement: { letter: ['B2', 'G1'], cps: [], iso: ['5.2', 'A.2.2', '6.2', 'A.3.2', 'A.9.3'], inputTo: ['A.5.2'] },
+    directions: { letter: ['B2', 'G1', 'G4'], cps: [], iso: ['5.2', 'A.2.2', '6.2', 'A.3.2', 'A.9.3'], inputTo: ['A.5.2'] },
+    aupOutline: { letter: ['G1', 'G5'], cps: [], iso: ['A.2.2', 'A.9.2', 'A.3.3'] },
     minute: { letter: ['B2', 'G2'], cps: [], iso: ['5.1', '9.3'] },
     actionList: { letter: ['G2'], cps: [], iso: ['6.2'] },
-    worklist: { letter: ['G4'], cps: [], iso: ['A.9'] },
+    worklist: { letter: ['G4'], cps: [], iso: ['A.9.2'] },
     plan: { letter: ['G2'], cps: [], iso: ['5.3'] },
     education: { letter: ['B1', 'G5'], cps: [], iso: ['7.2'] },
-    confidentiality: { letter: ['A2'], cps: [], iso: ['A.7'] },
+    confidentiality: { letter: ['A2'], cps: [], iso: ['A.9.2'] },
     boardViews: { letter: ['B2'], cps: [], iso: ['9.1', '9.3'] },
     evidence: { letter: ['A2'], cps: [], iso: ['9.3'] },
   },
 };
+/** What an input is, in words, for the ISO view. */
+export const INPUT_NOTE = { 'A.5.2': 'Input only: the board’s harm thresholds (B6) say what harm the board will not tolerate. They are not an AI system impact assessment (ISO/IEC 42005:2025).' };
 export const APPS = { RA: 'AI Risk Appetite', UA: 'AI Use Assessment', BD: 'AI Board Direction' };
 
 /** The tags of one output, or null. */
@@ -96,7 +130,7 @@ export const tagsFor = (app, id) => (TAGS[app] || {})[id] || null;
 /** One line for the screen: "APRA letter G3, P1 · CPS 230 47(c) · ISO/IEC 42001 6.1.4, A.5". Empty when untagged. */
 export function tagLine(app, id) {
   const t = tagsFor(app, id); if (!t) return '';
-  return ['APRA letter ' + t.letter.join(', '), t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', 'ISO/IEC 42001 ' + t.iso.join(', ')].filter(Boolean).join(' · ');
+  return ['APRA letter ' + t.letter.join(', '), t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', t.iso.length ? 'ISO/IEC 42001 ' + t.iso.join(', ') : ''].filter(Boolean).join(' · ');
 }
 
 /** ", minute 2026/12-04", or the reference as written when it already says what it is ("Board minute 2026/12-04"). */
@@ -118,21 +152,24 @@ function liteNote(d) {
 /** AI Use Assessment's artefacts, from the stored assessment. status: recorded (signed off), draft or none. */
 export function assessmentArtefacts(d, updatedAt) {
   d = d || {};
-  const ents = d.entries || [], vs = d.versions || [], v = label => vs.filter(x => x && x.label === label).pop();
+  // R7 was labelled "Independent check" before task ISO.6; a version signed off under either label counts.
+  const alias = l => String(l || '').replace('Independent check complete (R7)', 'Independent review complete (R7)');
+  const ents = d.entries || [], vs = d.versions || [], v = label => vs.filter(x => x && alias(x.label) === label).pop();
   const by = (label, has) => { const x = v(label); return x ? ['recorded', x.at, 'Signed off: ' + label] : has ? ['draft', updatedAt, 'Not yet signed off: ' + label] : ['none', null, '']; };
   const q = d.questions || [], f = d.feedback;
   const rows = [
     ['DL1', 'AI dependency register', by('Counsel review recorded (R6)', ents.length)],
-    ['DL2', 'Evidence obtainable at each boundary', by('Independent check complete (R7)', ents.length)],
-    ['DL3', 'Control-library shape for the entity’s own AI boundary', by('Independent check complete (R7)', ents.some(e => ((e.fields || {})[3] || {}).value === 'B3'))],
-    ['DL4', 'Technical schedule, tolerance and trigger design', by('Independent check complete (R7)', ents.length)],
+    ['DL2', 'Evidence obtainable at each boundary', by('Independent review complete (R7)', ents.length)],
+    ['DL3', 'Control-library shape for the entity’s own AI boundary', by('Independent review complete (R7)', ents.some(e => ((e.fields || {})[3] || {}).value === 'B3'))],
+    ['DL4', 'Technical schedule, tolerance and trigger design', by('Independent review complete (R7)', ents.length)],
     ['DL5', 'Technical annex', by('Technical annex signed', ents.length)],
     ['DL6', 'Hand-back list', by('Hand-back list accepted', ents.length)],
     ['QS', 'Question set to counsel', q.length ? (q.every(x => x.status === 'answered') ? ['recorded', q.map(x => x.respondedOn).filter(Boolean).sort().pop() || updatedAt, `${q.length} question${q.length === 1 ? '' : 's'}, all answered`] : ['draft', updatedAt, `${q.filter(x => x.status !== 'answered').length} of ${q.length} open`]) : ['none', null, '']],
-    ['RP', 'Review pack for the independent reviewer', by('Independent check complete (R7)', ents.length)],
-    ['CM', 'Closing measures', by('Independent check complete (R7)', ents.length)],
+    ['RP', 'Review pack for the independent reviewer', by('Independent review complete (R7)', ents.length)],
+    ['CM', 'Closing measures', by('Independent review complete (R7)', ents.length)],
     ['DR', 'Difference report', (d.diffReports || []).length ? ['recorded', (d.diffReports[d.diffReports.length - 1] || {}).at, `${d.diffReports.length} recalculation${d.diffReports.length === 1 ? '' : 's'}`] : ['none', null, '']],
     ['EP', 'Engagement plan', by('Set agreed (R1)', !!d.engagement)],
+    ['NC', 'Nonconformity and corrective action register', by('Independent review complete (R7)', (d.exceptions || []).length + (d.arrangements || []).filter(x => x && x.corrective && (x.corrective.rootCause || x.corrective.action)).length)],
     ['FN', 'Findings F1 to F4, as issued in the in-use feed', f ? ['recorded', f.generated || f.on, 'Issued to AI Risk Appetite'] : ['none', null, '']],
   ];
   const lite = liteNote(d), scoped = id => lite && id !== 'EP'; // the engagement plan covers the engagement, not the register
@@ -144,14 +181,15 @@ export function appetiteArtefacts(d, updatedAt) {
   d = d || {};
   const c = d.calibration || {}, approved = c.status === 'approved', started = approved || c.status === 'working' || c.status === 'agreed' || !!c.agreedOn || (c.version || 0) > 0;
   const withCal = has => approved ? ['recorded', c.approvedOn, 'Approved by the board' + minuteText(c.minuteRef)] : (has || started) ? ['draft', c.agreedOn || updatedAt, c.agreedOn ? 'Agreed by the CRO; not yet approved by the board' : 'Not yet approved by the board'] : ['none', null, ''];
-  const lim = ((d.aims || {}).limits || []), inUse = d.inUse;
+  const L = (d.aims || {}).limits, lim = Array.isArray(L) ? L : (L && Array.isArray(L.rows) ? L.rows : []), inUse = d.inUse;   // the app keeps { rows, file, loadedOn }
   const rows = [
     ['pack', 'Board pack', withCal()], ['paper', 'Board paper (plain words)', withCal()], ['statement', 'AI risk appetite statement', withCal()],
     ['schedule', 'Tolerance and trigger schedule', withCal()], ['calibration', 'Calibration set', withCal()],
     ['session', 'Session record', (d.challenge || []).length ? ['recorded', updatedAt, `${d.challenge.length} challenge${d.challenge.length === 1 ? '' : 's'} recorded`] : started ? ['draft', updatedAt, ''] : ['none', null, '']],
     ['checks', 'Check report (K1 to K11)', withCal(true)], ['plan', 'Engagement plan', withCal(true)],
     ['inUse', 'In-use measures against the appetite (decision 8)', inUse ? ['recorded', inUse.on || inUse.generated, 'From the AI Use Assessment in-use feed'] : ['none', null, '']],
-    ['limits', 'The client’s AI limits tested against the appetite (K11)', lim.length ? [approved ? 'recorded' : 'draft', approved ? c.approvedOn : updatedAt, `${lim.length} limit${lim.length === 1 ? '' : 's'} from the client’s ISO/IEC 42001 limits register`] : ['none', null, '']],
+    ['mgmtReview', 'Input to the AI management review (ISO/IEC 42001:2023, 9.3)', approved && inUse ? ['recorded', inUse.on || inUse.generated, 'From the approved appetite, the board’s directions and the in-use feed'] : started ? ['draft', updatedAt, approved ? 'No in-use feed loaded yet' : 'Not yet approved by the board'] : ['none', null, '']],
+    ['limits', 'The client’s AI limits tested against the appetite (K11)', lim.length ? [approved ? 'recorded' : 'draft', approved ? c.approvedOn : updatedAt, `${lim.length} limit${lim.length === 1 ? '' : 's'} from the limits register (a Triodian input, separate from the Statement of Applicability)`] : ['none', null, '']],
   ];
   return rows.map(([id, name, [s, at, note]]) => art('RA', id, name, s, at, note));
 }
@@ -181,7 +219,9 @@ const cell = s => String(s == null ? '' : s).replace(/\|/g, '\\|').replace(/\n/g
 const table = (h, rows) => `| ${h.join(' | ')} |\n| ${h.map(() => '---').join(' | ')} |\n` + rows.map(r => `| ${r.map(cell).join(' | ')} |`).join('\n') + '\n\n';
 
 /**
- * The index, in Markdown. o: { artefacts, by: 'letter' | 'iso', review, company, gatheredOn, notes }.
+ * The index, in Markdown. o: { artefacts, by: 'letter' | 'iso', review, company, gatheredOn, notes, soa }.
+ * soa: the rows of the client's Statement of Applicability, when one is loaded in AI Risk Appetite: the ISO view then
+ * shows, for each Annex A control, whether it applies, its justification and its implementation status.
  * review is the date of the client's next AI management review (ISO/IEC 42001 clause 9.3), when set: every artefact
  * is then due for review at it. notes: lines saying what could not be gathered.
  */
@@ -189,24 +229,56 @@ export function indexMarkdown(o) {
   const A = (o.artefacts || []).filter(a => a.status !== 'none'), by = o.by === 'iso' ? 'iso' : 'letter';
   const rev = ymd(o.review), row = a => [APPS[a.app], a.name, STATUS[a.status] || a.status, a.asOf || '—', rev || '—', a.note || ''];
   const H = ['App', 'Artefact', 'Status', 'As of', 'Review by', 'Note'];
-  let m = `${o.company ? o.company + ': ' : ''}the artefacts the three engagements hold, ${by === 'iso' ? 'by ISO/IEC 42001 clause and Annex A control' : 'by bullet of the ' + LETTER_NAME}. Gathered ${o.gatheredOn || ''}.\n\n`;
+  let m = `${o.company ? o.company + ': ' : ''}the artefacts the three engagements hold, ${by === 'iso' ? 'by ISO/IEC 42001:2023 clause and Annex A control' : 'by bullet of the ' + LETTER_NAME}. Gathered ${o.gatheredOn || ''}.\n\n`;
   m += rev ? `Review dates are set to the client’s next AI management review (ISO/IEC 42001 clause 9.3), ${rev}.\n\n` : 'No AI management review date is set, so no review dates are shown. Set it on the set-up screen to align them with ISO/IEC 42001 clause 9.3.\n\n';
   (o.notes || []).forEach(n => { m += `**Not gathered.** ${n}\n\n`; });
   if (by === 'letter') {
     LETTER.forEach(b => {
       const hits = A.filter(a => (a.letter || []).includes(b.id));
-      m += `## ${b.id} · ${b.text}\n\n${b.section}. CPS 230: ${b.cps.length ? b.cps.join(', ') : '—'}. ISO/IEC 42001: ${b.iso.join(', ')}.\n\n` + (hits.length ? table(H, hits.map(row)) : 'None yet.\n\n');
+      m += `## ${b.id} · ${b.text}\n\n${b.section}. CPS 230: ${b.cps.length ? b.cps.join(', ') : '—'}. ISO/IEC 42001:2023: ${b.iso.join(', ')}.\n\n` + (hits.length ? table(H, hits.map(row)) : 'None yet.\n\n');
     });
   } else {
+    const soa = soaIndex(o.soa), S = isoSummary(A, o.soa);
+    m += soa ? `The client’s Statement of Applicability is loaded: ${S.applicable} of ${S.listed} controls listed apply. Of those, the suite’s outputs evidence ${S.evidenced} and do not evidence ${S.applicable - S.evidenced}.\n\n`
+      : 'No Statement of Applicability is loaded. Load it in AI Risk Appetite’s set-up to see, for each Annex A control, whether it applies and its implementation status.\n\n';
+    m += `${NOT_EVIDENCED} means the three engagements produce nothing for that clause or control. The evidence for it is in the client’s own AI management system: for example its development, testing and data processes (A.6.1 to A.6.2.5, A.7) and its impact assessments (A.5).\n\n`;
     ISO.forEach(([id, name]) => {
-      const hits = A.filter(a => (a.iso || []).includes(id));
-      const bullets = LETTER.filter(b => b.iso.includes(id)).map(b => b.id);
-      m += `## ${id} · ${name}\n\nLetter bullets: ${bullets.join(', ') || '—'}.\n\n` + (hits.length ? table(H, hits.map(row)) : 'None yet.\n\n');
+      const hits = A.filter(a => (a.iso || []).includes(id)), inputs = A.filter(a => (a.inputTo || []).includes(id));
+      const bullets = LETTER.filter(b => b.iso.some(x => covers(x, id))).map(b => b.id), sr = soa && soa[id];
+      m += `## ${id} · ${name}\n\nLetter bullets: ${bullets.join(', ') || '—'}.` + (soa && /^A\./.test(id) ? ` Statement of Applicability: ${soaLine(sr)}.` : '') + '\n\n'
+        + (hits.length ? table(H, hits.map(row)) : `${NOT_EVIDENCED}.\n\n`)
+        + (inputs.length ? `${INPUT_NOTE[id] || 'Input only.'} From: ${inputs.map(a => a.name).join('; ')}.\n\n` : '');
     });
   }
   const gap = LETTER.filter(b => !A.some(a => (a.letter || []).includes(b.id))).map(b => b.id);
   m += `## Bullets with no evidence yet\n\n${gap.length ? gap.join(', ') + '. These are for other controls or tools the entity holds; the three engagements do not produce evidence for them.' : 'None.'}\n\n${NOTE}\n`;
   return m;
+}
+
+/* ---------- the Statement of Applicability (task ISO.5) ----------
+   A Statement of Applicability lists the Annex A controls, whether each applies, the justification, and how far it is
+   implemented. It holds no limits: the limits register is a separate Triodian input, tested by check K11. */
+const soaIndex = rows => (Array.isArray(rows) && rows.length ? Object.fromEntries(rows.map(r => [r.control, r])) : null);
+/** "applies · implemented in part · Material service providers", or "not listed". */
+export function soaLine(r) {
+  if (!r) return 'not listed';
+  const impl = r.implemented === 'yes' ? 'implemented' : r.implemented === 'partly' ? 'implemented in part' : r.implemented === 'no' ? 'not implemented' : 'implementation not stated';
+  return [r.applicable ? 'applies' : 'does not apply', r.applicable ? impl : '', r.justification || ''].filter(Boolean).join(' · ');
+}
+/** For each Annex A control: its SoA row, the outputs that evidence it, and those that are an input only. */
+export function soaReport(artefacts, soa) {
+  const A = (artefacts || []).filter(a => a.status !== 'none'), ix = soaIndex(soa) || {};
+  return ANNEX_A.map(([id, name]) => ({ id, name, soa: ix[id] || null, evidence: A.filter(a => (a.iso || []).includes(id)), inputs: A.filter(a => (a.inputTo || []).includes(id)) }));
+}
+/** Counts for the ISO view: controls the SoA lists, those that apply, and those of them the suite evidences. */
+export function isoSummary(artefacts, soa) {
+  const R = soaReport(artefacts, soa), listed = R.filter(r => r.soa), applicable = listed.filter(r => r.soa.applicable);
+  return { controls: ANNEX_A.length, evidencedAll: R.filter(r => r.evidence.length).length, listed: listed.length, applicable: applicable.length, evidenced: applicable.filter(r => r.evidence.length).length };
+}
+/** The report as a table, for a screen or a document: one row for each Annex A control. */
+export function soaMarkdown(artefacts, soa) {
+  const R = soaReport(artefacts, soa), has = !!soaIndex(soa);
+  return table(['Control', 'Name'].concat(has ? ['Statement of Applicability'] : [], ['Evidenced by']), R.map(r => [r.id, r.name].concat(has ? [soaLine(r.soa)] : [], [r.evidence.length ? r.evidence.map(a => `${APPS[a.app]}: ${a.name}${a.status === 'draft' ? ' (draft)' : ''}`).join('; ') : NOT_EVIDENCED + (r.inputs.length ? '. Input only: ' + r.inputs.map(a => a.name).join('; ') : '')])));
 }
 
 /** Counts for the screen: bullets with evidence, and artefacts recorded or in draft. */

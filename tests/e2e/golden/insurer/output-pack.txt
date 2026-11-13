@@ -88,7 +88,7 @@ Exceptions: a use above the ceiling must be approved by the person named in deci
 | 2 rungs | Low | Medium | High |
 | 3 or more rungs | Medium | High | High |
 
-| Priority | Time limit | Interim position |
+| Grade | Time limit | Interim position |
 | --- | --- | --- |
 | High | Reported to the next board risk committee meeting, with a plan | One of: restrict the AI's authority; add a compensating control; or accept, with a named accountable person |
 | Medium | Closed by the next contract renewal or variation for the arrangement | Accept, recorded with an owner |
@@ -195,8 +195,8 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | Ref | Measure | Limit | Owner | Counted from | Reported |
 | --- | --- | --- | --- | --- | --- |
 | M1 | Register entries above the authority ceiling without an approved exception | [0] | Ana Duarte | Register: authority tier against P1 | Each risk committee |
-| M2 | High-priority gaps open beyond their time limit | [0] | Priya Natarajan | Findings: priority and date set | Each risk committee |
-| M3 | Medium-priority gaps still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
+| M2 | Gaps graded High open beyond their time limit | [0] | Priya Natarajan | Findings: grade and date set | Each risk committee |
+| M3 | Gaps graded Medium still open after the contract renewal or variation | [ ] | Tom Ellery | Findings and the next contract date | Quarterly |
 | M4 | F4 findings open beyond their permitted date, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Findings: type and date set | Each risk committee |
 | M5 | Expected items of evidence that are overdue | [ ] days | Tom Ellery | Technical schedule: item and due date | Monthly |
 | M6 | Share of critical operations that depend on a single platform or AI model provider | not set (Tom Ellery, by 30 November 2026) | Priya Natarajan | Register: platform field | Half-yearly |
@@ -225,7 +225,7 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | --- | --- | --- |
 | K1 | Complete | failed |
 | K2 | Ordered | passed |
-| K3 | Priority ordered | passed |
+| K3 | Grade ordered | passed |
 | K4 | Consistent with existing thresholds | passed |
 | K5 | Consistent with existing authority | passed |
 | K6 | Provider compared with own staff | passed |
@@ -241,7 +241,7 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | --- | --- |
 | Above ceiling | An AI use with more authority than the ceiling the board has set. It is reported separately from evidence shortfalls. |
 | Accountable person | The senior person responsible for a function under the Financial Accountability Regime. |
-| AI risk appetite | The board's statement of how much authority AI may hold, what failures it will tolerate, and what evidence it expects the insurer to hold. |
+| AI risk appetite | The board's statement of how much authority AI may hold, what failures it will tolerate, and what evidence it expects the insurer to hold. ISO Guide 73:2009 (now ISO 31073:2022) defines risk appetite as the amount and type of risk that an organisation is willing to pursue or retain; the eight decisions state it for AI. |
 | Authority tier | How much AI may do without a person deciding, from A1 Assists to A6 Changes systems. |
 | Calibration set | The eleven parameters, P1 to P11, that the AI Use Assessment reads. |
 | Ceiling | The highest authority tier the board accepts for a function and location. |
@@ -255,10 +255,11 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | Current state | What the insurer does or holds today. It is the starting point for decisions 1 and 3. |
 | Evidence ladder | The seven evidence levels, in order of strength. |
 | Evidence rung | A level of evidence, from E0 None to E6 Action control. |
+| Evidence shortfall grade | How serious a gap is, graded High, Medium or Low from its size and the consequence level. It is not a risk rating: likelihood is not assessed. |
 | Expected evidence | The evidence the board expects the insurer to hold for a given authority tier and consequence level. |
 | Gap | The number of evidence levels between required and obtainable evidence. |
-| Gap priority | How serious a gap is, based on its size and the consequence level. |
 | Interim position | What the insurer does while a gap remains open: restrict the AI's authority, add a compensating control, or accept the gap. |
+| Likelihood | Not assessed. The framework grades how far the evidence falls short (evidence shortfall grade); it does not estimate how likely a failure is, so no result here is a risk rating in the sense of ISO 31000:2018. |
 | Material service provider | A provider the insurer relies on for a critical operation or to manage a material risk. |
 | Not determinable (F4) | An assessment finding that the documents cannot show whether, or how, AI is used. |
 | Not known | A fact the insurer's documents do not show. Such facts are counted, not estimated. |
@@ -267,9 +268,10 @@ Definitions from the AI Use Assessment Framework, sections 8.1 to 8.3.
 | Proposer | The person who put a position forward. On decisions 1 and 3 this must be the CRO or the insurer's risk function. |
 | Required evidence | The evidence the insurer can reasonably require from a provider under its contract, as settled with counsel. |
 | Risk appetite statement | The board-approved statement of the risk the insurer is prepared to accept. The AI risk appetite sits within it. |
+| Risk criteria | ISO Guide 73: the terms of reference against which the significance of a risk is evaluated. The eight decisions set the insurer's risk criteria for AI (ISO 31000:2018, 6.3.4; ISO/IEC 42001:2023, 6.1.2), and the calibration set holds them. |
 | Role limits | Administrators complete set-up. Counsel, Triodian, the CRO and the insurer's risk function record positions and starting data. The independent reviewer may change decision 2 only, including its starting data, questions and challenge. The board record role may complete the approval fields only. Only counsel or the CRO may write the overall position. Challenge responses and their status are recorded by counsel, the CRO or the risk function. |
 | Starting position | A value filled in before the session as a basis for discussion. It is not a recommendation. |
-| Tolerance level | The maximum disruption to a critical operation the board accepts. |
-| Trigger | A defined event that must be reported to the insurer within a set time. |
+| Tolerance level | The maximum disruption to a critical operation the board accepts. This is the operational-risk sense. ISO Guide 73 defines risk tolerance more widely, as an organisation's or stakeholder's readiness to bear the risk after risk treatment in order to achieve its objectives; decisions 3 to 5 record that. |
+| Trigger | A defined event that must be reported to the insurer within a set time. ISO Guide 73 has no term of its own for it: it is a threshold on a monitoring measure (ISO 31000:2018, 6.6). |
 | Who may propose | On decisions 1 and 3, only the CRO or the insurer's risk function may propose a position. On decision 2, the independent reviewer may also propose. Counsel and Triodian explain and record positions; neither proposes them. |
 | Working appetite | Positions agreed by the CRO and used to calibrate the assessment before the board approves them. |
