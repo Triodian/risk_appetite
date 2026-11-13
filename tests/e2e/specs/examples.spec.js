@@ -71,3 +71,28 @@ test('the default is the insurer example; the menu switches between them, each w
   expect(p._errors).toEqual([]);
   await ctx.close();
 });
+
+test('?example=banking opens Wattlebrook Bank with the ADI pack, the board’s directions and an approved appetite', async ({ browser }) => {
+  const { ctx, p } = await start(browser, '/?example=banking');
+  await expect(p.locator('.examplenote').first()).toContainText('a fictional bank, Wattlebrook Bank');
+  const s = await p.evaluate(() => { const S = window.RAF.state, ck = window.RAF.checks(); const last = S.calibration.issued[S.calibration.issued.length - 1];
+    return { name: S.engagement.insurer, pack: S.engagement.sectorPack, fns: S.functions.map(f => f.id).join(), cal: S.calibration.status, issued: S.calibration.issued.map(i => i.status).join(), failing: ck.filter(k => k.state === 'fail').map(k => k.id),
+      dir: S.boardDirections.file.company + ' ' + S.boardDirections.file.version, fc: last.set.parameters.P1['Financial crime (AML/CTF, fraud and scams)'], k11: (ck.find(k => k.id === 'K11') || {}).state, minute: last.set.minuteRef,
+      over: S.functions.flatMap(f => ['own', 'provider', 'platform'].map(l => `d1.${f.id}.${l}`)).filter(id => { const max = { rl: 2, dp: 4, bi: 2, fc: 2, ch: 2, cs: 4, tm: 2, rc: 1, to: 4 }[id.split('.')[1]]; return +S.decisions.d1.cells[id].value.slice(1) > max; }) }; });
+  expect(s.name).toBe('Wattlebrook Bank (fictional)'); expect(s.pack).toBe('adi');
+  expect(s.fns).toBe('rl,dp,bi,fc,ch,cs,tm,rc,to');
+  expect(s.failing).toEqual([]); expect(s.k11).toBe('pass');
+  expect(s.cal).toBe('approved'); expect(s.issued).toBe('working,approved'); expect(s.minute).toBe('Board minute 2026/11-09');
+  expect(s.dir).toBe('Wattlebrook Bank V2');                       // the directions the Board Direction example records
+  expect(s.over).toEqual(['d1.fc.provider']);                      // one ceiling above the board's direction, with its reason and revisit
+  expect(s.fc.provider.tier).toBe('A3');
+  await p.evaluate(() => window.RAF.go('d1'));
+  await expect(p.locator('body')).toContainText('Financial crime (AML/CTF, fraud and scams)');
+  await expect(p.locator('body')).toContainText('The board’s directions for this decision');
+  await expect(p.locator('body')).toContainText('A person decides before an account is frozen or closed');
+  await expect(p.locator('body')).not.toContainText('Corvane');
+  await expect(p.locator('body')).not.toContainText('Coastline');
+  for (const scr of ['d2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'checks', 'outputs']) expect(await p.evaluate(x => { try { window.RAF.go(x); return true; } catch (e) { return String(e); } }, scr)).toBe(true);
+  expect(p._errors).toEqual([]);
+  await ctx.close();
+});
