@@ -152,21 +152,24 @@ function liteNote(d) {
 /** AI Use Assessment's artefacts, from the stored assessment. status: recorded (signed off), draft or none. */
 export function assessmentArtefacts(d, updatedAt) {
   d = d || {};
-  const ents = d.entries || [], vs = d.versions || [], v = label => vs.filter(x => x && x.label === label).pop();
+  // R7 was labelled "Independent check" before task ISO.6; a version signed off under either label counts.
+  const alias = l => String(l || '').replace('Independent check complete (R7)', 'Independent review complete (R7)');
+  const ents = d.entries || [], vs = d.versions || [], v = label => vs.filter(x => x && alias(x.label) === label).pop();
   const by = (label, has) => { const x = v(label); return x ? ['recorded', x.at, 'Signed off: ' + label] : has ? ['draft', updatedAt, 'Not yet signed off: ' + label] : ['none', null, '']; };
   const q = d.questions || [], f = d.feedback;
   const rows = [
     ['DL1', 'AI dependency register', by('Counsel review recorded (R6)', ents.length)],
-    ['DL2', 'Evidence obtainable at each boundary', by('Independent check complete (R7)', ents.length)],
-    ['DL3', 'Control-library shape for the entity’s own AI boundary', by('Independent check complete (R7)', ents.some(e => ((e.fields || {})[3] || {}).value === 'B3'))],
-    ['DL4', 'Technical schedule, tolerance and trigger design', by('Independent check complete (R7)', ents.length)],
+    ['DL2', 'Evidence obtainable at each boundary', by('Independent review complete (R7)', ents.length)],
+    ['DL3', 'Control-library shape for the entity’s own AI boundary', by('Independent review complete (R7)', ents.some(e => ((e.fields || {})[3] || {}).value === 'B3'))],
+    ['DL4', 'Technical schedule, tolerance and trigger design', by('Independent review complete (R7)', ents.length)],
     ['DL5', 'Technical annex', by('Technical annex signed', ents.length)],
     ['DL6', 'Hand-back list', by('Hand-back list accepted', ents.length)],
     ['QS', 'Question set to counsel', q.length ? (q.every(x => x.status === 'answered') ? ['recorded', q.map(x => x.respondedOn).filter(Boolean).sort().pop() || updatedAt, `${q.length} question${q.length === 1 ? '' : 's'}, all answered`] : ['draft', updatedAt, `${q.filter(x => x.status !== 'answered').length} of ${q.length} open`]) : ['none', null, '']],
-    ['RP', 'Review pack for the independent reviewer', by('Independent check complete (R7)', ents.length)],
-    ['CM', 'Closing measures', by('Independent check complete (R7)', ents.length)],
+    ['RP', 'Review pack for the independent reviewer', by('Independent review complete (R7)', ents.length)],
+    ['CM', 'Closing measures', by('Independent review complete (R7)', ents.length)],
     ['DR', 'Difference report', (d.diffReports || []).length ? ['recorded', (d.diffReports[d.diffReports.length - 1] || {}).at, `${d.diffReports.length} recalculation${d.diffReports.length === 1 ? '' : 's'}`] : ['none', null, '']],
     ['EP', 'Engagement plan', by('Set agreed (R1)', !!d.engagement)],
+    ['NC', 'Nonconformity and corrective action register', by('Independent review complete (R7)', (d.exceptions || []).length + (d.arrangements || []).filter(x => x && x.corrective && (x.corrective.rootCause || x.corrective.action)).length)],
     ['FN', 'Findings F1 to F4, as issued in the in-use feed', f ? ['recorded', f.generated || f.on, 'Issued to AI Risk Appetite'] : ['none', null, '']],
   ];
   const lite = liteNote(d), scoped = id => lite && id !== 'EP'; // the engagement plan covers the engagement, not the register
@@ -185,6 +188,7 @@ export function appetiteArtefacts(d, updatedAt) {
     ['session', 'Session record', (d.challenge || []).length ? ['recorded', updatedAt, `${d.challenge.length} challenge${d.challenge.length === 1 ? '' : 's'} recorded`] : started ? ['draft', updatedAt, ''] : ['none', null, '']],
     ['checks', 'Check report (K1 to K11)', withCal(true)], ['plan', 'Engagement plan', withCal(true)],
     ['inUse', 'In-use measures against the appetite (decision 8)', inUse ? ['recorded', inUse.on || inUse.generated, 'From the AI Use Assessment in-use feed'] : ['none', null, '']],
+    ['mgmtReview', 'Input to the AI management review (ISO/IEC 42001:2023, 9.3)', approved && inUse ? ['recorded', inUse.on || inUse.generated, 'From the approved appetite, the board’s directions and the in-use feed'] : started ? ['draft', updatedAt, approved ? 'No in-use feed loaded yet' : 'Not yet approved by the board'] : ['none', null, '']],
     ['limits', 'The client’s AI limits tested against the appetite (K11)', lim.length ? [approved ? 'recorded' : 'draft', approved ? c.approvedOn : updatedAt, `${lim.length} limit${lim.length === 1 ? '' : 's'} from the limits register (a Triodian input, separate from the Statement of Applicability)`] : ['none', null, '']],
   ];
   return rows.map(([id, name, [s, at, note]]) => art('RA', id, name, s, at, note));

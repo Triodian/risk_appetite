@@ -63,6 +63,7 @@ Session record
 Calibration set
 Check report
 Engagement plan
+Management review input
 
 Evidence for: APRA letter B2, G1 · ISO/IEC 42001 6.2, A.2.2
 

@@ -728,6 +728,7 @@ function screenSetup() {
   <section class="card"><div class="row between"><h2 class="sh" style="margin:0">2 · People taking part</h2>${!practice() && SRV.user && SRV.user.isAdmin ? '<button class="btn sm" data-act="go" data-to="users">Manage users</button>' : ''}</div>
     <p class="small soft" style="margin:8px 0 14px">Every proposer, owner and approver is chosen from this list. On decisions 1 and 3, only the CRO or the ${N.entity} risk function can propose a position. ${practice() ? 'In practice mode the people are fictional.' : 'People and their roles are managed by administrators.'}</p>
     ${people || `<p class="soft small">No one with an engagement role yet.${!practice() && SRV.user && SRV.user.isAdmin ? ' Add users under <button class="lnk" data-act="go" data-to="users">Users</button>.' : ' An administrator adds people.'}</p>`}</section>
+  ${competenceCard()}
   <section class="card"><h2 class="sh">3 · Functions and ${T('critOp', 'critical operations')} in scope</h2><p class="small soft" style="margin:4px 0 14px">The business functions the appetite covers (decision 1 sets a ceiling for each), and the critical operations whose approved tolerance levels decision 2 uses.</p>
     <div class="grid2"><div><div class="mini" style="margin-bottom:6px">Functions (the framework’s starting list, which can be edited)</div>
       <div class="stack" style="gap:6px">${S.functions.map((f, i) => `<div class="row" style="flex-wrap:nowrap"><input class="in" id="fn-${i}" data-path="functions.${i}.name" value="${esc(f.name)}" aria-label="Function ${i + 1}"><button class="btn sm ghost" data-act="rmFn" data-i="${i}" aria-label="Remove ${esc(f.name)}">✕</button></div>`).join('')}</div>
@@ -1169,6 +1170,47 @@ function mdSchedule() {
   m += `## Triggers\n\n` + tbl(['Ref', 'Trigger', 'Measure', 'Threshold', 'Notify within', 'Notified to'], S.decisions.d7.triggers.map(t => [t.ref, t.name, t.measure, pv(`d7.${t.ref}.threshold`), val(`d7.${t.ref}.time`) ? val(`d7.${t.ref}.time`) + ' hours' : pv(`d7.${t.ref}.time`), pv(`d7.${t.ref}.to`)]));
   return m;
 }
+/* ---------- input to the AI management review (task ISO.6; ISO/IEC 42001:2023, 9.3) ----------
+   Generated from what the app holds for the board: the in-use measures, the open gaps and overdue items, the ceilings
+   past the board's direction, the versions of the risk criteria, and the challenges raised. It is an input to the
+   review, arranged under the inputs clause 9.3 lists. It does not record the review itself or its outcome. */
+function mdMgmtReview() {
+  const c = S.calibration, r = inUseNow(), dirs = DIRS(), e = S.engagement;
+  let m = mdHead('Input to the AI management review') + `For the ${N.entity}’s review of its AI management system (ISO/IEC 42001:2023, 9.3). Prepared from the AI risk appetite as it stands. The review, its decisions and its actions are recorded in the ${N.entity}’s own management system, not here.\n\n[[EVIDENCE]]\n\n`;
+  const open = [...S.challenge.filter(x => x.status === 'open').map(x => [x.ref, 'Challenge', withLabels(x.point), pname(x.raisedBy) || '—']), ...S.questionsForCounsel.filter(x => x.status !== 'answered').map(x => [x.ref, 'Question for counsel', withLabels(x.question), 'Counsel'])];
+  const ns = allCells().filter(x => { const p = P(x.id); return p && p.status === 'notSet'; });
+  m += `## 1. Actions open from this engagement\n\nThe status of actions from earlier management reviews is held in the ${N.entity}’s own system. These are the actions open in the appetite.\n\n`
+    + (open.length ? tbl(['Ref', 'Kind', 'What is open', 'Raised by or with'], open) : 'No challenge or question for counsel is open.\n\n')
+    + (ns.length ? `Positions recorded as not set: ${ns.map(x => `${cellLabel(x.id)} (owner ${pname(P(x.id).notSetOwner) || '—'}, due ${P(x.id).notSetDue || '—'})`).join('; ')}.\n\n` : '');
+  m += `## 2. Changes in external and internal issues\n\n`
+    + (dirs ? `The board’s directions read on the decisions: ${dirs.company || ''} version ${dirs.version || '—'}${dirs.recordedOn ? ', recorded ' + dAU(String(dirs.recordedOn).slice(0, 10)) : ''}${S.boardDirections.loadedOn ? ', loaded ' + dAU(S.boardDirections.loadedOn) : ''}.\n\n` : 'No board directions are loaded.\n\n')
+    + tbl(['Input', 'Status', 'Note'], S.inputs.map((x, i) => [x.ref + ' ' + (C.inputs[i] || {}).name, x.status || '—', x.note || '']));
+  const ch = S.challenge.map(x => [x.ref, pname(x.raisedBy) || '—', withLabels(x.point), x.status, x.response || '']), dis = allCells().filter(x => P(x.id) && String(P(x.id).dissent || '').trim());
+  m += `## 3. Changes in the needs and expectations of interested parties\n\nChallenges raised in the sessions and dissent recorded against positions.\n\n`
+    + (ch.length ? tbl(['Ref', 'Raised by', 'Point', 'Status', 'Response'], ch) : 'No challenge recorded.\n\n')
+    + (dis.length ? dis.map(x => `- ${cellLabel(x.id)}: ${P(x.id).dissent}`).join('\n') + '\n\n' : '');
+  m += `## 4. Performance\n\n### Monitoring and measurement results\n\n` + (r ? `From the AI Use Assessment in-use feed of ${dAU(r.on)}. A measure with no value cannot be counted from the register.\n\n` + tbl(['Ref', 'Measure', 'Limit', 'In use now'], inUseRows().map(x => [x.ref, withLabels(x.measure, 'C'), x.limit || '—', x.value == null ? 'Not counted: ' + x.basis : String(x.value)])) : 'No in-use feed is loaded, so no measure is counted yet.\n\n');
+  const g = (r && r.gapsByPriority) || null, od = (r && r.overdue) || [];
+  m += `### Nonconformities and corrective actions\n\n` + (g ? `Gaps by evidence shortfall grade: ${['High', 'Medium', 'Low'].map(k => `${k} ${g[k] || 0}`).join(' · ')}. The root cause, corrective action and effectiveness check for each gap are in AI Use Assessment’s nonconformity and corrective action register (ISO/IEC 42001:2023, 10.2).\n\n` + (od.length ? tbl(['Entry', 'Overdue'], od.map(x => [x.entry, x.item])) : 'No item is overdue.\n\n') : 'No in-use feed is loaded.\n\n');
+  const bd = dirs ? cellsFor('d1').filter(x => { const p = P(x.id); return p && p.status === 'set' && beyond(x.id, p.value); }) : [];
+  m += `### Ceilings past the board’s direction\n\n` + (bd.length ? tbl(['Ceiling', 'Recorded', 'Reason', 'Board revisit'], bd.map(x => { const p = P(x.id); return [cellLabel(x.id), p.value, p.reason || 'No reason recorded (K11)', p.boardRevisit || 'Not recorded (K11)']; })) : dirs ? 'No ceiling goes past the board’s direction.\n\n' : 'No board directions are loaded, so none can be compared.\n\n');
+  m += `### Audit results\n\nNot held by this app. The procedure for the ${N.entity}’s internal audit function to test an AI use assessment, following ISO 19011:2026, is AI Use Assessment’s docs/audit-procedure.md.\n\n`;
+  m += `## 5. Changes to the risk criteria\n\nThe calibration set holds the ${N.entity}’s risk criteria for AI (ISO 31000:2018, 6.3.4; ISO/IEC 42001:2023, 6.1.2). Versions issued:\n\n` + (c.issued.length ? tbl(['Version', 'Status', 'Date', 'By', 'Minute'], c.issued.map(x => ['v' + x.version, x.status, dAU(x.on), x.by || '', x.minuteRef || ''])) : 'None yet: the appetite is the framework default.\n\n')
+    + `Re-assessment interval (decision 8): ${(P('d8.interval') || {}).value || 'not set'}.\n\n`;
+  m += `## 6. Opportunities for improvement\n\n` + (() => { const w = runChecks().filter(k => k.state !== 'pass'); return w.length ? w.map(k => `- ${k.id} ${k.name}: ${k.state === 'warn' ? 'warning' : k.state === 'fail' ? 'failing' : 'cannot run'}. ${k.off.slice(0, 3).map(o => cellLabel(o.id) + ': ' + o.why).join('; ')}`).join('\n') + '\n\n' : 'Every check passes.\n\n'; })();
+  return m;
+}
+/* ---------- competence (task ISO.6; ISO/IEC 42001:2023, 7.2) ----------
+   For each person with an engagement role: why they are competent for it, and the evidence. Recorded in set-up and
+   printed in the session record. */
+const competenceOf = id => ((S.engagement.competence || {})[id]) || {};
+const rolePeople = () => S.people.filter(p => p.role && p.role !== 'none' && p.active !== false);
+function competenceCard() {
+  const ps = rolePeople(), done = ps.filter(p => String(competenceOf(p.id).statement || '').trim()).length;
+  return `<section class="card" id="competence"><h2 class="sh">2a · Competence</h2><p class="small soft" style="margin:4px 0 12px">For each person with a role: why they are competent for it, and the evidence (ISO/IEC 42001:2023, 7.2). ${done} of ${ps.length} recorded. Printed in the session record.</p>
+    <div class="stack" style="gap:10px">${ps.map(p => `<div class="fgrid" style="grid-template-columns:minmax(180px,1fr) 2fr 2fr"><div><strong>${esc(p.name)}</strong><br><span class="small soft">${esc(ROLE_NAME[p.role] || p.role)}</span></div>${fld('Why competent for the role', `engagement.competence.${p.id}.statement`, competenceOf(p.id).statement || '')}${fld('Evidence', `engagement.competence.${p.id}.evidence`, competenceOf(p.id).evidence || '')}</div>`).join('') || '<p class="soft small">No one with an engagement role yet.</p>'}</div></section>`;
+}
+const competenceMd = () => `## Competence of the people in the engagement\n\nISO/IEC 42001:2023, 7.2.\n\n` + tbl(['Person', 'Role', 'Why competent for the role', 'Evidence'], rolePeople().map(p => [p.name, ROLE_NAME[p.role] || p.role, competenceOf(p.id).statement || '[not yet recorded]', competenceOf(p.id).evidence || '']));
 function mdSession() {
   let m = mdHead('Session record') + 'A working paper, not a board paper. To be handled as counsel directs.\n\n';
   C.decisions.forEach(d => {
@@ -1181,7 +1223,7 @@ function mdSession() {
     m += `**Questions for counsel.** ${q.length ? '' : 'None.'}\n\n` + (q.length ? q.map(x => `- ${x.ref} (${x.status}): ${x.question}${x.response ? ' Response: ' + x.response : ''}`).join('\n') + '\n\n' : '');
     if (d.id === 'd3') { const r = S.decisions.d3.referenceShown; m += `**Reference table (Appendix A).** ${r.length ? 'Shown: ' + r.map(x => `${fmtAt(x.at)} by ${x.by}`).join('; ') + '.' : 'Not shown.'}\n\n`; }
   });
-  return m;
+  return m + competenceMd();
 }
 function paramGroups() {
   const pick = (did, f) => cellsFor(did).filter(f || (() => true)).map(c => c.id);
@@ -1264,10 +1306,10 @@ function mdPlan() {
   return m;
 }
 function mdChecks() { const ck = runChecks(); let m = mdHead('Check report'); m += tbl(['Check', 'Name', 'Result', 'Detail'], ck.map(k => [k.id, k.name, k.state === 'pass' ? 'passed' : k.state === 'fail' ? 'failed' : k.state === 'warn' ? 'warning' : 'cannot run', k.off.length ? k.off.map(o => cellLabel(o.id) + ': ' + o.why).join('; ') : k.result])); return m + C.k10Note + '\n'; }
-function outputFor(tab) { const L = (fn, id) => () => { EVID = id; try { return datesAU(withLabels(fn())).replace('[[EVIDENCE]]', () => `Evidence for: ${evTags(id)}.`); } finally { EVID = ''; } }; return { pack: [L(mdPack, 'pack'), 'board-pack'], paper: [L(mdPaper, 'paper'), 'board-paper'], statement: [L(mdStatement, 'statement'), 'statement'], schedule: [L(mdSchedule, 'schedule'), 'schedule'], session: [L(mdSession, 'session'), 'session-record'], calibration: [L(mdCalibration, 'calibration'), 'calibration-set'], checks: [L(mdChecks, 'checks'), 'check-report'], plan: [L(mdPlan, 'plan'), 'engagement-plan'] }[tab]; }
+function outputFor(tab) { const L = (fn, id) => () => { EVID = id; try { return datesAU(withLabels(fn())).replace('[[EVIDENCE]]', () => `Evidence for: ${evTags(id)}.`); } finally { EVID = ''; } }; return { pack: [L(mdPack, 'pack'), 'board-pack'], paper: [L(mdPaper, 'paper'), 'board-paper'], statement: [L(mdStatement, 'statement'), 'statement'], schedule: [L(mdSchedule, 'schedule'), 'schedule'], session: [L(mdSession, 'session'), 'session-record'], mgmtReview: [L(mdMgmtReview, 'mgmtReview'), 'management-review-input'], calibration: [L(mdCalibration, 'calibration'), 'calibration-set'], checks: [L(mdChecks, 'checks'), 'check-report'], plan: [L(mdPlan, 'plan'), 'engagement-plan'] }[tab]; }
 function screenOutputs(ck) {
   const c = S.calibration, bl = blocking(ck).length, tab = UI.outTab, [fn, slug] = outputFor(tab), md = fn();
-  const tabs = [['pack', 'Board pack'], ['paper', 'Board paper (plain words)'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan']];
+  const tabs = [['pack', 'Board pack'], ['paper', 'Board paper (plain words)'], ['statement', 'Statement'], ['schedule', 'Schedule'], ['session', 'Session record'], ['calibration', 'Calibration set'], ['checks', 'Check report'], ['plan', 'Engagement plan'], ['mgmtReview', 'Management review input']];
   const who = me(), listIds = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1'), blIds = listIds(blocking(ck).map(k => k.id));
   const whyAgree = [!who || !rolesOf(who).includes('cro') ? (practice() ? 'Only the CRO can agree: choose the CRO under “Acting as” above.' : 'Only the CRO can agree the working appetite.') : '', bl ? `Checks ${blIds} must pass first.` : ''].filter(Boolean);
   const agreeWhy = whyAgree.join(' '), needsAgree = c.status === 'default' || (c.status === 'working' && !c.agreedById);
@@ -2103,7 +2145,21 @@ function exampleChoice() {
 }
 const setExampleChoice = id => { try { sessionStorage.setItem(EX_SECTOR, id); } catch (e) {} };
 function setPack(id) { C = TriodianPacks.resolve(BASE, id); N = BASE.packs[C.pack].nouns; ROLE_NAME.risk = N.Entity + ' risk'; }
-function buildExample() { return exampleChoice().build(); }
+// Every worked example records a competence statement for each role (task ISO.6). Fictional, like the rest.
+const EXAMPLE_COMPETENCE = {
+  cro: ['Holds the CRO role and owns the risk management framework the appetite sits in', 'Role description and board delegation, 2026'],
+  risk: ['Accountable for the functions ticked in set-up; runs AI governance or risk for them', 'Role description; the AI inventory confirmed for the engagement'],
+  counsel: ['Partner advising on financial services regulation and AI; answers the questions for counsel', 'Practising certificate; engagement letter'],
+  gc: ['General counsel: responsible for the entity’s legal position and for instructing counsel', 'Role description'],
+  triodian: ['Facilitates the method; trained on the AI Risk Appetite Framework and its checks', 'Triodian method training record, 2026'],
+  independent: ['Independent reviewer: challenges the positions; holds ISO/IEC 42001 lead auditor training', 'Training certificate; independence declaration on file'],
+  board: ['Records the board’s approval as the company secretariat', 'Board charter'],
+};
+function buildExample() {
+  const X = exampleChoice().build();
+  X.engagement.competence = X.engagement.competence || Object.fromEntries(X.people.filter(p => EXAMPLE_COMPETENCE[p.role]).map(p => [p.id, { statement: EXAMPLE_COMPETENCE[p.role][0], evidence: EXAMPLE_COMPETENCE[p.role][1] }]));
+  return X;
+}
 
 /* ---------- events ---------- */
 function onClick(e) {
@@ -2283,6 +2339,6 @@ async function boot() {
   if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
-window.RAF = { soaPanel: () => soaPanel(), get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C, useAims: (kind, text, file) => useAims(kind, text, file), limits: () => limitResults() };
+window.RAF = { soaPanel: () => soaPanel(), competenceCard: () => competenceCard(), get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C, useAims: (kind, text, file) => useAims(kind, text, file), limits: () => limitResults() };
 boot();
 })();

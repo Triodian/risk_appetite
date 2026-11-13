@@ -228,3 +228,18 @@ A working paper, not a board paper. To be handled as counsel directs.
 **Not set.** None.
 
 **Questions for counsel.** None.
+
+## Competence of the people in the engagement
+
+ISO/IEC 42001:2023, 7.2.
+
+| Person | Role | Why competent for the role | Evidence |
+| --- | --- | --- | --- |
+| Priya Natarajan | CRO | Holds the CRO role and owns the risk management framework the appetite sits in | Role description and board delegation, 2026 |
+| Tom Ellery | Insurer risk | Accountable for the functions ticked in set-up; runs AI governance or risk for them | Role description; the AI inventory confirmed for the engagement |
+| Ana Duarte | Insurer risk | Accountable for the functions ticked in set-up; runs AI governance or risk for them | Role description; the AI inventory confirmed for the engagement |
+| Marcus Lee | Insurer risk | Accountable for the functions ticked in set-up; runs AI governance or risk for them | Role description; the AI inventory confirmed for the engagement |
+| Meredith Vance | Counsel | Partner advising on financial services regulation and AI; answers the questions for counsel | Practising certificate; engagement letter |
+| Sam Okoro | Triodian | Facilitates the method; trained on the AI Risk Appetite Framework and its checks | Triodian method training record, 2026 |
+| Lena Hartmann | Independent reviewer | Independent reviewer: challenges the positions; holds ISO/IEC 42001 lead auditor training | Training certificate; independence declaration on file |
+| Board secretariat | Board record | Records the board’s approval as the company secretariat | Board charter |
