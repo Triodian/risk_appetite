@@ -22,5 +22,6 @@ for (const id of ids) {
 ok('jurisdiction packs keep the board', P.resolve(BASE, 'generalInsurer').governingBody === 'board');
 const g = P.resolve(BASE, 'bpGovernment');
 ok('government names the accountable authority', g.governingBody === 'accountableAuthority' && T.relabel('Board approves the appetite', g.governingBody) === 'Accountable authority approves the appetite');
+ok('every pack carries the two productivity measures (BC4)', Object.keys(BASE.packs).every(id => ['M11', 'M12'].every(r => P.resolve(BASE, id).measures.some(m => m.ref === r))));
 console.log(fails ? `\n${fails} failure(s)` : '\nAll baseline checks pass');
 process.exit(fails ? 1 : 0);

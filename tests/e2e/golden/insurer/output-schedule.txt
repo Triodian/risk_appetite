@@ -23,6 +23,8 @@ The measurable parts of the statement, kept in a separate schedule so that they 
 | M7 | Register entries in a location marked not accepted | [0] | Marcus Lee | Register: location against P8 | Each risk committee |
 | M8 | Triggers reported later than the time limit | [0] | Tom Ellery | Trigger log | Quarterly |
 | M9 | Evidence levels established with low confidence, at C4 Policyholder harm or C5 Critical disruption | [0] | Priya Natarajan | Register: confidence against P7 | Each risk committee |
+| M11 | Days from request to approval for a new AI use, on the fast path and off it | [ ] | Priya Natarajan | Management reporting; the board's fast path (BC2) | Each risk committee |
+| M12 | Share of AI use on sanctioned tools | [ ] | Priya Natarajan | Management reporting; the AI inventory against the tools in use | Half-yearly |
 
 ## Triggers
 

@@ -1960,7 +1960,7 @@ function buildExampleInsurer() {
     { ref: 'CH-02', raisedBy: 'p2', decision: 'd2', cell: 'd2.C4', point: 'The hardship part of C4 Policyholder harm has no definition. Two people assessing the same case could reach different levels.', response: '', status: 'open' },
     { ref: 'CH-03', raisedBy: 'p1', decision: 'd1', cell: 'd1.cl.own', point: 'The board\u2019s direction for Claims is Cautious: a person decides every decline. Our own triage at A3 and the platform behind it sit above that. Either lower both ceilings or record why, and take them to the board on 30 November.', response: '', status: 'open' }
   ];
-  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1' };
+  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1', M11: 'p1', M12: 'p1' };
   X.history = [{ at: '2026-10-15T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-10-22T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
   S = old; UI.role = role; UI.forceRole = force; return X;
 }
@@ -2038,7 +2038,7 @@ function buildExampleSuper() {
     { ref: 'CH-01', raisedBy: 'p3', decision: 'd1', cell: 'd1.ci.provider', point: 'A3 inside the group insurer is above the board’s direction for claims. The reason should say what the model decides and what it does not.', response: 'Reason and condition updated: triage only, an assessor decides every decline. The board revisits it on 25 November.', status: 'accepted' },
     { ref: 'CH-02', raisedBy: 'p7', decision: 'd2', cell: 'd2.C4', point: 'Ten or more members is a pattern. One member in hardship who waits because of AI is harm on its own.', response: 'Accepted. C4 now counts any single death, disablement or hardship payment.', status: 'accepted' }
   ];
-  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1', M10: 'p1' };
+  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1', M10: 'p1', M11: 'p1', M12: 'p1' };
   X.history = [{ at: '2026-11-03T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-11-10T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
   // The CRO agreed the working appetite and the board approved it, as agreeWorking() and recordApproval() record them.
   if (!blocking(runChecks()).length) {
@@ -2122,7 +2122,7 @@ function buildExampleBank() {
     { ref: 'CH-01', raisedBy: 'p3', decision: 'd1', cell: 'd1.fc.provider', point: 'A3 inside the payments provider is above the board’s direction for financial crime. The reason should say what the model decides and what it does not.', response: 'Reason and condition updated: the model holds a payment for review; a person decides before any account is frozen or closed. The board revisits it on 25 November.', status: 'accepted' },
     { ref: 'CH-02', raisedBy: 'p7', decision: 'd2', cell: 'd2.C4', point: 'Twenty-five or more customers is a pattern. One customer locked out of their money because of AI is harm on its own.', response: 'Accepted. C4 now counts any single account wrongly frozen and any single hardship request wrongly declined.', status: 'accepted' }
   ];
-  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1' };
+  X.measureOwners = { M1: 'p3', M2: 'p1', M3: 'p2', M4: 'p1', M5: 'p2', M6: 'p1', M7: 'p4', M8: 'p2', M9: 'p1', M11: 'p1', M12: 'p1' };
   X.history = [{ at: '2026-11-03T10:05:00.000Z', by: 'Triodian', action: 'session', target: 'session 1', from: null, to: 'opened', version: 0 }, { at: '2026-11-10T09:30:00.000Z', by: 'Triodian', action: 'session', target: 'session 2', from: null, to: 'opened', version: 0 }];
   // The CRO agreed the working appetite and the board approved it, as agreeWorking() and recordApproval() record them.
   if (!blocking(runChecks()).length) {
