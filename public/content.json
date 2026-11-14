@@ -798,6 +798,22 @@
       "owner": "CRO",
       "from": "Register: confidence against P7",
       "reported": "Each risk committee"
+    },
+    {
+      "ref": "M11",
+      "measure": "Days from request to approval for a new AI use, on the fast path and off it",
+      "limit": "[ ]",
+      "owner": "CRO",
+      "from": "Management reporting; the board's fast path (BC2)",
+      "reported": "Each risk committee"
+    },
+    {
+      "ref": "M12",
+      "measure": "Share of AI use on sanctioned tools",
+      "limit": "[ ]",
+      "owner": "CRO",
+      "from": "Management reporting; the AI inventory against the tools in use",
+      "reported": "Half-yearly"
     }
   ],
   "statusMarks": {

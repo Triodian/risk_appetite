@@ -957,6 +957,22 @@
    "owner": "CRO",
    "ref": "M9",
    "reported": "Each risk committee"
+  },
+  {
+   "from": "Management reporting; the board's fast path (BC2)",
+   "limit": "[ ]",
+   "measure": "Days from request to approval for a new AI use, on the fast path and off it",
+   "owner": "CRO",
+   "ref": "M11",
+   "reported": "Each risk committee"
+  },
+  {
+   "from": "Management reporting; the AI inventory against the tools in use",
+   "limit": "[ ]",
+   "measure": "Share of AI use on sanctioned tools",
+   "owner": "CRO",
+   "ref": "M12",
+   "reported": "Half-yearly"
   }
  ],
  "overallExample": "[Insurer] accepts AI that assists its people and its providers' people. It accepts AI that decides or transacts only [where / up to], and only where it holds [evidence]. It does not accept [ ].",
