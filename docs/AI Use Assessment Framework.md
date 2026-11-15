@@ -4,7 +4,7 @@ Oct 11, 2026 · @Damian Hickey
 
 ## 1. Summary
 
-The AI use assessment establishes, for a representative set of an insurer's arrangements, where AI acts, what it is able to do, and what evidence of its behaviour can be produced at each boundary in the chain. It is the technical half of a joint engagement led by Norton Rose Fulbright (NRF). NRF answers what the insurer can require; this assessment answers what can actually be produced.
+The AI use assessment establishes, for a representative set of an insurer's arrangements, where AI acts, what it is able to do, and what evidence of its behaviour can be produced at each boundary in the chain. It is the technical half of a joint engagement led by counsel. Counsel answers what the insurer can require; this assessment answers what can actually be produced.
 
 | Item | Position |
 | --- | --- |
@@ -18,7 +18,7 @@ The AI use assessment establishes, for a representative set of an insurer's arra
 | Independent check | The independent reviewer, on behalf of the CRO |
 | Measure | APRA's standards and expectations. The assessment is solution-agnostic and presents no product |
 
-**Status of this document.** The method, the seven questions, the ladder, the roles and the outputs come from the NRF planning deck (October 2026) and the AI Counsel Briefing (12 September 2026). The field-level detail, codes, rating rules, weekly plan and templates are drafted here to make the method executable. Section 12 lists each drafted element that needs confirmation.
+**Status of this document.** The method, the seven questions, the ladder, the roles and the outputs come from counsel's planning deck (October 2026) and the AI Counsel Briefing (12 September 2026). The field-level detail, codes, rating rules, weekly plan and templates are drafted here to make the method executable. Section 12 lists each drafted element that needs confirmation.
 
 **Standing rule.** Every legal determination is the insurer's and its counsel's. Triodian supplies the framework, the facts and the technical classification. Nothing in the assessment or its working papers states a legal conclusion.
 
@@ -55,7 +55,7 @@ Selection criteria, applied in this order:
 
 ### 2.4 Out of scope
 
-- **Legal advice.** Reach, applicability, grading and privilege are NRF's.
+- **Legal advice.** Reach, applicability, grading and privilege are counsel's.
 - **Policyholder or claims data.** The assessment works from documents and interviews.
 - **Provider involvement.** No provider is approached. Obtainability is assessed from the insurer's side.
 - **Production access.** No system is connected to, tested or monitored.
@@ -80,7 +80,7 @@ Three instruments are applied in four steps, the same way to every arrangement a
 1. **Confirm the set.** A representative set of arrangements, agreed with the GC.
 2. **Map the AI.** Where AI acts, what authority it holds and who stands behind it. Each use becomes a register entry.
 3. **Classify and test.** The consequence of each use, and the evidence obtainable at each boundary.
-4. **Questions to counsel.** Legal questions go to NRF in writing. Counsel sees every draft first. Counsel's determinations are then recorded against each entry and the finding is set.
+4. **Questions to counsel.** Legal questions go to counsel in writing. Counsel sees every draft first. Counsel's determinations are then recorded against each entry and the finding is set.
 
 ### 3.3 The logic of a finding
 
@@ -107,16 +107,16 @@ Each arrangement produces three positions on the ladder. The finding is the rela
 | Party | Role | Engaged by | Where it stops |
 | --- | --- | --- | --- |
 | The insurer | Client. The CRO raises the risk; the GC decides the brief and owns the outcome | n/a | n/a |
-| Norton Rose Fulbright | Leads the engagement, holds the client, engages both firms, owns every legal call | The insurer | n/a |
-| Triodian | Technical party. Does the assessment and the register. Responsible for the result | NRF | Gives no legal advice. Fills gaps only if the insurer asks, as a separate decision |
+| Counsel | Leads the engagement, holds the client, engages both firms, owns every legal call | The insurer | n/a |
+| Triodian | Technical party. Does the assessment and the register. Responsible for the result | Counsel | Gives no legal advice. Fills gaps only if the insurer asks, as a separate decision |
 | Independent reviewer | Independent check of Triodian's assessment, on behalf of the CRO | Counsel or the CRO, separately from Triodian (to be confirmed) | Does not do the assessment or build any control. Gives no legal advice |
-| KJR | Scaling partner for the register in later engagements | To be agreed | Not part of the first assessment |
+| Scaling partner | Scales the register in later engagements | To be agreed | Not part of the first assessment |
 
 ### 4.2 Responsibility by activity
 
 R = does the work. A = accountable for it. C = consulted. I = informed.
 
-| Activity | GC | Insurer AI and risk teams | NRF | Triodian | Independent reviewer |
+| Activity | GC | Insurer AI and risk teams | Counsel | Triodian | Independent reviewer |
 | --- | --- | --- | --- | --- | --- |
 | Decide the brief and the set | A | C | R | C | I |
 | Brief the AI, governance and safety teams | I | C | A | R | I |
@@ -141,10 +141,10 @@ R = does the work. A = accountable for it. C = consulted. I = informed.
 
 ### 4.4 Rules of engagement
 
-- **Counsel first.** Every draft goes to NRF before anyone at the insurer sees it.
+- **Counsel first.** Every draft goes to counsel before anyone at the insurer sees it.
 - **Legal questions in writing.** Any point needing a legal view is logged as a numbered question to counsel (template in section 9.5) and is not answered in a working paper.
-- **Privilege.** The work is scoped through counsel, on the privilege position NRF determines. Document marking, storage and circulation follow NRF's instruction.
-- **One technical party.** NRF deals with Triodian for all technical matters.
+- **Privilege.** The work is scoped through counsel, on the privilege position counsel determines. Document marking, storage and circulation follow counsel's instruction.
+- **One technical party.** Counsel deals with Triodian for all technical matters.
 - **Independence of the check.** The independent reviewer receives the register, worksheets and annex from counsel or the CRO, not from Triodian, and reports on behalf of the CRO.
 
 ## 5. Workplan
@@ -155,18 +155,18 @@ The plan below fits the four steps into four weeks. Where the set is small and d
 
 | Phase | When | Activities | Output | Exit gate |
 | --- | --- | --- | --- | --- |
-| 0. Mobilise | Before week 1 | NRF convenes the legal and technical briefing. GC decides the brief. Privilege position and document handling set by NRF. Document request issued | Signed brief. Document request list. Agreed contacts | GC has confirmed the brief in writing |
-| 1. Confirm the set | Week 1, days 1 to 2 | Apply the selection criteria in section 2.2. Agree the arrangements and their boundary types with the GC | Set register: arrangement ID, parties, boundary type, reason selected | GC and NRF agree the set |
+| 0. Mobilise | Before week 1 | Counsel convenes the legal and technical briefing. GC decides the brief. Privilege position and document handling set by counsel. Document request issued | Signed brief. Document request list. Agreed contacts | GC has confirmed the brief in writing |
+| 1. Confirm the set | Week 1, days 1 to 2 | Apply the selection criteria in section 2.2. Agree the arrangements and their boundary types with the GC | Set register: arrangement ID, parties, boundary type, reason selected | GC and counsel agree the set |
 | 2. Map the AI | Week 1, day 3, to end of week 2 | Brief the AI, governance and safety teams. Take the insurer's inventory as the first input. Read each agreement. Interview arrangement owners. Extend the register down the chain | Register with fields 1 to 14 complete (section 6). Interview notes. Source index | Every entry has a source and a date. Uses not on the inventory are logged for hand-back |
 | 3. Classify and test | Weeks 2 to 3 | Classify authority and failure consequence. Set the indicative rung. Run the obtainability test at each boundary. Internal validation review | Register fields 15 to 22 complete. Classification rationale per entry. Draft worksheets | Validation review passed with no open exceptions |
-| 4. Questions to counsel | Week 3 | Issue the numbered question set to NRF. Record counsel's determinations on nexus, rights, location and required evidence | Question log with responses. Register fields 23 to 25 complete | Every question answered, or recorded as open with an owner |
-| 5. Findings and report | Weeks 3 to 4 | Set one finding per arrangement. Draft the technical schedule and annex. Draft to counsel first | Finding worksheets. Technical schedule. Technical annex, draft | NRF accepts the draft for independent check |
+| 4. Questions to counsel | Week 3 | Issue the numbered question set to counsel. Record counsel's determinations on nexus, rights, location and required evidence | Question log with responses. Register fields 23 to 25 complete | Every question answered, or recorded as open with an owner |
+| 5. Findings and report | Weeks 3 to 4 | Set one finding per arrangement. Draft the technical schedule and annex. Draft to counsel first | Finding worksheets. Technical schedule. Technical annex, draft | Counsel accepts the draft for independent check |
 | 6. Independent check | Week 4 | The pack goes to the independent reviewer through the agreed reporting line. Triodian answers its queries through the same line. Corrections made and logged | The independent reviewer's check, reported on behalf of the CRO. Final annex | The check is confirmed complete through the agreed reporting line |
-| 7. Close | End of week 4 | Hand uses not on the inventory back to its owner. Hand the register to NRF. Archive working papers as NRF directs | Hand-back list. Final register. Closure note | GC receives NRF's advice with the annex attached |
+| 7. Close | End of week 4 | Hand uses not on the inventory back to its owner. Hand the register to counsel. Archive working papers as counsel directs | Hand-back list. Final register. Closure note | GC receives counsel's advice with the annex attached |
 
 ### 5.2 Document request list
 
-Issued in phase 0 through NRF.
+Issued in phase 0 through counsel.
 
 | Ref | Document | Used for |
 | --- | --- | --- |
@@ -231,9 +231,9 @@ The deck names eight things each entry records. The 26 fields below break those 
 | 20 | Independently checkable | Yes · no · partly, with reason | Triodian | 3 |
 | 21 | Obtainable rung | E0 to E6 (section 8.4) | Triodian, by test | 3 |
 | 22 | Confidence in obtainability | High · medium · low | Triodian | 3 |
-| 23 | Nexus, relationship and location determination | Counsel's wording, with question reference | NRF | 4 |
-| 24 | Rights the insurer holds | Passive · significant influence · contractual · control or board seat | NRF | 4 |
-| 25 | Required rung and grading | E0 to E6, graded requirement · expectation · better view | NRF | 4 |
+| 23 | Nexus, relationship and location determination | Counsel's wording, with question reference | Counsel | 4 |
+| 24 | Rights the insurer holds | Passive · significant influence · contractual · control or board seat | Counsel | 4 |
+| 25 | Required rung and grading | E0 to E6, graded requirement · expectation · better view | Counsel | 4 |
 | 26 | Finding and gap owner | F1 to F4 (section 9.1), with named owner | Triodian, after counsel | 5 |
 
 ### 6.3 Completion rules
@@ -461,11 +461,11 @@ One worksheet per arrangement. It is the working paper the independent reviewer 
 | DL1 | AI dependency register, including AI inside providers | All 26 fields for every entry in the set. Source index. Count of not-known fields | Every entry has a finding or is recorded F4. No field is blank |
 | DL2 | Evidence obtainable at each boundary | One finding worksheet per arrangement (section 9.4). A one-page summary table: arrangement, tier, consequence, indicative, required, obtainable, finding, priority | Each worksheet is reviewed, and each rung is traceable to a test result |
 | DL3 | Control-library shape for the insurer's own AI boundary | For B3 entries only: the categories of rule the insurer would need to state for its own staff's use, and the record each would produce. Shape only, with no product specified | Reviewed by the insurer's AI governance lead for fit with the existing framework |
-| DL4 | Technical schedule, tolerance and trigger design | For each F1 and F2: the evidence item, its contents, its frequency, the tolerance it is measured against, the triggers and their timing. Written to sit beside NRF's flow-down clauses | NRF confirms each item maps to a clause or to a stated reason for none |
+| DL4 | Technical schedule, tolerance and trigger design | For each F1 and F2: the evidence item, its contents, its frequency, the tolerance it is measured against, the triggers and their timing. Written to sit beside counsel's flow-down clauses | Counsel confirms each item maps to a clause or to a stated reason for none |
 | DL5 | Technical annex, in Triodian's name | Method, set, summary table, findings, limitations, not-known count, statement of what was not done | The independent reviewer's check is complete and its points are closed or disclosed |
 | DL6 | Hand-back list | AI uses found that are not on the insurer's inventory | Accepted by the inventory owner |
 
-### 10.2 What NRF produces
+### 10.2 What counsel produces
 
 Listed so the interfaces are clear. These are not Triodian deliverables.
 
@@ -504,12 +504,12 @@ Listed so the interfaces are clear. These are not Triodian deliverables.
 
 | # | Review | When | Reviewer | Tests |
 | --- | --- | --- | --- | --- |
-| R1 | Set review | End of phase 1 | NRF and GC | Selection criteria applied; each boundary type represented |
+| R1 | Set review | End of phase 1 | Counsel and GC | Selection criteria applied; each boundary type represented |
 | R2 | Register completeness | End of phase 2 | Delivery manager | Fields 1 to 14 complete or not known; every value sourced and dated |
 | R3 | Classification review | During phase 3 | A second Triodian reviewer, not the classifier | Tier re-derived from fields 11 to 13 without sight of the original; differences resolved and logged |
 | R4 | Validation | End of phase 3 | Sam Ferraro | Rules in sections 8.3 and 8.4 applied consistently across entries; every adjustment has a reason; every obtainable rung has five test results |
 | R5 | Legal-line check | Before any draft leaves Triodian | Method owner | No sentence states what the law requires; "required" and "gap" used only as section 10.4 allows |
-| R6 | Counsel review | Phase 5 | NRF | Draft seen by counsel first; determinations transcribed accurately |
+| R6 | Counsel review | Phase 5 | Counsel | Draft seen by counsel first; determinations transcribed accurately |
 | R7 | Independent check | Phase 6 | Independent reviewer | Is the assessment sound, and are its findings supported? |
 
 ### 11.2 Evidence standards
@@ -522,11 +522,11 @@ Listed so the interfaces are clear. These are not Triodian deliverables.
 
 ### 11.3 Working papers
 
-- Marked, stored and circulated as NRF directs under the privilege position it determines.
+- Marked, stored and circulated as counsel directs under the privilege position it determines.
 - Versioned. Each worksheet shows preparer, reviewer and date for every version.
 - No policyholder, claimant or staff personal data is collected. If a document supplied contains it, it is returned and a redacted copy requested.
 - No provider confidential material is sought. Documents are supplied by the insurer from what it already holds.
-- Retained or destroyed at close as NRF directs.
+- Retained or destroyed at close as counsel directs.
 
 ### 11.4 Exceptions log
 
@@ -550,7 +550,7 @@ Any departure from this framework is logged with the reason and who approved it:
 
 - The set is four arrangements. A larger set extends phases 2 and 3 roughly in proportion.
 - The insurer supplies documents D1 to D6 in week 1. Late documents move the plan day for day.
-- NRF answers questions to counsel within five working days.
+- Counsel answers questions within five working days.
 - The insurer has a current AI inventory. If it has none, phase 2 starts from the material service provider register and takes longer.
 - The independent reviewer's check fits inside week 4. Its scope and criteria are not defined in either deck and are to be agreed with the CRO.
 
@@ -558,12 +558,12 @@ Any departure from this framework is logged with the reason and who approved it:
 
 | Dependency | Owner | Needed by |
 | --- | --- | --- |
-| Signed brief and privilege position | GC and NRF | Before week 1 |
+| Signed brief and privilege position | GC and counsel | Before week 1 |
 | Agreed set | GC | Week 1, day 2 |
-| Documents D1 to D10 | Insurer, through NRF | Week 1 |
+| Documents D1 to D10 | Insurer, through counsel | Week 1 |
 | Interview access | Insurer AI and risk teams | Weeks 1 to 2 |
 | Board appetite and tolerances for the operations in the set | Insurer operational risk | Week 2 |
-| Counsel's determinations | NRF | Week 3 |
+| Counsel's determinations | Counsel | Week 3 |
 | Independent check | Independent reviewer, on behalf of the CRO | Week 4 |
 
 ### 12.3 Drafted here, to be confirmed
@@ -589,14 +589,14 @@ These elements are not in either deck. Each was added to make the method executa
 ### 12.5 Other open items
 
 - [ ] **Ladder naming.** The two decks differ on three rung names. Choose one set.
-- [ ] **Insurer terms.** The counsel briefing was written for a superannuation trustee. "Mandate breach" and "member harm" have been changed to "contract breach" and "policyholder harm" to match the NRF deck.
+- [ ] **Insurer terms.** The counsel briefing was written for a superannuation trustee. "Mandate breach" and "member harm" have been changed to "contract breach" and "policyholder harm" to match counsel's deck.
 - [ ] **Control-library shape (DL3).** The deck names it without describing its contents. The description in section 10.1 is a minimal reading.
-- [ ] **Fee and effort.** Not covered here. The counsel briefing priced the equivalent assessment for a trustee at A$35k fixed for three to four weeks; no figure for insurers appears in the NRF deck.
-- [ ] **KJR's role.** Described as a later scaling partner for the register. No task is assigned to it in this framework.
+- [ ] **Fee and effort.** Not covered here. The assessment runs three to four weeks; Triodian publishes its fees, by jurisdiction, on its website.
+- [ ] **The scaling partner's role.** Described as a later scaling partner for the register. No task is assigned to it in this framework.
 
 ### Sources
 
-- NRF planning deck: "What a CRO will ask, and how we answer it together", Damian Hickey, October 2026, 24 slides.
+- Counsel's planning deck: "What a CRO will ask, and how we answer it together", Damian Hickey, October 2026, 24 slides.
 - "Triodian - AI Counsel Briefing", 12 September 2026, 29 slides.
 
 No external source was consulted. Regulatory references are as stated in those two documents.
