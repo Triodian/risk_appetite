@@ -63,7 +63,40 @@
   /** The pack that fits an entity type, if any. */
   function forEntityType(base, entityType) { return list(base).find(p => p.entityTypes.includes(entityType)) || null; }
 
-  const api = { DEFAULT, NOUNS, resolve, unfilled, list, forEntityType, fill };
+  /**
+   * The pack a regulated sector starts on (Metamodel regulated sectors, base.regulatedSectors): the jurisdiction's own
+   * pack for one of the sector's entity types; then the jurisdiction's overlay built on the sector's first baseline
+   * that has one (US-BANKING: usBanking, built on BP-BANKING); then that baseline's own pack; otherwise null.
+   */
+  function forSector(base, sectorID) {
+    const d = ((base && base.regulatedSectors) || []).find(x => x.id === sectorID);
+    if (!d) return null;
+    const P = Object.values((base && base.packs) || {});
+    const own = P.find(p => p.jurisdiction === d.jurisdiction && (p.entityTypes || []).some(e => (d.entityTypes || []).includes(e)));
+    if (own) return own.id;
+    for (const b of d.baselineProfiles || []) {
+      const over = P.find(p => p.jurisdiction === d.jurisdiction && p.builtOn === b);
+      if (over) return over.id;
+      const bp = P.find(p => p.baseline === b);
+      if (bp) return bp.id;
+    }
+    return null;
+  }
+  /**
+   * The pack a new engagement starts on in this deployment (DEFAULT_JURISDICTION and DEFAULT_SECTOR, set at install):
+   * the sector's pack; else, with a jurisdiction only, DEFAULT when it belongs to that jurisdiction, or the
+   * jurisdiction's first pack; else DEFAULT. People change the pack at set-up until a position is recorded.
+   */
+  function startPack(base, defaults) {
+    const df = defaults || {}, P = (base && base.packs) || {};
+    const s = df.sector && forSector(base, df.sector);
+    if (s) return s;
+    const j = String(df.jurisdiction || '').toUpperCase();
+    if (j && !(P[DEFAULT] && P[DEFAULT].jurisdiction === j)) { const first = list(base).find(p => p.jurisdiction === j); if (first) return first.id; }
+    return DEFAULT;
+  }
+
+  const api = { DEFAULT, NOUNS, resolve, unfilled, list, forEntityType, forSector, startPack, fill };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.TriodianPacks = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

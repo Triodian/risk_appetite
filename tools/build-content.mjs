@@ -21,7 +21,9 @@ for (const f of readdirSync(at('content/packs')).filter(f => f.endsWith('.json')
   packs[p.id] = p;
 }
 if (!packs[Packs.DEFAULT]) throw new Error(`The ${Packs.DEFAULT} pack is missing`);
-const built = { ...base, packs };
+// The regulated sectors (tools/sync-sectors.mjs), for the pack a deployment's sector starts on.
+const sectors = JSON.parse(readFileSync(at('content/regulated-sectors.json'), 'utf8'));
+const built = { ...base, packs, regulatedSectorsSource: sectors.source, regulatedSectors: sectors.sectors };
 for (const id of Object.keys(packs)) {
   const left = Packs.unfilled(Packs.resolve(built, id));
   if (left.length) throw new Error(`${id}: unfilled tokens: ${left.join(', ')}`);

@@ -111,6 +111,8 @@ export default {
         demoAdmins: demoAdmins(env),
         firstAdmins: String(env.FIRST_ADMINS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
         site: env.SITE_LABEL || '', origin: siteUrl(env, request), sender: emailSender(env), defer: p => ctx.waitUntil(p),
+        // The jurisdiction and sector this deployment starts in (set at install); a new engagement starts on their pack.
+        defaults: { jurisdiction: String(env.DEFAULT_JURISDICTION || 'AU').toUpperCase(), sector: env.DEFAULT_SECTOR || '' },
         readDirections: directionsReader(env), readFeedback: feedbackReader(env),
       }, storeFor(env));
       return json(r.body, r.status);

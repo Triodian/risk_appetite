@@ -84,3 +84,21 @@ test('a US health care provider gets the US health pack: the health baseline wit
   expect(p._errors).toEqual([]);
   await ctx.close();
 });
+
+// US.6: a deployment installed for US banking (DEFAULT_JURISDICTION US, DEFAULT_SECTOR US-BANKING) starts a new
+// engagement on the US banking pack; one with no defaults starts on the default pack, as before.
+for (const [defaults, want, noun] of [[{ jurisdiction: 'US', sector: 'US-BANKING' }, 'usBanking', 'Bank'], [{ jurisdiction: 'US', sector: '' }, 'usBanking', 'Bank'], [null, 'generalInsurer', 'Insurer']]) {
+  test(`a deployment set to ${defaults ? defaults.jurisdiction + (defaults.sector ? ' ' + defaults.sector : ' with no sector') : 'nothing'} starts a new engagement on ${want}`, async ({ browser }) => {
+    const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Dev-User': ADMIN }, viewport: { width: 1280, height: 900 } });
+    await ctx.addInitScript(() => { try { sessionStorage.setItem('triodian.suite.seen', '1'); sessionStorage.setItem('triodian.example.left', '1'); } catch (e) {} });
+    await ctx.route('**/api/engagement', route => route.request().method() === 'GET' ? route.fulfill({ json: { exists: false } }) : route.fulfill({ json: { revision: 1 } }));
+    await ctx.route('**/api/me', async route => { const r = await route.fetch(); const b = await r.json(); if (defaults) b.defaults = defaults; else delete b.defaults; return route.fulfill({ response: r, json: b }); });
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
+    await p.goto('/admin/'); await p.waitForTimeout(800);
+    await p.locator('[data-act="new"]').click();
+    await expect(p.locator('#f_engagement_sectorPack')).toHaveValue(want);
+    await expect(p.locator('label:has(#f_engagement_insurer)').first()).toContainText(noun);
+    expect(errs).toEqual([]);
+    await ctx.close();
+  });
+}

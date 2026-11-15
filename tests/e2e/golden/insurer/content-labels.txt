@@ -1066,6 +1066,298 @@
    "used": "Hand-over notes at close"
   }
  ],
+ "regulatedSectors": [
+  {
+   "baselineProfiles": [
+    "BP-BANKING"
+   ],
+   "entityTypes": [
+    "authorisedDepositTakingInstitution"
+   ],
+   "id": "AU-BANKING",
+   "jurisdiction": "AU",
+   "name": "Banking"
+  },
+  {
+   "baselineProfiles": [
+    "BP-INSURANCE"
+   ],
+   "entityTypes": [
+    "generalInsurer",
+    "lifeInsurer",
+    "privateHealthInsurer"
+   ],
+   "id": "AU-INSURANCE",
+   "jurisdiction": "AU",
+   "name": "Insurance"
+  },
+  {
+   "entityTypes": [
+    "superannuationTrustee"
+   ],
+   "id": "AU-SUPERANNUATION",
+   "jurisdiction": "AU",
+   "name": "Superannuation"
+  },
+  {
+   "baselineProfiles": [
+    "BP-SECURITIES"
+   ],
+   "entityTypes": [
+    "financialServicesLicensee"
+   ],
+   "id": "AU-FINANCIAL-SERVICES",
+   "jurisdiction": "AU",
+   "name": "Financial services and markets"
+  },
+  {
+   "baselineProfiles": [
+    "BP-BANKING"
+   ],
+   "entityTypes": [
+    "creditLicensee"
+   ],
+   "id": "AU-CREDIT",
+   "jurisdiction": "AU",
+   "name": "Credit"
+  },
+  {
+   "baselineProfiles": [
+    "BP-PAYMENTS"
+   ],
+   "entityTypes": [
+    "paymentServiceProvider"
+   ],
+   "id": "AU-PAYMENTS",
+   "jurisdiction": "AU",
+   "name": "Payments"
+  },
+  {
+   "entityTypes": [
+    "listedEntity"
+   ],
+   "id": "AU-LISTED",
+   "jurisdiction": "AU",
+   "name": "Listed companies"
+  },
+  {
+   "baselineProfiles": [
+    "BP-HEALTH"
+   ],
+   "entityTypes": [
+    "healthServiceProvider"
+   ],
+   "id": "AU-HEALTH",
+   "jurisdiction": "AU",
+   "name": "Health"
+  },
+  {
+   "baselineProfiles": [
+    "BP-CI-CORPORATE",
+    "BP-CI-GOVERNMENT"
+   ],
+   "entityTypes": [
+    "criticalInfrastructureAssetOwner"
+   ],
+   "id": "AU-CRITICAL-INFRASTRUCTURE",
+   "jurisdiction": "AU",
+   "name": "Critical infrastructure"
+  },
+  {
+   "entityTypes": [
+    "defenceIndustrySupplier"
+   ],
+   "id": "AU-DEFENCE",
+   "jurisdiction": "AU",
+   "name": "Defence industry"
+  },
+  {
+   "entityTypes": [
+    "privateCompany",
+    "notForProfit"
+   ],
+   "id": "AU-GENERAL",
+   "jurisdiction": "AU",
+   "name": "Not financially regulated"
+  },
+  {
+   "baselineProfiles": [
+    "BP-BANKING"
+   ],
+   "entityTypes": [
+    "bank"
+   ],
+   "id": "SG-BANKING",
+   "jurisdiction": "SG",
+   "name": "Banking"
+  },
+  {
+   "baselineProfiles": [
+    "BP-INSURANCE"
+   ],
+   "entityTypes": [
+    "insurer"
+   ],
+   "id": "SG-INSURANCE",
+   "jurisdiction": "SG",
+   "name": "Insurance"
+  },
+  {
+   "baselineProfiles": [
+    "BP-SECURITIES"
+   ],
+   "entityTypes": [
+    "capitalMarketsIntermediary"
+   ],
+   "id": "SG-CAPITAL-MARKETS",
+   "jurisdiction": "SG",
+   "name": "Capital markets"
+  },
+  {
+   "baselineProfiles": [
+    "BP-PAYMENTS"
+   ],
+   "entityTypes": [
+    "paymentServiceProvider"
+   ],
+   "id": "SG-PAYMENTS",
+   "jurisdiction": "SG",
+   "name": "Payments"
+  },
+  {
+   "entityTypes": [
+    "listedEntity"
+   ],
+   "id": "SG-LISTED",
+   "jurisdiction": "SG",
+   "name": "Listed companies"
+  },
+  {
+   "baselineProfiles": [
+    "BP-HEALTH"
+   ],
+   "entityTypes": [
+    "healthServiceProvider"
+   ],
+   "id": "SG-HEALTH",
+   "jurisdiction": "SG",
+   "name": "Health"
+  },
+  {
+   "baselineProfiles": [
+    "BP-CI-CORPORATE",
+    "BP-CI-GOVERNMENT"
+   ],
+   "entityTypes": [
+    "criticalInfrastructureAssetOwner"
+   ],
+   "id": "SG-CRITICAL-INFRASTRUCTURE",
+   "jurisdiction": "SG",
+   "name": "Critical infrastructure"
+  },
+  {
+   "entityTypes": [
+    "defenceIndustrySupplier"
+   ],
+   "id": "SG-DEFENCE",
+   "jurisdiction": "SG",
+   "name": "Defence industry"
+  },
+  {
+   "entityTypes": [
+    "privateCompany",
+    "notForProfit"
+   ],
+   "id": "SG-GENERAL",
+   "jurisdiction": "SG",
+   "name": "Not financially regulated"
+  },
+  {
+   "baselineProfiles": [
+    "BP-BANKING"
+   ],
+   "entityTypes": [
+    "bank"
+   ],
+   "id": "US-BANKING",
+   "jurisdiction": "US",
+   "name": "Banking"
+  },
+  {
+   "baselineProfiles": [
+    "BP-INSURANCE"
+   ],
+   "entityTypes": [
+    "insurer"
+   ],
+   "id": "US-INSURANCE",
+   "jurisdiction": "US",
+   "name": "Insurance"
+  },
+  {
+   "baselineProfiles": [
+    "BP-SECURITIES"
+   ],
+   "entityTypes": [
+    "capitalMarketsIntermediary"
+   ],
+   "id": "US-SECURITIES",
+   "jurisdiction": "US",
+   "name": "Securities and investment advice"
+  },
+  {
+   "baselineProfiles": [
+    "BP-HEALTH"
+   ],
+   "entityTypes": [
+    "healthServiceProvider"
+   ],
+   "id": "US-HEALTH",
+   "jurisdiction": "US",
+   "name": "Health care"
+  },
+  {
+   "baselineProfiles": [
+    "BP-CI-CORPORATE",
+    "BP-CI-GOVERNMENT"
+   ],
+   "entityTypes": [
+    "criticalInfrastructureAssetOwner"
+   ],
+   "id": "US-CRITICAL-INFRASTRUCTURE",
+   "jurisdiction": "US",
+   "name": "Critical infrastructure"
+  },
+  {
+   "baselineProfiles": [
+    "BP-PAYMENTS"
+   ],
+   "entityTypes": [
+    "paymentServiceProvider"
+   ],
+   "id": "US-PAYMENTS",
+   "jurisdiction": "US",
+   "name": "Payments and money transmission"
+  },
+  {
+   "entityTypes": [
+    "listedEntity"
+   ],
+   "id": "US-LISTED",
+   "jurisdiction": "US",
+   "name": "Listed companies"
+  },
+  {
+   "entityTypes": [
+    "privateCompany",
+    "notForProfit"
+   ],
+   "id": "US-GENERAL",
+   "jurisdiction": "US",
+   "name": "Not financially regulated"
+  }
+ ],
+ "regulatedSectorsSource": "Triodian Metamodel 2.9.0, reference-data/regulated-sectors.json",
  "roles": [
   {
    "id": "counsel",
