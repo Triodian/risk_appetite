@@ -58,6 +58,15 @@ ok('adding a known person to another app joins their record and id', u && u.id =
 ok('their roles in the first app are untouched', (await BD.getUser('u-bd-2')).roles.join() === 'chair');
 await RA.updateUser('u-bd-2', { ...u, name: 'Cassandra', organisation: 'Acme', roles: ['board'], isAdmin: false, active: true }, 'admin@acme.test', 'now');
 ok('a name changed in one app shows in every app', (await BD.getUser('u-bd-2')).name === 'Cassandra');
+// Security review 15 Nov 2026, S.3: an app's Admin cannot move a person to another email (and so another sign-in).
+await RA.updateUser('u-bd-2', { ...u, email: 'someone-else@acme.test', name: 'Cassandra', organisation: 'Acme', roles: ['board'], isAdmin: false, active: true }, 'admin@acme.test', 'now');
+ok('updateUser never changes the email', (await BD.getUser('u-bd-2')).email === 'chair@acme.test' && !(await RA.getUserByEmail('someone-else@acme.test')));
+await RA.setPendingEmail('u-bd-2', 'chair2@acme.test', 'now'); await RA.confirmEmail('u-bd-2', 'chair2@acme.test', 'now');
+ok('the person’s own confirmed change moves every app and keeps every role', (await BD.getUser('u-bd-2')).email === 'chair2@acme.test' && (await BD.getUser('u-bd-2')).roles.join() === 'chair' && (await RA.getUserByEmail('chair2@acme.test')).roles.join() === 'board');
+// Security review 15 Nov 2026, S.4: bootstrap closes once per app and stays closed.
+ok('bootstrap is open on a fresh app', (await RA.bootstrapClosed()) === false);
+await RA.closeBootstrap('admin@acme.test', 'now');
+ok('closing it is per app and sticks', (await RA.bootstrapClosed()) === true && (await BD.bootstrapClosed()) === false);
 await RA.updatePrefs('u-bd-2', 'iso', 'Australia/Brisbane', false);
 ok('preferences are the person’s, across the suite', (await BD.getUser('u-bd-2')).timeZone === 'Australia/Brisbane' && (await BD.getUser('u-bd-2')).notify === false);
 const fresh = { id: 'u-n2', email: 'new@acme.test', name: 'Nia', organisation: '', roles: ['risk'], isAdmin: false };

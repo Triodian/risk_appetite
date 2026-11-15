@@ -31,6 +31,8 @@
   // Email Service (Email Sending). Until it is, each send fails and is listed as Failed, with the reason, in
   // Admin → Notifications; saves are never affected. To stop sending, set NOTIFY_SENDING to "off".
   "send_email": [{ "name": "EMAIL" }],
+  // FIRST_ADMINS: comma-separated emails that become this deployment's first administrator on sign-in, once, while it has
+  // never had one; written per deployment by the installer. There is no compiled-in list (security review 15 Nov 2026).
   // DEMO_ADMINS (demo addition): comma-separated emails made active administrators when they sign in.
   // Empty it ("") on a client deployment. See lib/core/api.js.
   // DEMO_LOGIN (demo addition, a Worker secret, not set here): username sign-in for the shared trio_demo account,
@@ -78,7 +80,7 @@
         { "binding": "DB", "database_name": "risk-appetite-client-db", "database_id": "REPLACE-WITH-THE-CLIENT-DATABASE-ID" }
       ],
       "services": [{ "binding": "BOARD", "service": "board-direction-client", "entrypoint": "BoardService" }, { "binding": "ASSESSMENT", "service": "use-assessment-client", "entrypoint": "AssessmentService" }],
-      "vars": { "SUITE_DEMO": "off", "SUITE_COOKIE_DOMAIN": "CLIENT-DOMAIN.example", "SUITE_SESSION_COOKIE": "tri_suite", "DEMO_LOGIN": "", "DEMO_ADMINS": "", "SITE_URL": "https://risk-appetite.CLIENT-DOMAIN.example", "NOTIFY_SENDING": "off", "NOTIFY_FROM": "" },
+      "vars": { "SUITE_DEMO": "off", "SUITE_COOKIE_DOMAIN": "CLIENT-DOMAIN.example", "SUITE_SESSION_COOKIE": "tri_suite", "DEMO_LOGIN": "", "FIRST_ADMINS": "ADMIN@CLIENT-DOMAIN.example", "DEMO_ADMINS": "", "SITE_URL": "https://risk-appetite.CLIENT-DOMAIN.example", "NOTIFY_SENDING": "off", "NOTIFY_FROM": "" },
       "send_email": [{ "name": "EMAIL" }],
       "triggers": { "crons": ["0 21 * * *"] },
       "observability": { "enabled": true }
