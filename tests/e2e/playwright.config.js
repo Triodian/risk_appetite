@@ -24,6 +24,7 @@ export default defineConfig({
       `--port ${PORT} --ip 127.0.0.1 --local-upstream localhost`,
       '--persist-to tests/e2e/.state',
       '--var LOCAL_DEV_NO_SIGNIN_EMAIL:damian.hickey@triodian.com',
+      '--var FIRST_ADMINS:damian.hickey@triodian.com', // the harness's first administrator; nothing is compiled in any more (security review 15 Nov 2026, S.4)
       '--var NOTIFY_SENDING:off',
       // A test-only demo account (password Tq7£2Wx*90), so the demo sign-in is on here as on the demo site, where
       // DEMO_LOGIN is a Worker secret (docs/demo-sign-in.md).
@@ -41,6 +42,7 @@ export default defineConfig({
       `--port ${PORT + 100} --ip 127.0.0.1 --local-upstream localhost --inspector-port ${PORT + 1100}`,
       '--persist-to tests/e2e/.state-client',
       '--var LOCAL_DEV_NO_SIGNIN_EMAIL:damian.hickey@triodian.com',
+      '--var FIRST_ADMINS:damian.hickey@triodian.com', // the harness's first administrator; nothing is compiled in any more (security review 15 Nov 2026, S.4)
       '--var NOTIFY_SENDING:off',
       '--var SUITE_DEMO:off',
       "--var DEMO_LOGIN:''",
