@@ -1,0 +1,49 @@
+{
+  "jurisdiction": "US",
+  "checked": "2026-11-14",
+  "source": "Triodian project note 'United States - jurisdiction scope (US.1)' and the Atlas US round (data/research/2026-11-14-us-overlay.json in obligations-atlas). The inputs name the documents a US entity in the sector usually holds; whether an instrument applies is counsel's question, and the matter brief lists the records.",
+  "packs": [
+    {
+      "id": "usBanking", "name": "Bank (United States)", "builtOn": "bpBanking",
+      "instruments": "SR 26-2 on model risk, the 2023 interagency third-party guidance and, in New York, 23 NYCRR 500",
+      "inputs": {
+        "I5": ["Register of third-party relationships, with those that support critical activities marked, and their subcontractors", "Third-party relationship register, critical activities marked"],
+        "I7": ["AI governance framework, permitted-use policy, AI inventory and the model inventory with each model's validation status", "AI governance framework, AI inventory and model inventory"]
+      }
+    },
+    {
+      "id": "usInsurance", "name": "Insurer (United States)", "builtOn": "bpInsurance",
+      "instruments": "the NAIC model bulletin on AI systems as each state has issued it and, in New York, Insurance Circular Letter No. 7",
+      "inputs": {
+        "I5": ["Register of third-party AI systems and data vendors, with their audit and cooperation terms", "Third-party AI systems and data vendor register"],
+        "I7": ["Written AI systems programme, permitted-use policy and AI inventory, with the states in which the insurer writes business that have issued the model bulletin", "Written AI systems programme and AI inventory"]
+      }
+    },
+    {
+      "id": "usSecurities", "name": "Broker-dealer or investment adviser (United States)", "builtOn": "bpSecurities",
+      "instruments": "Regulation S-P, FINRA Rule 3110 and FINRA's 2026 report on generative AI and AI agents",
+      "inputs": {
+        "I7": ["AI governance framework, AI inventory, and the written supervisory procedures that cover generative AI and AI agents", "AI inventory and written supervisory procedures"],
+        "I10": ["Incident response programme and customer notification procedure, with each service provider's notice terms", "Incident response programme and notice terms"]
+      }
+    },
+    {
+      "id": "usHealth", "name": "Health care provider (United States)", "builtOn": "bpHealth",
+      "instruments": "45 CFR 92.210 on patient care decision support tools, the HIPAA business associate terms and the HTI-5 changes to certified health IT",
+      "inputs": {
+        "I5": ["Register of business associates and other providers, with each agreement", "Business associate and provider register"],
+        "I7": ["AI governance framework, AI inventory, and the inventory of patient care decision support tools with the record of how discrimination risk in each was reduced", "AI inventory and decision support tool inventory"]
+      },
+      "consequencePrompt": "Does a single patient whose care is delayed or denied because of AI count as harm, or only a pattern of them?"
+    },
+    {
+      "id": "usCriticalInfrastructure", "name": "Critical infrastructure owner or operator (United States)", "builtOn": "bpCiCorporate",
+      "instruments": "NERC CIP-013 supply chain risk management (bulk electric system) and CIRCIA incident and ransom-payment reporting once its final rule is in force",
+      "inputs": {
+        "I5": ["Vendor register and the supply chain cyber security risk management plan", "Vendor register and supply chain plan"],
+        "I10": ["Incident notification procedure, with the reporting timings that will apply once the CIRCIA rule is in force", "Incident notification procedure, ready for CIRCIA"]
+      },
+      "consequencePrompt": "Does a single unplanned change to an operational setting count as harm even when service is not disrupted, or only one that disrupts it?"
+    }
+  ]
+}
