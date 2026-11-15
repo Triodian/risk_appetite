@@ -1412,7 +1412,8 @@ let lastBp = null, inChange = false, pendingRender = false;
 function render() { if (inChange) { if (!pendingRender) { pendingRender = true; setTimeout(() => { pendingRender = false; doRender(); }, 0); } return; } doRender(); }
 const dsKey = el => el && el !== document.body && el.dataset && Object.keys(el.dataset).length ? el.tagName + '|' + JSON.stringify(Object.assign({}, el.dataset)) : null;
 // The sector pack follows the engagement: set-up picks it, and it locks once a decision or entry is recorded.
-function packId() { return (S && S.engagement && S.engagement.sectorPack) || TriodianPacks.DEFAULT; }
+// A new engagement starts on the pack of the jurisdiction and sector this deployment is set to (TriodianPacks.startPack).
+function packId() { return (S && S.engagement && S.engagement.sectorPack) || TriodianPacks.startPack(BASE, SRV.defaults) || TriodianPacks.DEFAULT; }
 // Mirrors packLocked in lib/core/rbac.js, which refuses the change on the server.
 function packLocked() { if (!S) return false; if ((S.calibration || {}).version > 0) return true; return Object.values(S.decisions || {}).some(d => d && d.cells && Object.keys(d.cells).length > 0); }
 // A new pack on an engagement with nothing recorded: the functions, inputs, triggers and events follow the pack.
@@ -2342,7 +2343,7 @@ async function boot() {
   render();
   const r = location.protocol.startsWith('http') ? await api('GET', '/api/me') : { ok: false, error: 'opened as a local file' };
   SRV.checked = true;
-  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
+  if (r.ok) { SRV.on = true; SRV.user = r.body.user; SRV.site = r.body.site || ''; SRV.defaults = r.body.defaults || null; document.documentElement.classList.toggle('testsite', !!SRV.site); document.title = (SRV.site ? '[' + SRV.site + '] ' : '') + document.title.replace(/^\[[^\]]*\] /, ''); if (AREA === 'admin' && SRV.user.isAdmin && UI.screen !== 'setup') loadAdmin(); if (AREA === 'profile') { render(); const e = await api('GET', '/api/engagement'); if (e.ok) { SRV.exists = !!e.body.exists; render(); } } else { await loadArchives(); await loadReal(); if (AREA === 'app' && openExampleByDefault()) startPractice(); SRV.started = true; render(); } } else { SRV.on = false; SRV.reason = r.error; SRV.code = r.code || ''; if (AREA === 'app' && SRV.code !== 'no_access' && openExampleByDefault()) startPractice(); render(); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfQuiet(); });
 }
 window.RAF = { soaPanel: () => soaPanel(), competenceCard: () => competenceCard(), get state() { return S; }, snapshot: () => snapshotNow(), render: () => render(), validate: o => validateFile(migrate(o)), checks: () => runChecks(), calibrationSet: () => calibrationSet(), go, save: () => saveNow(), datesAU, output: (tab) => outputFor(tab)[0](), content: () => C, useAims: (kind, text, file) => useAims(kind, text, file), limits: () => limitResults() };
