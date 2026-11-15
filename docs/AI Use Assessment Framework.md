@@ -1,6 +1,6 @@
 # AI Use Assessment Framework
 
-Oct 11, 2026 · @Damian Hickey
+Oct 11, 2026
 
 ## 1. Summary
 
@@ -132,12 +132,12 @@ R = does the work. A = accountable for it. C = consulted. I = informed.
 
 ### 4.3 Team
 
-| Role | Person | Responsibility in the assessment |
-| --- | --- | --- |
-| Method owner | Damian Hickey | Scope, sequence and the evidence each stage has to produce. Signs the technical annex |
-| Delivery manager | Leon Cosgrove | Plan, document requests, interview schedule, issue log |
-| AI architect | Abhishek Gupta | Technical reading of each system: authority, credentials, where a record could be produced |
-| Validation | Sam Ferraro PhD | Checks the measures without having written them, before anything goes to the independent reviewer |
+| Role | Responsibility in the assessment |
+| --- | --- |
+| Method owner | Scope, sequence and the evidence each stage has to produce. Signs the technical annex |
+| Delivery manager | Plan, document requests, interview schedule, issue log |
+| AI architect | Technical reading of each system: authority, credentials, where a record could be produced |
+| Validation | Checks the measures without having written them, before anything goes to the independent reviewer |
 
 ### 4.4 Rules of engagement
 
@@ -507,7 +507,7 @@ Listed so the interfaces are clear. These are not Triodian deliverables.
 | R1 | Set review | End of phase 1 | Counsel and GC | Selection criteria applied; each boundary type represented |
 | R2 | Register completeness | End of phase 2 | Delivery manager | Fields 1 to 14 complete or not known; every value sourced and dated |
 | R3 | Classification review | During phase 3 | A second Triodian reviewer, not the classifier | Tier re-derived from fields 11 to 13 without sight of the original; differences resolved and logged |
-| R4 | Validation | End of phase 3 | Sam Ferraro | Rules in sections 8.3 and 8.4 applied consistently across entries; every adjustment has a reason; every obtainable rung has five test results |
+| R4 | Validation | End of phase 3 | The validator | Rules in sections 8.3 and 8.4 applied consistently across entries; every adjustment has a reason; every obtainable rung has five test results |
 | R5 | Legal-line check | Before any draft leaves Triodian | Method owner | No sentence states what the law requires; "required" and "gap" used only as section 10.4 allows |
 | R6 | Counsel review | Phase 5 | Counsel | Draft seen by counsel first; determinations transcribed accurately |
 | R7 | Independent check | Phase 6 | Independent reviewer | Is the assessment sound, and are its findings supported? |
@@ -596,7 +596,7 @@ These elements are not in either deck. Each was added to make the method executa
 
 ### Sources
 
-- Counsel's planning deck: "What a CRO will ask, and how we answer it together", Damian Hickey, October 2026, 24 slides.
+- Counsel's planning deck: "What a CRO will ask, and how we answer it together", October 2026, 24 slides.
 - "Triodian - AI Counsel Briefing", 12 September 2026, 29 slides.
 
 No external source was consulted. Regulatory references are as stated in those two documents.
