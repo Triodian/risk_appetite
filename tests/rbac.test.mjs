@@ -84,4 +84,14 @@ const req = (path, body) => ({ method: 'POST', path, email: 'admin@x.com', text:
   const { ROLES } = await import('../lib/core/roles.js');
   ok('the risk seat keeps its id and is named for both functions', ROLES.find(r => r.id === 'risk').name === 'Risk or AI governance function'); }
 
+// ---- the first save of a deployment, or a file loaded into an empty one, goes through the same rules (security review 15 Nov 2026, S.5) ----
+const fresh = () => ({ schema: 'triodian.raf.v1', engagement: { id: 'e1', insurer: 'Acme', overallPosition: '' }, people: [], current: {}, decisions: { d1: { cells: {} }, d2: { cells: {} }, d3: { cells: {}, referenceShown: [] } }, questionsForCounsel: [], challenge: [],
+  calibration: { status: 'default', version: 0, agreedBy: '', agreedById: '', agreedOn: '', approvedOn: '', minuteRef: '', approvedBy: '', issued: [] }, measureOwners: {}, history: [] });
+const first = (label, who, f, want) => { const n = fresh(); f(n); const r = checkSave(null, n, U(who), users); ok('first save: ' + label, !r.error === want, r.error); };
+first('an administrator starts an engagement from the blank template', 'ad', () => {}, true);
+first('counsel cannot (set-up is for administrators)', 'cn', () => {}, false);
+first('a file carrying a position on decision 1 is refused', 'ad', n => { n.decisions.d1.cells = { c1: { value: 'A3' } }; }, false);
+first('a file carrying the CRO’s agreement is refused', 'ad', n => { n.calibration = { ...n.calibration, status: 'working', version: 1, agreedBy: 'Chris', agreedById: 'cr', agreedOn: '2026-11-01' }; }, false);
+first('a file carrying the board’s approval is refused', 'ad', n => { n.calibration = { ...n.calibration, status: 'approved', version: 1, agreedById: 'cr', agreedBy: 'Chris', agreedOn: '2026-11-01', approvedOn: '2026-11-02', minuteRef: 'M1', approvedBy: 'Board' }; }, false);
+first('a file carrying the overall position is refused', 'ad', n => { n.engagement.overallPosition = 'Cautious'; }, false);
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);
