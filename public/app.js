@@ -1081,7 +1081,7 @@ const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'
 /* The APRA letter bullet, CPS 230 paragraph and ISO/IEC 42001 control each output serves (task R.2; public/shared/evidence.js).
    outputFor sets EVID; the first header written for that output carries the line. */
 let EVID = '';
-const evTags = id => (window.RAFEvidence ? window.RAFEvidence.tagLine('RA', id) : '');
+const evTags = id => (window.RAFEvidence ? window.RAFEvidence.tagLine('RA', id, (BASE.packs[C.pack] || {}).jurisdiction) : '');   // outside Australia, ISO/IEC 42001 only
 // A placeholder, filled after withLabels: the letter's bullets A1 to A4 are not the authority levels A1 to A6.
 const evLine = () => { const t = EVID ? evTags(EVID) : ''; EVID = ''; return t ? '[[EVIDENCE]]\n\n' : ''; };
 function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[' + N.Entity + ']'} · ${e.reference || '[reference]'} · generated ${today()}\n\n${evLine()}`; }
@@ -2140,7 +2140,7 @@ const EXAMPLES = [
   { id: 'insurance', name: 'Insurance', note: 'Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.', what: 'a fictional general insurer', offer: 'A fictional general insurer, part-way through the second session.', build: buildExampleInsurer },
   { id: 'superannuation', name: 'Superannuation trustee', note: 'Worked example: a fictional superannuation trustee, Coastline Super, for practice only. Nothing is saved.', what: 'a fictional superannuation trustee', offer: 'A fictional superannuation trustee, with the board’s directions loaded and the appetite approved by its board.', build: buildExampleSuper },
   { id: 'banking', name: 'Bank', note: 'Worked example: a fictional bank, Wattlebrook Bank, for practice only. Nothing is saved.', what: 'a fictional bank', offer: 'A fictional bank, with the board’s directions loaded and the appetite approved by its board.', build: buildExampleBank },
-];
+].concat(window.RAFUSExamples ? window.RAFUSExamples({ setPack, newEngagement, getPos, UI, AT, CO, EV, rk, D, blocking, runChecks, snapshotNow, calibrationSet, defaultOwner, C: () => C, swap: X => { const o = S; S = X; return o; } }) : []);  // the United States examples (raf-example-us.js, loaded first)
 const EX_SECTOR = 'triodian.example.sector';
 function exampleChoice() {
   let id = '';

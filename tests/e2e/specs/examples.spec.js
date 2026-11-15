@@ -123,3 +123,35 @@ test('the bank example produces the management review input and records competen
   expect(p._errors).toEqual([]);
   await ctx.close();
 });
+
+// The United States examples (task US.5): the same bank and insurer as in AI Board Direction and AI Use Assessment,
+// each on its US pack, with the directions the Board Direction example records, every check passing and an approved appetite.
+for (const [ex, name, pack, dir, over] of [
+  ['us-banking', 'Harlow Ridge Bank', 'usBanking', 'Harlow Ridge Bank V2', ['d1.ffc.provider']],
+  ['us-insurance', 'Ashgrove Mutual Insurance Company', 'usInsurance', 'Ashgrove Mutual Insurance Company V2', ['d1.p.provider', 'd1.c.own']],
+]) {
+  test(`?example=${ex} opens ${name} on the US pack, within the board’s directions, approved`, async ({ browser }) => {
+    const { ctx, p } = await start(browser, `/?example=${ex}`);
+    await expect(p.locator('.examplenote').first()).toContainText(name);
+    const s = await p.evaluate(() => { const S = window.RAF.state, ck = window.RAF.checks(), areas = S.boardDirections.file.directions.BD1.areas;
+      const max = Object.fromEntries(S.functions.map(f => { const a = areas.find(x => x.name === f.name); return [f.id, a ? +a.maxTier.slice(1) : 9]; }));
+      return { name: S.engagement.insurer, pack: S.engagement.sectorPack, failing: ck.filter(k => k.state === 'fail').map(k => k.id), cal: S.calibration.status, issued: S.calibration.issued.map(i => i.status).join(),
+        dir: S.boardDirections.file.company + ' ' + S.boardDirections.file.version, jur: S.boardDirections.file.jurisdiction,
+        over: S.functions.flatMap(f => ['own', 'provider', 'platform'].map(l => `d1.${f.id}.${l}`)).filter(id => +S.decisions.d1.cells[id].value.slice(1) > max[id.split('.')[1]]) }; });
+    expect(s.name).toBe(name + ' (fictional)'); expect(s.pack).toBe(pack);
+    expect(s.failing).toEqual([]);
+    expect(s.cal).toBe('approved'); expect(s.issued).toBe('working,approved');
+    expect(s.dir).toBe(dir); expect(s.jur).toBe('US');
+    expect(s.over.sort()).toEqual(over.slice().sort());           // each ceiling above a direction carries its reason and revisit
+    for (const id of over) expect(await p.evaluate(id => { const c = window.RAF.state.decisions.d1.cells[id]; return !!(c.reason && c.boardRevisit); }, id)).toBe(true);
+    await p.evaluate(() => window.RAF.go('d1'));
+    await expect(p.locator('body')).toContainText('The board’s directions for this decision');
+    for (const w of ['APRA', 'Wattlebrook', 'Corvane', 'Coastline', 'AFCA', 'superannuation']) await expect(p.locator('body')).not.toContainText(w);
+    // the outputs carry ISO/IEC 42001 references only: the APRA letter and CPS 230 are Australian
+    const outs = await p.evaluate(() => ['pack', 'paper', 'statement', 'schedule', 'session', 'calibration', 'checks', 'plan', 'mgmtReview'].map(t => window.RAF.output(t)).join('\n'));
+    expect(outs).toContain('Evidence for: ISO/IEC 42001');
+    for (const w of ['APRA', 'CPS 230', 'Wattlebrook', 'superannuation']) expect(outs, w).not.toContain(w);
+    expect(p._errors).toEqual([]);
+    await ctx.close();
+  });
+}
