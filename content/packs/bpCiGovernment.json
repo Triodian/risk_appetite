@@ -5,7 +5,7 @@
   "entityTypes": [],
   "baseline": "BP-CI-GOVERNMENT",
   "governingBody": "accountableAuthority",
-  "note": "Generated from Triodian Metamodel 2.8.0 (reference-data/baseline-profiles.json) by tools/build-baseline-packs.mjs; do not edit by hand. A best-practice baseline for utilities, transport, water and networks run by a public body that holds in any jurisdiction; it names no regulator, and the jurisdiction's own obligations come from the matter brief.",
+  "note": "Generated from Triodian Metamodel 2.9.0 (reference-data/baseline-profiles.json) by tools/build-baseline-packs.mjs; do not edit by hand. A best-practice baseline for utilities, transport, water and networks run by a public body that holds in any jurisdiction; it names no regulator, and the jurisdiction's own obligations come from the matter brief.",
   "nouns": {
     "entity": "operator",
     "Entity": "Operator",

@@ -51,7 +51,7 @@ test('a baseline for a public body names the accountable authority; its function
   const { ctx, p, saves } = await adminPage(browser, null);
   await p.locator('[data-act="new"]').click();
   const pack = p.locator('#f_engagement_sectorPack');
-  await expect(pack.locator('option')).toHaveCount(12);
+  await expect(pack.locator('option')).toHaveCount(17); // three AU, one SG, five US and eight baseline packs
   await pack.selectOption('bpGovernment');
   await expect(p.locator('label:has(#f_engagement_insurer)').first()).toContainText('Agency');
   await expect(p.locator('#app')).toContainText('accountable authority');
@@ -61,6 +61,25 @@ test('a baseline for a public body names the accountable authority; its function
   await expect.poll(() => saves.length && saves[saves.length - 1].engagement.sectorPack).toBe('bpGovernment');
   // a company's pack names the board again
   await pack.selectOption('bpCiCorporate');
+  await expect(p.locator('#app')).toContainText('board');
+  expect(p._errors).toEqual([]);
+  await ctx.close();
+});
+
+test('a US health care provider gets the US health pack: the health baseline with US inputs (task US.4)', async ({ browser }) => {
+  const { ctx, p, saves } = await adminPage(browser, null);
+  await p.locator('[data-act="new"]').click();
+  const pack = p.locator('#f_engagement_sectorPack');
+  await expect(pack.locator('option', { hasText: '(United States)' })).toHaveCount(5);
+  await pack.selectOption('usHealth');
+  const st = await p.evaluate(() => ({ f: window.RAF.state.functions.map(f => f.name), pack: window.RAF.state.engagement.sectorPack }));
+  expect(st.pack).toBe('usHealth');
+  await pack.selectOption('bpHealth');
+  const base = await p.evaluate(() => window.RAF.state.functions.map(f => f.name));
+  expect(st.f).toEqual(base); // the functions are the baseline's
+  await pack.selectOption('usHealth');
+  await p.evaluate(() => window.RAF.save());
+  await expect.poll(() => saves.length && saves[saves.length - 1].engagement.sectorPack).toBe('usHealth');
   await expect(p.locator('#app')).toContainText('board');
   expect(p._errors).toEqual([]);
   await ctx.close();

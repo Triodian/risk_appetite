@@ -5,7 +5,7 @@
   "entityTypes": [],
   "baseline": "BP-SECURITIES",
   "governingBody": "board",
-  "note": "Generated from Triodian Metamodel 2.8.0 (reference-data/baseline-profiles.json) by tools/build-baseline-packs.mjs; do not edit by hand. A best-practice baseline for broker-dealers, advisers and fund managers that holds in any jurisdiction; it names no regulator, and the jurisdiction's own obligations come from the matter brief.",
+  "note": "Generated from Triodian Metamodel 2.9.0 (reference-data/baseline-profiles.json) by tools/build-baseline-packs.mjs; do not edit by hand. A best-practice baseline for broker-dealers, advisers and fund managers that holds in any jurisdiction; it names no regulator, and the jurisdiction's own obligations come from the matter brief.",
   "nouns": {
     "entity": "firm",
     "Entity": "Firm",
