@@ -2140,7 +2140,7 @@ const EXAMPLES = [
   { id: 'insurance', name: 'Insurance', note: 'Worked example: a fictional general insurer, Corvane General, for practice only. Nothing is saved.', what: 'a fictional general insurer', offer: 'A fictional general insurer, part-way through the second session.', build: buildExampleInsurer },
   { id: 'superannuation', name: 'Superannuation trustee', note: 'Worked example: a fictional superannuation trustee, Coastline Super, for practice only. Nothing is saved.', what: 'a fictional superannuation trustee', offer: 'A fictional superannuation trustee, with the board’s directions loaded and the appetite approved by its board.', build: buildExampleSuper },
   { id: 'banking', name: 'Bank', note: 'Worked example: a fictional bank, Wattlebrook Bank, for practice only. Nothing is saved.', what: 'a fictional bank', offer: 'A fictional bank, with the board’s directions loaded and the appetite approved by its board.', build: buildExampleBank },
-];
+].concat(window.RAFUSExamples ? window.RAFUSExamples({ setPack, newEngagement, getPos, UI, AT, CO, EV, rk, D, blocking, runChecks, snapshotNow, calibrationSet, defaultOwner, C: () => C, swap: X => { const o = S; S = X; return o; } }) : []);  // the United States examples (raf-example-us.js, loaded first)
 const EX_SECTOR = 'triodian.example.sector';
 function exampleChoice() {
   let id = '';
