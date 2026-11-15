@@ -21,8 +21,9 @@ for (const f of readdirSync(at('content/overlays')).filter(f => f.endsWith('.jso
     pack.id = o.id; pack.name = o.name; pack.jurisdiction = O.jurisdiction; pack.entityTypes = [];
     delete pack.baseline; pack.builtOn = base.baseline; pack.overlay = O.jurisdiction;
     pack.note = `Generated from content/overlays/${f} and the ${base.name} pack by tools/build-overlay-packs.mjs; do not edit by hand. The ${base.name.replace(/ \(best-practice baseline\)$/, '').toLowerCase()} baseline for ${where}: the inputs name documents drawn from ${o.instruments}. Whether any of them applies is counsel's question; the matter brief lists the records.`;
-    // Rename each input in the list, and its row in the framework text's inputs table as the baseline leaves it.
-    const md = Packs.resolve({ ...content, packs: { [base.id]: base } }, base.id).frameworkMarkdown.split('\n');
+    // Rename each input in the list, and its row in the framework text's inputs table as the baseline leaves it (tokens
+    // unfilled, as edits are applied before the nouns).
+    const md = Packs.resolve({ ...content, packs: { [base.id]: { ...base, nouns: {} } } }, base.id).frameworkMarkdown.split('\n');
     for (const [ref, [name, short]] of Object.entries(o.inputs || {})) {
       const inp = pack.replace.inputs.find(i => i.ref === ref);
       if (!inp) throw new Error(`${o.id}: no input ${ref} in ${o.builtOn}`);
