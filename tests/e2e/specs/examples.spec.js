@@ -147,6 +147,10 @@ for (const [ex, name, pack, dir, over] of [
     await p.evaluate(() => window.RAF.go('d1'));
     await expect(p.locator('body')).toContainText('The board’s directions for this decision');
     for (const w of ['APRA', 'Wattlebrook', 'Corvane', 'Coastline', 'AFCA', 'superannuation']) await expect(p.locator('body')).not.toContainText(w);
+    // the outputs carry ISO/IEC 42001 references only: the APRA letter and CPS 230 are Australian
+    const outs = await p.evaluate(() => ['pack', 'paper', 'statement', 'schedule', 'session', 'calibration', 'checks', 'plan', 'mgmtReview'].map(t => window.RAF.output(t)).join('\n'));
+    expect(outs).toContain('Evidence for: ISO/IEC 42001');
+    for (const w of ['APRA', 'CPS 230', 'Wattlebrook', 'superannuation']) expect(outs, w).not.toContain(w);
     expect(p._errors).toEqual([]);
     await ctx.close();
   });

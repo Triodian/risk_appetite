@@ -1081,7 +1081,7 @@ const pv = id => { const p = P(id); if (!p || p.status === 'unset') return '[ ]'
 /* The APRA letter bullet, CPS 230 paragraph and ISO/IEC 42001 control each output serves (task R.2; public/shared/evidence.js).
    outputFor sets EVID; the first header written for that output carries the line. */
 let EVID = '';
-const evTags = id => (window.RAFEvidence ? window.RAFEvidence.tagLine('RA', id) : '');
+const evTags = id => (window.RAFEvidence ? window.RAFEvidence.tagLine('RA', id, (BASE.packs[C.pack] || {}).jurisdiction) : '');   // outside Australia, ISO/IEC 42001 only
 // A placeholder, filled after withLabels: the letter's bullets A1 to A4 are not the authority levels A1 to A6.
 const evLine = () => { const t = EVID ? evTags(EVID) : ''; EVID = ''; return t ? '[[EVIDENCE]]\n\n' : ''; };
 function mdHead(title) { const e = S.engagement; return `${e.privilegeMarking || '[Privilege marking not recorded in set-up]'}\n\n# ${title}\n\n**${statusMark()}**${e.example ? ' · WORKED EXAMPLE, FICTIONAL INSURER' : ''}\n\n${e.insurer || '[' + N.Entity + ']'} · ${e.reference || '[reference]'} · generated ${today()}\n\n${evLine()}`; }

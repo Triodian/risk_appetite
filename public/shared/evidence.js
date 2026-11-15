@@ -128,9 +128,13 @@ export const APPS = { RA: 'AI Risk Appetite', UA: 'AI Use Assessment', BD: 'AI B
 /** The tags of one output, or null. */
 export const tagsFor = (app, id) => (TAGS[app] || {})[id] || null;
 /** One line for the screen: "APRA letter G3, P1 · CPS 230 47(c) · ISO/IEC 42001 6.1.4, A.5". Empty when untagged. */
-export function tagLine(app, id) {
+/** The tag line printed on an output. The APRA letter and CPS 230 apply only to Australian engagements: give the
+ *  engagement's jurisdiction (its pack's, such as 'US'), and outside Australia the line carries ISO/IEC 42001 alone.
+ *  With no jurisdiction (the Australian packs, before packs carried one) the line is as it was. */
+export function tagLine(app, id, jurisdiction) {
   const t = tagsFor(app, id); if (!t) return '';
-  return ['APRA letter ' + t.letter.join(', '), t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', t.iso.length ? 'ISO/IEC 42001 ' + t.iso.join(', ') : ''].filter(Boolean).join(' · ');
+  const au = !jurisdiction || jurisdiction === 'AU';
+  return [au ? 'APRA letter ' + t.letter.join(', ') : '', au && t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', t.iso.length ? 'ISO/IEC 42001 ' + t.iso.join(', ') : ''].filter(Boolean).join(' · ');
 }
 
 /** ", minute 2026/12-04", or the reference as written when it already says what it is ("Board minute 2026/12-04"). */
@@ -225,8 +229,10 @@ const table = (h, rows) => `| ${h.join(' | ')} |\n| ${h.map(() => '---').join(' 
  * review is the date of the client's next AI management review (ISO/IEC 42001 clause 9.3), when set: every artefact
  * is then due for review at it. notes: lines saying what could not be gathered.
  */
+/** o.jurisdiction: outside Australia ('US' and so on) the index is by ISO/IEC 42001 only, with no APRA letter bullets. */
 export function indexMarkdown(o) {
-  const A = (o.artefacts || []).filter(a => a.status !== 'none'), by = o.by === 'iso' ? 'iso' : 'letter';
+  const au = !o.jurisdiction || o.jurisdiction === 'AU';
+  const A = (o.artefacts || []).filter(a => a.status !== 'none'), by = o.by === 'iso' || !au ? 'iso' : 'letter';
   const rev = ymd(o.review), row = a => [APPS[a.app], a.name, STATUS[a.status] || a.status, a.asOf || '—', rev || '—', a.note || ''];
   const H = ['App', 'Artefact', 'Status', 'As of', 'Review by', 'Note'];
   let m = `${o.company ? o.company + ': ' : ''}the artefacts the three engagements hold, ${by === 'iso' ? 'by ISO/IEC 42001:2023 clause and Annex A control' : 'by bullet of the ' + LETTER_NAME}. Gathered ${o.gatheredOn || ''}.\n\n`;
@@ -245,11 +251,12 @@ export function indexMarkdown(o) {
     ISO.forEach(([id, name]) => {
       const hits = A.filter(a => (a.iso || []).includes(id)), inputs = A.filter(a => (a.inputTo || []).includes(id));
       const bullets = LETTER.filter(b => b.iso.some(x => covers(x, id))).map(b => b.id), sr = soa && soa[id];
-      m += `## ${id} · ${name}\n\nLetter bullets: ${bullets.join(', ') || '—'}.` + (soa && /^A\./.test(id) ? ` Statement of Applicability: ${soaLine(sr)}.` : '') + '\n\n'
+      m += `## ${id} · ${name}\n\n` + [au ? `Letter bullets: ${bullets.join(', ') || '—'}.` : '', soa && /^A\./.test(id) ? `Statement of Applicability: ${soaLine(sr)}.` : ''].filter(Boolean).join(' ') + '\n\n'
         + (hits.length ? table(H, hits.map(row)) : `${NOT_EVIDENCED}.\n\n`)
         + (inputs.length ? `${INPUT_NOTE[id] || 'Input only.'} From: ${inputs.map(a => a.name).join('; ')}.\n\n` : '');
     });
   }
+  if (!au) return m;
   const gap = LETTER.filter(b => !A.some(a => (a.letter || []).includes(b.id))).map(b => b.id);
   m += `## Bullets with no evidence yet\n\n${gap.length ? gap.join(', ') + '. These are for other controls or tools the entity holds; the three engagements do not produce evidence for them.' : 'None.'}\n\n${NOTE}\n`;
   return m;
