@@ -1640,7 +1640,8 @@ const otherApps = u => ((ADM.others || {})[u.id] || []).map(o => `<div class="sm
 function roleChecks(u) { const cur = rolesOf(u); return `<fieldset class="acts2" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Engagement roles <span class="soft" style="font-weight:400">· one person may hold more than one</span></legend><div class="row" style="gap:4px 16px;flex-wrap:wrap">${ADM.roles.map(r => `<label class="cb small"><input type="checkbox" name="f-roles" value="${esc(r.id)}" ${cur.includes(r.id) ? 'checked' : ''}> ${esc(r.name)}</label>`).join('')}</div></fieldset>`; }
 function userForm(u, isNew) {
   return `<form class="adm-form" id="userForm" data-id="${esc(u.id || '')}" novalidate>
-    <label class="f">Email<input class="in" id="f-email" type="email" autocomplete="off" value="${esc(u.email || '')}"></label>
+    <label class="f">Email<input class="in" id="f-email" type="email" autocomplete="off" value="${esc(u.email || '')}" ${isNew ? '' : 'readonly aria-describedby="f-email-note"'}></label>
+    ${isNew ? '' : '<p class="small soft" id="f-email-note" style="margin:-6px 0 10px">Only the person can change their email, in their Profile, by confirming the new address with a sign-in. It carries their roles in every app.</p>'}
     <label class="f">Name<input class="in" id="f-name" value="${esc(u.name || '')}"></label>
     <label class="f">Organisation<input class="in" id="f-org" value="${esc(u.organisation || '')}"></label>
     ${roleChecks(u)}

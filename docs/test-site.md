@@ -32,6 +32,6 @@ page says "Test site · not the live engagement".
 
 - Changes go to the `test` branch first; Cloudflare deploys them to the test site.
 - When they have been checked there, merge `test` into `main`; Cloudflare deploys the live site.
-- The first person to sign in to the test site who is listed in `BOOTSTRAP_ADMINS` (lib/config.js)
+- The first person to sign in to the test site who is listed in the Worker variable `FIRST_ADMINS`
   becomes its administrator. Add test users in its Admin, separately from the live site.
 - To start the test site again from empty, delete and re-create the test database.

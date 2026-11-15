@@ -1,5 +1,6 @@
-# Runs on every push and pull request. A failure shows on the commit in GitHub before anyone relies on it.
-# Cloudflare deploys separately; this does not block a deploy, it tells you something broke.
+# Runs on every push and pull request. The deploy job runs only after every test has passed, on main (live) and test
+# (test site), so a failing test blocks the deploy rather than reporting it afterwards (security review 15 Nov 2026, S.2;
+# plan rule N.4). The Cloudflare Git build for this repo is switched off; this workflow is the only path to a deploy.
 name: Tests
 on:
   push:
@@ -38,3 +39,34 @@ jobs:
           name: playwright-report
           path: tests/e2e/test-results
           retention-days: 14
+
+  # Deploys with wrangler once the tests are green. main → the live site; test → the test site (wrangler --env test).
+  # Needs the repository secrets CLOUDFLARE_API_TOKEN (Workers Scripts: Edit, Workers Routes: Edit, D1: Edit) and
+  # CLOUDFLARE_ACCOUNT_ID. Without them the job explains and stops, and nothing is deployed.
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the deploy secrets are set
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: |
+          echo "::error::CLOUDFLARE_API_TOKEN is not set as a repository secret, so this run cannot deploy. Add it (and CLOUDFLARE_ACCOUNT_ID) under Settings → Secrets and variables → Actions."
+          exit 1
+      - name: Deploy the live site (main)
+        if: github.ref == 'refs/heads/main'
+        run: npx --yes wrangler@4 deploy
+      - name: Deploy the test site (test)
+        if: github.ref == 'refs/heads/test'
+        run: npx --yes wrangler@4 deploy --env test
