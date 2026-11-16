@@ -85,8 +85,20 @@ const demoAdmins = env => String(env.DEMO_ADMINS || '').split(',').map(e => e.tr
 const APP_ID = 'risk-appetite';
 const storeFor = env => withIdentity(d1Store(env.DB), env.IDENTITY ? identityUsers(env.IDENTITY, APP_ID, env.DB) : null);
 
+/** The commit this Worker was deployed from (APP_COMMIT, set by the gated workflow's deploy step), on every response
+ *  as X-Triodian-Release and at /api/version, so a test can attest the deployed revision rather than infer it
+ *  (penetration retest 16 Nov 2026: "live authentication results alone do not establish that the fixes are deployed";
+ *  development plan P.14). The repositories are public, so the commit is not a secret. */
+export const release = env => String((env && env.APP_COMMIT) || '').trim() || 'unknown';
+const withRelease = (res, env) => { try { const r = new Response(res.body, res); r.headers.set('X-Triodian-Release', release(env)); return r; } catch (e) { return res; } };
+
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/version' && request.method === 'GET') return withRelease(json({ app: APP_ID, commit: release(env), site: env.SITE_LABEL || '' }), env);
+    return withRelease(await this.app(request, env, ctx), env);
+  },
+  async app(request, env, ctx) {
     const url = new URL(request.url);
     // Sign-in: /login (a static page), /auth/* (lib/identity/session.js). Pages need a session; assets do not.
     if (url.pathname.startsWith('/auth/')) return (await handleAuth(request, env)) || new Response('Not found', { status: 404 });

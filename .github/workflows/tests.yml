@@ -66,7 +66,7 @@ jobs:
           exit 1
       - name: Deploy the live site (main)
         if: github.ref == 'refs/heads/main'
-        run: npx --yes wrangler@4 deploy
+        run: npx --yes wrangler@4 deploy --var APP_COMMIT:${{ github.sha }}
       - name: Deploy the test site (test)
         if: github.ref == 'refs/heads/test'
-        run: npx --yes wrangler@4 deploy --env test
+        run: npx --yes wrangler@4 deploy --env test --var APP_COMMIT:${{ github.sha }}
