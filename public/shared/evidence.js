@@ -201,6 +201,10 @@ export const TAGS = {
     EP: { letter: ['G2'], cps: [], iso: ['5.3'] },
     FN: { letter: ['P2', 'P4', 'S4'], cps: ['53', '55(d)'], iso: ['A.10.3'] },
     NC: { letter: ['A1'], cps: [], iso: ['10.2'] },
+    // AI Incident Accountability, Shape A (plan tasks A.3 to A.5): readiness, holds and validation events
+    DL11: { letter: ['S1', 'G2', 'P2'], cps: ['33', '42', '54'], iso: ['A.3.2', 'A.6.2.8', 'A.10.3'] },
+    DL12: { letter: ['P2'], cps: ['54'], iso: ['A.10.3', 'A.6.2.8'] },
+    VE: { letter: ['A4', 'S1', 'B2'], cps: ['33', '42'], iso: ['A.8.4', '9.1', '10.2'] },
   },
   BD: {
     inventory: { letter: ['G3'], cps: [], iso: ['4.3', 'A.4.2'] },
@@ -251,6 +255,11 @@ function liteNote(d) {
   return `Lite scope: ${n} of ${arrs.length} arrangement${arrs.length === 1 ? '' : 's'}, those behind critical operations${left ? `; ${left} left out for later triage` : ''}`;
 }
 
+/** The nine readiness fields of AI Incident Accountability (public/aua-content.json, readiness.fields); recorded when none is blank. */
+export const READINESS_FIELDS = ['infrastructure', 'records', 'holderKind', 'holder', 'clause', 'production', 'farSystem', 'farInfrastructure', 'farChange'];
+export const readinessDone = e => READINESS_FIELDS.every(k => String(((e || {}).readiness || {})[k] || '').trim());
+/** The record holders named in a register, as the keys the holds map uses (the same rule as the app's holdKey). */
+export const holdersOf = ents => [...new Set((ents || []).map(e => String(((e || {}).readiness || {}).holder || '').trim()).filter(Boolean).map(h => h.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60)))];
 /** AI Use Assessment's artefacts, from the stored assessment. status: recorded (signed off), draft or none. */
 export function assessmentArtefacts(d, updatedAt) {
   d = d || {};
@@ -273,6 +282,11 @@ export function assessmentArtefacts(d, updatedAt) {
     ['EP', 'Engagement plan', by('Set agreed (R1)', !!d.engagement)],
     ['NC', 'Nonconformity and corrective action register', by('Independent review complete (R7)', (d.exceptions || []).length + (d.arrangements || []).filter(x => x && x.corrective && (x.corrective.rootCause || x.corrective.action)).length)],
     ['FN', 'Findings F1 to F4, as issued in the in-use feed', f ? ['recorded', f.generated || f.on, 'Issued to AI Risk Appetite'] : ['none', null, '']],
+    // AI Incident Accountability, Shape A: the readiness record stands with the register; a hold is recorded once counsel
+    // settles it; a validation event is recorded once the independent reviewer has reviewed it.
+    ['DL11', 'Incident readiness record', ents.length ? (ents.every(readinessDone) ? ['recorded', updatedAt, 'Readiness recorded for every entry'] : ['draft', updatedAt, `${ents.filter(e => !readinessDone(e)).length} of ${ents.length} entries with readiness gaps`]) : ['none', null, '']],
+    ['DL12', 'Evidence-preservation hold', (() => { const H = holdersOf(ents), hs = d.holds || {}; if (!H.length) return ['none', null, '']; const settled = H.filter(k => (hs[k] || {}).settledBy); return settled.length === H.length ? ['recorded', updatedAt, `${H.length} letter${H.length === 1 ? '' : 's'} settled by counsel`] : ['draft', updatedAt, `${settled.length} of ${H.length} letters settled by counsel`]; })()],
+    ['VE', 'Exercise and incident record', (() => { const X = d.exercises || []; if (!X.length) return ['none', null, '']; const r = X.filter(x => x.reviewedBy); return r.length === X.length ? ['recorded', X.map(x => x.reviewedOn).filter(Boolean).sort().pop() || updatedAt, `${X.length} event${X.length === 1 ? '' : 's'}, all reviewed`] : ['draft', updatedAt, `${X.length - r.length} of ${X.length} events not yet reviewed`]; })()],
   ];
   const lite = liteNote(d), scoped = id => lite && id !== 'EP'; // the engagement plan covers the engagement, not the register
   return rows.map(([id, name, [s, at, note]]) => art('UA', id, name, s, at, scoped(id) && s !== 'none' ? [note, lite].filter(Boolean).join(' · ') : note));
