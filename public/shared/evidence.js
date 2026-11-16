@@ -1,8 +1,15 @@
-// The APRA letter evidence index (development plan task R.2). Each output of the three engagement apps is tagged with
-// the bullet of APRA's 30 April 2026 letter on AI it serves (B1 to A4), the CPS 230 paragraph where one applies (the
-// numbering amended from 1 July 2026), and the ISO/IEC 42001:2023 clause or Annex A control it can stand as evidence for.
-// AI Board Direction, in connected mode, gathers the artefacts from AI Risk Appetite and AI Use Assessment over the
-// service bindings and lists them by letter bullet or by ISO/IEC 42001 control, each showing its evidence or "none yet".
+// The evidence index (development plan task R.2; jurisdiction regimes added for the United States, US.6). Each output
+// of the three engagement apps is tagged with the bullet of APRA's 30 April 2026 letter on AI it serves (B1 to A4), the
+// CPS 230 paragraph where one applies (the numbering amended from 1 July 2026), and the ISO/IEC 42001:2023 clause or
+// Annex A control it can stand as evidence for. AI Board Direction, in connected mode, gathers the artefacts from
+// AI Risk Appetite and AI Use Assessment over the service bindings and lists them by the jurisdiction's regime or by
+// ISO/IEC 42001 control, each showing its evidence or "none yet".
+//
+// Regimes (US.6). The letter's bullets are the suite's own vocabulary for what a supervisor expects of a board and its
+// AI; the tags on the outputs are written in it. Another jurisdiction's regime (REGIMES) lists that jurisdiction's
+// expectations per main sector, each naming the instrument and paragraph it comes from and the letter bullets it
+// covers, so an output tagged to a bullet is evidence for the regime items that cover the bullet. The mapping, like the
+// CPS 230 links, is Triodian's reading of each instrument, for counsel admitted in the jurisdiction to confirm.
 // Plain functions, no page code: the same file is in all three apps, and the server and the tests run it in Node.
 //
 // The letter has no paragraph numbers, names no prudential standard and does not mention FAR, so the links to CPS 230
@@ -42,6 +49,95 @@ export const LETTER = [
   { id: 'A3', section: 'Assurance', text: 'Second line and internal audit able to assess AI independently, including probabilistic and agentic systems', cps: [], iso: ['9.2'] },
   { id: 'A4', section: 'Assurance', text: 'Assessment before deployment and through the lifecycle; continuous, proportionate monitoring', cps: [], iso: ['6.1.4', 'A.5', '9.1'] },
 ];
+
+/* ---------- Regimes outside Australia (US.6) ----------
+   One regime per jurisdiction and main sector, keyed 'US:US-BANKING' and so on, with 'US' as the regime for any other
+   US sector (NIST AI RMF, which the NAIC bulletin and the federal banking agencies both point to as a framework an
+   organisation may adopt). Each item: id, section, text (the expectation in plain words), ref (the instrument and
+   where in it), covers (the letter bullets whose evidence serves it), iso. Nothing here says an instrument applies to
+   any organisation: the matter brief lists the records and counsel decides. Checked against the US scoping note of
+   14 November 2026; re-check each quarter with it. */
+const NIST = { id: 'US', short: 'NIST AI RMF', name: 'NIST AI Risk Management Framework 1.0 (NIST AI 100-1) and Generative AI Profile (NIST AI 600-1)', refLabel: 'NIST AI RMF',
+  note: 'The NIST AI Risk Management Framework is voluntary. Supervisors in several US sectors name it as a framework an organisation may adopt; it binds no one. The links from the suite’s outputs to its functions are Triodian’s reading.',
+  items: [
+    { id: 'GV', section: 'Govern', text: 'Policies, accountability, culture, workforce competence and the inventory decisions that give the board and management oversight of AI risk', ref: 'NIST AI 100-1, Govern 1 to 6', covers: ['B1', 'B2', 'G1', 'G2', 'G5'], iso: ['5.1', '5.2', '5.3', '7.2'] },
+    { id: 'MP', section: 'Map', text: 'Context, intended uses, the AI in use and the third-party components and dependencies, mapped so risk can be measured', ref: 'NIST AI 100-1, Map 1 to 5', covers: ['G3', 'P1', 'S4'], iso: ['4.3', 'A.4', 'A.10'] },
+    { id: 'MS', section: 'Measure', text: 'Testing, evaluation, verification and validation, and monitoring, before deployment and through the lifecycle', ref: 'NIST AI 100-1, Measure 1 to 4', covers: ['A1', 'A2', 'A4', 'P3'], iso: ['6.1.3', '9.1', 'A.6'] },
+    { id: 'MG', section: 'Manage', text: 'Risk treatment, human oversight of high-consequence decisions, incident response, resilience and third-party risk managed, contracts included', ref: 'NIST AI 100-1, Manage 1 to 4', covers: ['G4', 'S1', 'S2', 'P2', 'P4', 'A3'], iso: ['6.1.3', 'A.9', 'A.10'] },
+  ] };
+export const REGIMES = {
+  'US': NIST,
+  'US:US-BANKING': { id: 'US:US-BANKING', short: 'US banking', refLabel: 'Instrument', name: 'SR 26-2 / OCC Bulletin 2026-13 (model risk management, 17 April 2026) and the Interagency Guidance on Third-Party Relationships (June 2023)',
+    note: 'SR 26-2 says it is not enforceable and that generative and agentic AI are outside its scope; the 2023 third-party guidance remains in effect until the September 2026 proposal replaces it. State law (NYDFS 23 NYCRR 500 in New York) is not mapped here. The links are Triodian’s reading, for counsel to confirm.',
+    items: [
+      { id: 'MR1', section: 'Model risk management', text: 'An inventory of models in use, including vendor models and AI-based models, with owners', ref: 'SR 26-2 / OCC 2026-13, model inventory', covers: ['G3'], iso: ['4.3', 'A.4.2'] },
+      { id: 'MR2', section: 'Model risk management', text: 'Validation and ongoing monitoring of models in proportion to their risk, vendor models included', ref: 'SR 26-2 / OCC 2026-13, model validation and ongoing monitoring', covers: ['A4', 'P3', 'A1'], iso: ['A.6.2.4', 'A.6.2.6', '9.1'] },
+      { id: 'MR3', section: 'Model risk management', text: 'Board and senior management oversight of model risk: policies, roles, reporting of material model risk', ref: 'SR 26-2 / OCC 2026-13, governance, policies and controls', covers: ['B2', 'G1', 'G2'], iso: ['5.1', '5.2', '5.3'] },
+      { id: 'MR4', section: 'Model risk management', text: 'Generative and agentic AI, outside SR 26-2, governed under the bank’s own framework: human involvement, controls over autonomous workflows', ref: 'SR 26-2 / OCC 2026-13, scope statement; the bank’s own AI framework', covers: ['G4', 'S2'], iso: ['A.9', 'A.6'] },
+      { id: 'MR5', section: 'Model risk management', text: 'Board understanding of model and third-party risk, and staff with the competence and training to run both frameworks', ref: 'SR 26-2 / OCC 2026-13, roles and resources; Interagency Guidance 2023, governance: staffing and training', covers: ['B1', 'G5'], iso: ['7.2', '7.3'] },
+      { id: 'TP1', section: 'Third-party relationships', text: 'Planning and due diligence before a third-party relationship, including AI providers and the platforms behind them', ref: 'Interagency Guidance 2023, planning; due diligence and third-party selection', covers: ['P1', 'S4'], iso: ['A.10.3'] },
+      { id: 'TP2', section: 'Third-party relationships', text: 'Contracts that give performance measures, information and audit rights, subcontracting terms and notice of incidents', ref: 'Interagency Guidance 2023, contract negotiation', covers: ['P2'], iso: ['A.10.3'] },
+      { id: 'TP3', section: 'Third-party relationships', text: 'Ongoing monitoring of the relationship and the model behind it; termination and exit', ref: 'Interagency Guidance 2023, ongoing monitoring; termination', covers: ['P3', 'P4'], iso: ['A.10.3', '6.1.3'] },
+      { id: 'TP4', section: 'Third-party relationships', text: 'Board oversight of third-party risk management and independent review of it', ref: 'Interagency Guidance 2023, governance: board oversight, independent reviews, documentation and reporting', covers: ['B2', 'A2', 'A3'], iso: ['5.1', '9.2'] },
+    ] },
+  'US:US-INSURANCE': { id: 'US:US-INSURANCE', short: 'US insurance', refLabel: 'Instrument', name: 'NAIC Model Bulletin on the Use of Artificial Intelligence Systems by Insurers (December 2023), as adopted by the states',
+    note: 'The bulletin binds in a state only where that state has adopted it; adoption is recorded as a setting of the engagement. New York’s Insurance Circular Letter No. 7 (2024) and Colorado’s regulations are not mapped here. The links are Triodian’s reading, for counsel to confirm.',
+    items: [
+      { id: 'AI1', section: 'AIS program', text: 'A written AI systems program, proportionate to the insurer’s use of AI, with an accountable owner', ref: 'NAIC Model Bulletin, section 3, AIS Program', covers: ['G1', 'B2'], iso: ['5.2', 'A.2.2', '6.2'] },
+      { id: 'AI2', section: 'Governance', text: 'Governance: board or senior management oversight, policies, roles and reporting lines for AI', ref: 'NAIC Model Bulletin, section 3.1, governance', covers: ['B1', 'G2'], iso: ['5.1', '5.3', 'A.3.2'] },
+      { id: 'AI3', section: 'Risk management and internal controls', text: 'An inventory of AI systems, risk assessment, testing for unfair discrimination, and human review where decisions affect consumers', ref: 'NAIC Model Bulletin, section 3.2, risk management and internal controls', covers: ['G3', 'A1', 'A2', 'G4'], iso: ['A.4.2', '6.1.2', '6.1.3', 'A.9'] },
+      { id: 'AI4', section: 'Third-party AI', text: 'Due diligence on third-party AI systems and data, contract terms, and oversight of the vendors behind them', ref: 'NAIC Model Bulletin, section 4, third-party AI systems and data', covers: ['P1', 'P2', 'S4'], iso: ['A.10.3'] },
+      { id: 'AI5', section: 'Documentation and examination', text: 'Documentation of the program and its controls, available to the regulator on request or in a market conduct examination', ref: 'NAIC Model Bulletin, section 5, regulatory oversight and examination', covers: ['A2', 'A3'], iso: ['9.2', 'A.8.3'] },
+      { id: 'AI6', section: 'Lifecycle', text: 'Monitoring and validation of AI systems across their lifecycle, including after deployment', ref: 'NAIC Model Bulletin, section 3.2, lifecycle controls', covers: ['A4', 'P3'], iso: ['A.6.2.6', '9.1'] },
+    ] },
+  'US:US-SECURITIES': { id: 'US:US-SECURITIES', short: 'US securities', refLabel: 'Instrument', name: 'FINRA Rule 3110 (supervision) with the 2026 Regulatory Oversight Report on generative AI and AI agents, and Regulation S-P as amended in 2024',
+    note: 'Rule 3110 binds member firms; the oversight report states FINRA’s expectations and is not a rule. Reg S-P’s compliance dates were 3 December 2025 for larger entities and 3 June 2026 for smaller. State securities regulators are not mapped here. The links are Triodian’s reading, for counsel to confirm.',
+    items: [
+      { id: 'SV1', section: 'Supervision', text: 'Written supervisory procedures that cover generative AI and AI agents: their scope, autonomy, data and auditability', ref: 'FINRA Rule 3110(b); 2026 Regulatory Oversight Report, GenAI and AI agents', covers: ['G1', 'G4', 'S2'], iso: ['A.2.2', 'A.9.2', 'A.6'] },
+      { id: 'SV2', section: 'Supervision', text: 'An inventory of the AI tools in use and the data they reach, kept current', ref: '2026 Regulatory Oversight Report, GenAI and AI agents', covers: ['G3'], iso: ['4.3', 'A.4.2'] },
+      { id: 'SV3', section: 'Supervision', text: 'Testing and monitoring of AI tools before and after deployment, including outputs that reach customers', ref: 'FINRA Rule 3110(c); 2026 Regulatory Oversight Report', covers: ['A4', 'P3', 'A1'], iso: ['A.6.2.4', 'A.6.2.6', '9.1'] },
+      { id: 'SV4', section: 'Supervision', text: 'Training of associated persons on the permitted use of AI tools', ref: 'FINRA Rule 3110(a); Rule 1240 continuing education', covers: ['G5'], iso: ['7.2', '7.3'] },
+      { id: 'SP1', section: 'Safeguarding (Reg S-P)', text: 'An incident response program for unauthorised access to customer information, with customer notification', ref: 'Regulation S-P, Rule 248.30(a) as amended 2024', covers: ['S2', 'A2'], iso: ['A.8.4', 'A.6'] },
+      { id: 'SP2', section: 'Safeguarding (Reg S-P)', text: 'Oversight of service providers, including AI providers, with 72-hour notice of a breach written into the arrangement', ref: 'Regulation S-P, Rule 248.30(a)(5) service provider oversight', covers: ['P1', 'P2'], iso: ['A.10.3'] },
+      { id: 'SV5', section: 'Supervision', text: 'Designated principals and senior management responsible for AI supervision; the CEO’s annual certification of supervisory controls; reporting to the board', ref: 'FINRA Rule 3110(a)(2); Rule 3120; Rule 3130', covers: ['B1', 'B2', 'G2', 'A3'], iso: ['5.1', '5.3', '9.2', '9.3'] },
+    ] },
+  'US:US-HEALTH': { id: 'US:US-HEALTH', short: 'US health care', refLabel: 'Instrument', name: '45 CFR 92.210 (Section 1557, patient care decision support tools), the HIPAA Privacy and Security Rules, and the HTI-5 final rule (October 2026)',
+    note: '92.210 binds covered entities from May 2025. HTI-5 removes the model-card and risk-management criteria for certified health IT from 28 December 2026, so vendor information that certification no longer obliges is asked for by contract. FDA device rules and state medical-board rules are not mapped here. The links are Triodian’s reading, for counsel to confirm.',
+    items: [
+      { id: 'HC1', section: 'Nondiscrimination', text: 'The patient care decision support tools in use identified, with those that use protected characteristics as input variables', ref: '45 CFR 92.210(b)', covers: ['G3'], iso: ['4.3', 'A.4.2'] },
+      { id: 'HC2', section: 'Nondiscrimination', text: 'Reasonable efforts to mitigate the risk of discrimination from those tools, with a person able to review their output', ref: '45 CFR 92.210(c)', covers: ['G4', 'A2', 'A4'], iso: ['A.9', 'A.5.4', '9.1'] },
+      { id: 'HC3', section: 'Privacy and security', text: 'Business associate agreements and safeguards for AI providers that handle electronic protected health information', ref: 'HIPAA Privacy Rule 45 CFR 164.502(e), 164.504(e); Security Rule 164.308(b)', covers: ['P1', 'P2'], iso: ['A.10.3'] },
+      { id: 'HC4', section: 'Privacy and security', text: 'A security risk analysis that covers AI tools and their access to ePHI', ref: 'HIPAA Security Rule 45 CFR 164.308(a)(1)', covers: ['S2', 'A1'], iso: ['6.1.2', 'A.6'] },
+      { id: 'HC5', section: 'Vendor information', text: 'Model information and change notice obtained from vendors by contract, since HTI-5 no longer obliges certified health IT to supply it', ref: 'HTI-5 final rule (28 October 2026), in force 28 December 2026; the vendor agreement', covers: ['P2', 'P3'], iso: ['A.10.3', 'A.8.2'] },
+      { id: 'HC6', section: 'Oversight', text: 'Governance of clinical AI: accountable owners, policy and board or executive oversight', ref: 'HHS-OIG General Compliance Program Guidance (November 2023), board oversight; no single federal instrument', covers: ['B1', 'B2', 'G1', 'G2'], iso: ['5.1', '5.2', '5.3'] },
+      { id: 'HC7', section: 'Oversight', text: 'Workforce training on AI tools that touch ePHI or patient care decisions, and independent review of the compliance program', ref: 'HIPAA Security Rule 45 CFR 164.308(a)(5); HHS-OIG General Compliance Program Guidance, auditing and monitoring', covers: ['G5', 'A3'], iso: ['7.2', '7.3', '9.2'] },
+    ] },
+  'US:US-CRITICAL-INFRASTRUCTURE': { id: 'US:US-CRITICAL-INFRASTRUCTURE', short: 'US critical infrastructure', refLabel: 'Instrument', name: 'NERC CIP reliability standards (bulk electric system), TSA security directives, the CIRCIA reporting rule (pending) and CISA and NIST guidance on AI in operational technology',
+    note: 'NERC CIP binds registered entities of the bulk electric system; TSA directives bind the pipeline and rail operators they name; CIRCIA’s final rule was sent for review in October 2026 and its 72-hour and 24-hour reports apply once in force. Other sectors’ risk management agencies are not mapped here. The links are Triodian’s reading, for counsel to confirm.',
+    items: [
+      { id: 'CI1', section: 'Supply chain', text: 'A supply chain cyber security risk management plan that reaches AI vendors and the software they supply into CIP environments', ref: 'NERC CIP-013-2 R1, R2', covers: ['P1', 'P2', 'S4'], iso: ['A.10.3'] },
+      { id: 'CI2', section: 'Change and access', text: 'Change management, configuration monitoring and access control for AI tools inside regulated OT environments', ref: 'NERC CIP-010-4; CIP-005-7; CIP-007-6', covers: ['A1', 'S2', 'G4'], iso: ['6.3', 'A.6', 'A.9'] },
+      { id: 'CI3', section: 'Inventory', text: 'AI tools inside regulated environments authorised and inventoried, with owners', ref: 'NERC CIP-002-5.1a; TSA security directives, cybersecurity implementation plan', covers: ['G3', 'G2'], iso: ['4.3', 'A.4.2', '5.3'] },
+      { id: 'CI4', section: 'Resilience', text: 'Reliance on AI assessed for operations the system depends on, with fallback and recovery', ref: 'NERC CIP-009-6; TSA security directives, assessment and resilience', covers: ['S1', 'P4'], iso: ['6.1.3', 'A.6'] },
+      { id: 'CI5', section: 'Incident reporting', text: 'Readiness to report a covered cyber incident within 72 hours and a ransom payment within 24 hours', ref: 'CIRCIA, 6 USC 681b; final rule pending', covers: ['S2', 'A2'], iso: ['A.8.4'] },
+      { id: 'CI6', section: 'Oversight', text: 'Board or executive oversight of AI in operational technology, with CISA and NIST guidance adopted as the control framework', ref: 'CISA and NIST AI and OT security guidance; NIST AI RMF', covers: ['B1', 'B2', 'G1', 'A3'], iso: ['5.1', '5.2', '9.2'] },
+      { id: 'CI7', section: 'People', text: 'Cyber security training and awareness for personnel with access to regulated environments, AI tools included', ref: 'NERC CIP-004-7 R2', covers: ['G5'], iso: ['7.2', '7.3'] },
+    ] },
+};
+/** The Australian regime, in the same shape: the letter's bullets, each covering itself. */
+const AU_REGIME = { id: 'AU', short: 'APRA letter', name: LETTER_NAME, refLabel: 'CPS 230', note: NOTE, items: LETTER.map(b => ({ ...b, ref: b.cps.length ? 'CPS 230 ' + b.cps.join(', ') : '', covers: [b.id] })) };
+const PACK_SECTOR = { usBanking: 'US-BANKING', usInsurance: 'US-INSURANCE', usSecurities: 'US-SECURITIES', usHealth: 'US-HEALTH', usCriticalInfrastructure: 'US-CRITICAL-INFRASTRUCTURE' };
+/** The regime for an engagement: its jurisdiction and sector (a sector id such as US-BANKING, or a pack id such as
+ *  usBanking). Australia (or no jurisdiction) is the letter; a US sector with its own regime gets it, any other US
+ *  sector NIST AI RMF; a jurisdiction with no regime yet gets null, and the index is by ISO/IEC 42001 alone. */
+export function regimeFor(jurisdiction, sector) {
+  const j = jurisdiction || 'AU';
+  if (j === 'AU') return AU_REGIME;
+  const sec = PACK_SECTOR[sector] || sector || '';
+  return REGIMES[`${j}:${sec}`] || REGIMES[j] || null;
+}
+/** The regime items an artefact (its letter tags) is evidence for. */
+export const regimeItemsFor = (regime, a) => regime ? regime.items.filter(i => i.covers.some(c => (a.letter || []).includes(c))) : [];
 
 /** The ISO/IEC 42001:2023 clauses the tags use, in the standard's order. */
 export const CLAUSES = [
@@ -129,12 +225,14 @@ export const APPS = { RA: 'AI Risk Appetite', UA: 'AI Use Assessment', BD: 'AI B
 export const tagsFor = (app, id) => (TAGS[app] || {})[id] || null;
 /** One line for the screen: "APRA letter G3, P1 · CPS 230 47(c) · ISO/IEC 42001 6.1.4, A.5". Empty when untagged. */
 /** The tag line printed on an output. The APRA letter and CPS 230 apply only to Australian engagements: give the
- *  engagement's jurisdiction (its pack's, such as 'US'), and outside Australia the line carries ISO/IEC 42001 alone.
- *  With no jurisdiction (the Australian packs, before packs carried one) the line is as it was. */
-export function tagLine(app, id, jurisdiction) {
+ *  engagement's jurisdiction (its pack's, such as 'US') and its sector or pack id, and the line carries that
+ *  jurisdiction's regime items (US.6) with ISO/IEC 42001; a jurisdiction with no regime yet carries ISO/IEC 42001
+ *  alone. With no jurisdiction (the Australian packs, before packs carried one) the line is as it was. */
+export function tagLine(app, id, jurisdiction, sector) {
   const t = tagsFor(app, id); if (!t) return '';
-  const au = !jurisdiction || jurisdiction === 'AU';
-  return [au ? 'APRA letter ' + t.letter.join(', ') : '', au && t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', t.iso.length ? 'ISO/IEC 42001 ' + t.iso.join(', ') : ''].filter(Boolean).join(' · ');
+  const au = !jurisdiction || jurisdiction === 'AU', R = au ? null : regimeFor(jurisdiction, sector);
+  const items = R ? regimeItemsFor(R, t).map(i => i.id) : [];
+  return [au ? 'APRA letter ' + t.letter.join(', ') : '', au && t.cps.length ? 'CPS 230 ' + t.cps.join(', ') : '', R && items.length ? R.short + ' ' + items.join(', ') : '', t.iso.length ? 'ISO/IEC 42001 ' + t.iso.join(', ') : ''].filter(Boolean).join(' · ');
 }
 
 /** ", minute 2026/12-04", or the reference as written when it already says what it is ("Board minute 2026/12-04"). */
@@ -229,19 +327,25 @@ const table = (h, rows) => `| ${h.join(' | ')} |\n| ${h.map(() => '---').join(' 
  * review is the date of the client's next AI management review (ISO/IEC 42001 clause 9.3), when set: every artefact
  * is then due for review at it. notes: lines saying what could not be gathered.
  */
-/** o.jurisdiction: outside Australia ('US' and so on) the index is by ISO/IEC 42001 only, with no APRA letter bullets. */
+/** o.jurisdiction and o.sector: outside Australia the index is by the jurisdiction's regime for the sector (US.6), or
+ *  by ISO/IEC 42001 only where no regime is mapped yet. o.by: 'regime' (or 'letter', its older name) or 'iso'. */
 export function indexMarkdown(o) {
-  const au = !o.jurisdiction || o.jurisdiction === 'AU';
-  const A = (o.artefacts || []).filter(a => a.status !== 'none'), by = o.by === 'iso' || !au ? 'iso' : 'letter';
+  const au = !o.jurisdiction || o.jurisdiction === 'AU', R = regimeFor(o.jurisdiction, o.sector);
+  const A = (o.artefacts || []).filter(a => a.status !== 'none'), by = o.by === 'iso' || !R ? 'iso' : 'regime';
   const rev = ymd(o.review), row = a => [APPS[a.app], a.name, STATUS[a.status] || a.status, a.asOf || '—', rev || '—', a.note || ''];
   const H = ['App', 'Artefact', 'Status', 'As of', 'Review by', 'Note'];
-  let m = `${o.company ? o.company + ': ' : ''}the artefacts the three engagements hold, ${by === 'iso' ? 'by ISO/IEC 42001:2023 clause and Annex A control' : 'by bullet of the ' + LETTER_NAME}. Gathered ${o.gatheredOn || ''}.\n\n`;
+  let m = `${o.company ? o.company + ': ' : ''}the artefacts the three engagements hold, ${by === 'iso' ? 'by ISO/IEC 42001:2023 clause and Annex A control' : au ? 'by bullet of the ' + LETTER_NAME : 'by expectation of ' + R.name}. Gathered ${o.gatheredOn || ''}.\n\n`;
   m += rev ? `Review dates are set to the client’s next AI management review (ISO/IEC 42001 clause 9.3), ${rev}.\n\n` : 'No AI management review date is set, so no review dates are shown. Set it on the set-up screen to align them with ISO/IEC 42001 clause 9.3.\n\n';
   (o.notes || []).forEach(n => { m += `**Not gathered.** ${n}\n\n`; });
-  if (by === 'letter') {
+  if (by === 'regime' && au) {
     LETTER.forEach(b => {
       const hits = A.filter(a => (a.letter || []).includes(b.id));
       m += `## ${b.id} · ${b.text}\n\n${b.section}. CPS 230: ${b.cps.length ? b.cps.join(', ') : '—'}. ISO/IEC 42001:2023: ${b.iso.join(', ')}.\n\n` + (hits.length ? table(H, hits.map(row)) : 'None yet.\n\n');
+    });
+  } else if (by === 'regime') {
+    R.items.forEach(i => {
+      const hits = A.filter(a => regimeItemsFor(R, a).some(x => x.id === i.id));
+      m += `## ${i.id} · ${i.text}\n\n${i.section}. ${i.ref}. ISO/IEC 42001:2023: ${i.iso.join(', ')}.\n\n` + (hits.length ? table(H, hits.map(row)) : 'None yet.\n\n');
     });
   } else {
     const soa = soaIndex(o.soa), S = isoSummary(A, o.soa);
@@ -251,14 +355,15 @@ export function indexMarkdown(o) {
     ISO.forEach(([id, name]) => {
       const hits = A.filter(a => (a.iso || []).includes(id)), inputs = A.filter(a => (a.inputTo || []).includes(id));
       const bullets = LETTER.filter(b => b.iso.some(x => covers(x, id))).map(b => b.id), sr = soa && soa[id];
-      m += `## ${id} · ${name}\n\n` + [au ? `Letter bullets: ${bullets.join(', ') || '—'}.` : '', soa && /^A\./.test(id) ? `Statement of Applicability: ${soaLine(sr)}.` : ''].filter(Boolean).join(' ') + '\n\n'
+      const regimeIds = R && !au ? R.items.filter(i => i.iso.some(x => covers(x, id))).map(i => i.id) : [];
+      m += `## ${id} · ${name}\n\n` + [au ? `Letter bullets: ${bullets.join(', ') || '—'}.` : R ? `${R.short}: ${regimeIds.join(', ') || '—'}.` : '', soa && /^A\./.test(id) ? `Statement of Applicability: ${soaLine(sr)}.` : ''].filter(Boolean).join(' ') + '\n\n'
         + (hits.length ? table(H, hits.map(row)) : `${NOT_EVIDENCED}.\n\n`)
         + (inputs.length ? `${INPUT_NOTE[id] || 'Input only.'} From: ${inputs.map(a => a.name).join('; ')}.\n\n` : '');
     });
   }
-  if (!au) return m;
-  const gap = LETTER.filter(b => !A.some(a => (a.letter || []).includes(b.id))).map(b => b.id);
-  m += `## Bullets with no evidence yet\n\n${gap.length ? gap.join(', ') + '. These are for other controls or tools the entity holds; the three engagements do not produce evidence for them.' : 'None.'}\n\n${NOTE}\n`;
+  if (!R) return m;
+  const gap = R.items.filter(i => !A.some(a => regimeItemsFor(R, a).some(x => x.id === i.id))).map(i => i.id);
+  m += `## ${au ? 'Bullets' : 'Expectations'} with no evidence yet\n\n${gap.length ? gap.join(', ') + '. These are for other controls or tools the entity holds; the three engagements do not produce evidence for them.' : 'None.'}\n\n${R.note}\n`;
   return m;
 }
 
@@ -288,8 +393,9 @@ export function soaMarkdown(artefacts, soa) {
   return table(['Control', 'Name'].concat(has ? ['Statement of Applicability'] : [], ['Evidenced by']), R.map(r => [r.id, r.name].concat(has ? [soaLine(r.soa)] : [], [r.evidence.length ? r.evidence.map(a => `${APPS[a.app]}: ${a.name}${a.status === 'draft' ? ' (draft)' : ''}`).join('; ') : NOT_EVIDENCED + (r.inputs.length ? '. Input only: ' + r.inputs.map(a => a.name).join('; ') : '')])));
 }
 
-/** Counts for the screen: bullets with evidence, and artefacts recorded or in draft. */
-export function coverage(artefacts) {
-  const A = (artefacts || []).filter(a => a.status !== 'none');
-  return { bullets: LETTER.filter(b => A.some(a => (a.letter || []).includes(b.id))).length, of: LETTER.length, recorded: A.filter(a => a.status === 'recorded').length, draft: A.filter(a => a.status === 'draft').length };
+/** Counts for the screen: regime items (letter bullets in Australia) with evidence, and artefacts recorded or in draft.
+ *  With no regime (a jurisdiction not yet mapped) bullets and of are 0. */
+export function coverage(artefacts, jurisdiction, sector) {
+  const A = (artefacts || []).filter(a => a.status !== 'none'), R = regimeFor(jurisdiction, sector);
+  return { bullets: R ? R.items.filter(i => A.some(a => regimeItemsFor(R, a).some(x => x.id === i.id))).length : 0, of: R ? R.items.length : 0, recorded: A.filter(a => a.status === 'recorded').length, draft: A.filter(a => a.status === 'draft').length };
 }
