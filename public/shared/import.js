@@ -73,6 +73,17 @@ export const ARRANGEMENT_COLUMNS = {
   tool_kind: ['tool kind'],
   decisions_about_individuals: ['automated decisions', 'adm'],
   owner: ['business owner', 'accountable owner'],
+  // Incident readiness (AI Incident Accountability, Shape A; use-assessment plan task A.2). Optional: a register without
+  // them loads as before, and the gaps are listed in the Incident readiness record (DL11).
+  shared_infrastructure: ['infrastructure', 'shared platform'],
+  runtime_records: ['records', 'runtime record', 'logs'],
+  record_holder: ['holder', 'records held by'],
+  record_holder_kind: ['holder kind', 'holder type'],
+  access_clause: ['records clause', 'clause'],
+  production_time: ['time to produce', 'production'],
+  accountable_system: ['accountable person system', 'far system', 'accountable for the system'],
+  accountable_infrastructure: ['accountable person infrastructure', 'far infrastructure', 'accountable for the infrastructure'],
+  accountable_change: ['accountable person change', 'far change', 'accountable for change'],
 };
 /** The arrangements file: one row per AI system or use, keyed on the client's provider register id. */
 export function readArrangements(text) {
@@ -88,21 +99,25 @@ export function readArrangements(text) {
     const [authority, e5] = code(r.authority, /^(A[1-6])\b/i, 'Authority'), [consequence, e6] = code(r.consequence, /^(C[1-5])\b/i, 'Consequence');
     const [information, e7] = code(r.information, /^(G[1-6])\b/i, 'Information class'), [kind, e8] = code(r.tool_kind, /^(K[1-7])\b/i, 'Tool kind');
     const [adm, e9] = pick(r.decisions_about_individuals, ['yes', 'no'], 'Decisions about individuals');
-    why.push(...[e1, e2, e3, e4, e5, e6, e7, e8, e9].filter(Boolean));
+    const [holderKind, e10] = pick(r.record_holder_kind, ['entity', 'vendor', 'infrastructure', 'fourthParty'], 'Record holder kind');
+    why.push(...[e1, e2, e3, e4, e5, e6, e7, e8, e9, e10].filter(Boolean));
     const k = r.system_id || r.provider_register_id + '|' + r.system;
     if (!why.length && seen.has(k)) why.push(r.system_id ? `system id ${r.system_id} appears twice` : 'the same provider and system appear twice');
     if (why.length) { refused.push({ line: r._line, reason: why.join('; ') }); continue; }
     seen.add(k);
     rows.push({ line: r._line, providerId: r.provider_register_id, systemId: r.system_id || '', provider: r.provider, system: r.system, arrangement: r.arrangement || r.provider,
       function: r.function || '', criticalOperation: r.critical_operation || '', boundary, where, platform: r.platform || '', location: r.location || '', whatItDoes: r.what_it_does || '',
-      human, credentials: r.credentials || '', onInventory: onInv, users: r.users || '', authority, consequence, information, kind, adm: adm === 'yes', owner: r.owner || '' });
+      human, credentials: r.credentials || '', onInventory: onInv, users: r.users || '', authority, consequence, information, kind, adm: adm === 'yes', owner: r.owner || '',
+      readiness: { infrastructure: r.shared_infrastructure || '', records: r.runtime_records || '', holderKind, holder: r.record_holder || '', clause: r.access_clause || '', production: r.production_time || '', farSystem: r.accountable_system || '', farInfrastructure: r.accountable_infrastructure || '', farChange: r.accountable_change || '' } });
   }
   return { rows, refused };
 }
-const ARR_HEAD = ['provider_register_id', 'system_id', 'provider', 'system', 'arrangement', 'function', 'critical_operation', 'boundary', 'where', 'platform', 'location', 'what_it_does', 'human_involvement', 'credentials', 'on_inventory', 'users', 'authority', 'consequence', 'information', 'tool_kind', 'decisions_about_individuals', 'owner'];
+const ARR_HEAD = ['provider_register_id', 'system_id', 'provider', 'system', 'arrangement', 'function', 'critical_operation', 'boundary', 'where', 'platform', 'location', 'what_it_does', 'human_involvement', 'credentials', 'on_inventory', 'users', 'authority', 'consequence', 'information', 'tool_kind', 'decisions_about_individuals', 'owner',
+  'shared_infrastructure', 'runtime_records', 'record_holder', 'record_holder_kind', 'access_clause', 'production_time', 'accountable_system', 'accountable_infrastructure', 'accountable_change'];
+const RD_KEYS = ['infrastructure', 'records', 'holder', 'holderKind', 'clause', 'production', 'farSystem', 'farInfrastructure', 'farChange'];
 /** The arrangements file again, from rows in the shape readArrangements gives: the client's ids go back out unchanged. */
 export function writeArrangements(rows) {
-  return toCsv(ARR_HEAD, rows.map(r => [r.providerId, r.systemId, r.provider, r.system, r.arrangement, r.function, r.criticalOperation, r.boundary, r.where, r.platform, r.location, r.whatItDoes, r.human, r.credentials, r.onInventory, r.users, r.authority, r.consequence, r.information, r.kind, r.adm === true ? 'yes' : r.adm === false ? 'no' : '', r.owner]));
+  return toCsv(ARR_HEAD, rows.map(r => [r.providerId, r.systemId, r.provider, r.system, r.arrangement, r.function, r.criticalOperation, r.boundary, r.where, r.platform, r.location, r.whatItDoes, r.human, r.credentials, r.onInventory, r.users, r.authority, r.consequence, r.information, r.kind, r.adm === true ? 'yes' : r.adm === false ? 'no' : '', r.owner, ...RD_KEYS.map(k => (r.readiness || {})[k] || '')]));
 }
 
 /* ---------- 2. AI limits (the limits register, a Triodian input) ---------- */
