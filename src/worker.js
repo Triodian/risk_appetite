@@ -4,7 +4,12 @@
 //   identity  → lib/identity/cloudflare-access.js (Cloudflare Access sign-in)
 //   storage   → lib/store/d1.js (Cloudflare D1); users from lib/identity/people.js when IDENTITY is bound
 //   email     → Cloudflare Email Service binding EMAIL, only when NOTIFY_SENDING is "on" (off by default)
+//   links     → the BOARD and ASSESSMENT service bindings or, on a platform without bindings, HTTPS with LINK_SECRET
+//               (lib/platform/links.js)
+// The same handler runs on Node with SQLite (src/node.js, lib/platform/node.js): env is the platform (development plan ID.3).
 import { whoIs, handleAuth, gate, markDemo } from '../lib/identity/session.js';
+import { serviceLink, handleLink } from '../lib/platform/links.js';
+import { statusForService } from './status.js';
 import { d1Store } from '../lib/store/d1.js';
 import { identityUsers, withIdentity } from '../lib/identity/people.js';
 import { handle, issuedCalibration, boardView, appetiteEvidence } from '../lib/core/api.js';
@@ -31,10 +36,11 @@ export async function calibrationForService(env) {
 /** Reads the board directions from the AI Board Direction app (task 3.5), through the BOARD service binding to its
  *  BoardService entrypoint. Null when this site has no binding: set-up then offers the file instead. */
 function directionsReader(env) {
-  if (!env.BOARD || typeof env.BOARD.directions !== 'function') return null;
+  const link = serviceLink(env, 'BOARD', ['directions']);
+  if (!link || typeof link.directions !== 'function') return null;
   return async () => {
     let r;
-    try { r = await env.BOARD.directions(); }
+    try { r = await link.directions(); }
     catch (e) { console.error(e); return { status: 503, error: 'The Board Direction app could not be reached through the BOARD service binding. Check that the binding names the Board Direction Worker deployed in this account.' }; }
     return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'The Board Direction app gave no answer.' };
   };
@@ -43,10 +49,11 @@ function directionsReader(env) {
 /** Reads the in-use feed from the AI Use Assessment app (task 3.7), through the ASSESSMENT service binding to its
  *  AssessmentService entrypoint. Null when this site has no binding: decision 3 then offers the file instead. */
 function feedbackReader(env) {
-  if (!env.ASSESSMENT || typeof env.ASSESSMENT.feedback !== 'function') return null;
+  const link = serviceLink(env, 'ASSESSMENT', ['feedback', 'evidence']);
+  if (!link || typeof link.feedback !== 'function') return null;
   return async () => {
     let r;
-    try { r = await env.ASSESSMENT.feedback(); }
+    try { r = await link.feedback(); }
     catch (e) { console.error(e); return { status: 503, error: 'The Use Assessment app could not be reached through the ASSESSMENT service binding. Check that the binding names the Use Assessment Worker deployed in this account.' }; }
     return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'The Use Assessment app gave no answer.' };
   };
@@ -54,10 +61,11 @@ function feedbackReader(env) {
 
 /** Reads the AI Use Assessment's artefacts for the evidence index (task R.2), through the ASSESSMENT binding. */
 function assessmentEvidenceReader(env) {
-  if (!env.ASSESSMENT) return null;
+  const link = serviceLink(env, 'ASSESSMENT', ['feedback', 'evidence']);
+  if (!link) return null;
   return async () => {
     let r;
-    try { r = await env.ASSESSMENT.evidence(); }
+    try { r = await link.evidence(); }
     catch (e) { console.error(e); return { status: 503, error: 'the Use Assessment app could not be reached through the ASSESSMENT service binding, or its version does not list artefacts yet.' }; }
     return r && r.status === 200 ? r.body : { status: (r && r.status) || 502, error: (r && r.body && r.body.error) || 'the Use Assessment app gave no answer.' };
   };
@@ -76,6 +84,10 @@ export async function boardViewForService(env) {
   try { return await boardView(d1Store(env.DB)); }
   catch (e) { console.error(e); return { status: 500, body: { error: 'The Risk Appetite app hit an error reading the board view.' } }; }
 }
+
+/** What the other apps may read from this one over a link (the service entrypoints in src/service.js and
+ *  src/status-service.js on Cloudflare; /api/link/<method> with LINK_SECRET elsewhere, lib/platform/links.js). */
+export const LINK_METHODS = { calibrationSet: calibrationForService, boardView: boardViewForService, evidence: evidenceForService, status: async env => ({ status: 200, body: await statusForService(env) }) };
 
 /** DEMO ADDITION: emails in DEMO_ADMINS (comma-separated) are made administrators when they sign in. */
 const demoAdmins = env => String(env.DEMO_ADMINS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -103,6 +115,9 @@ export default {
     // Sign-in: /login (a static page), /auth/* (lib/identity/session.js). Pages need a session; assets do not.
     if (url.pathname.startsWith('/auth/')) return (await handleAuth(request, env)) || new Response('Not found', { status: 404 });
     if (!url.pathname.startsWith('/api/')) return (await gate(request, env)) || markDemo(await env.ASSETS.fetch(request), env);
+    // Another app of the suite, over HTTPS with the deployment's LINK_SECRET (only where there are no service bindings).
+    const link = await handleLink(request, env, LINK_METHODS);
+    if (link) return link;
 
     const who = await whoIs(request, env);
     if (!env.DB && (who.email || who.service)) return json({ error: 'The database is not connected to this site yet.' }, 503);
