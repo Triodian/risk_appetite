@@ -84,6 +84,10 @@ npx wrangler dev --local-upstream localhost --var LOCAL_DEV_NO_SIGNIN_EMAIL:you@
 `LOCAL_DEV_NO_SIGNIN_EMAIL` only works on localhost. Locally, an `X-Dev-User` header picks a different user for testing.
 
 
+## Roadmap
+
+What is planned for the suite, and what each item waits on, is at [docs.triodian.com/roadmap](https://docs.triodian.com/roadmap); this README does not keep its own copy.
+
 ## Contributing
 
 Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
