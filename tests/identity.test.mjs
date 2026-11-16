@@ -149,4 +149,112 @@ for (const [next, want] of [['/\\attacker.example/landing', '/'], ['//attacker.e
   globalThis.fetch = realFetch;
 }
 
+
+// OIDC relying party (development plan ID.1): a deployment that is not behind Access signs in through the organisation's
+// own OpenID Connect provider. A fake provider (discovery, keys, token endpoint) is stubbed into fetch; tokens are signed
+// with a local key. The provider supplies the email and nothing else: no role is read from it.
+{
+  const { providerKind } = await import('../lib/identity/provider.js');
+  const { verifyIdToken, oidcConfig } = await import('../lib/identity/oidc.js');
+  const ISSUER = 'https://login.acme-idp.example/tenant', CLIENT = 'client-abc';
+  const kp = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+  const jwk = { ...(await crypto.subtle.exportKey('jwk', kp.publicKey)), kid: 'k-oidc', use: 'sig' };
+  const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = () => Math.floor(Date.now() / 1000);
+  const mint = async (claims, kid = 'k-oidc', key = kp.privateKey) => {
+    const h = b64({ alg: 'RS256', kid }), p = b64({ iss: ISSUER, aud: CLIENT, exp: now() + 600, iat: now(), email: 'cro@acme.test', email_verified: true, ...claims });
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(h + '.' + p)); return h + '.' + p + '.' + Buffer.from(sig).toString('base64url');
+  };
+  const doc = { issuer: ISSUER, authorization_endpoint: ISSUER + '/authorize', token_endpoint: ISSUER + '/token', jwks_uri: ISSUER + '/keys' };
+  let nextToken = null, lastTokenRequest = null;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => {
+    u = String(u);
+    if (u === ISSUER + '/.well-known/openid-configuration') return new Response(JSON.stringify(doc));
+    if (u === ISSUER + '/keys') return new Response(JSON.stringify({ keys: [jwk] }));
+    if (u === ISSUER + '/token') { lastTokenRequest = new URLSearchParams(o.body); return new Response(JSON.stringify({ id_token: await nextToken(lastTokenRequest), token_type: 'Bearer' })); }
+    return realFetch(u, o);
+  };
+  const oidcDb = new DatabaseSync(':memory:');
+  const oidcEnv = { IDENTITY: d1(oidcDb), DB: d1(oidcDb), SUITE_COOKIE_DOMAIN: 'acme.example', SUITE_SESSION_COOKIE: 'tri_suite', IDENTITY_PROVIDER: 'oidc', OIDC_ISSUER: ISSUER + '/', OIDC_CLIENT_ID: CLIENT };
+  const HOST = 'https://use.acme.example';
+  ok('the provider is chosen by IDENTITY_PROVIDER, Access by default', providerKind(oidcEnv) === 'oidc' && providerKind({}) === 'access' && providerKind({ IDENTITY_PROVIDER: 'other' }) === 'access');
+  ok('the issuer is read without its trailing slash', oidcConfig(oidcEnv).issuer === ISSUER);
+  ok('an OIDC deployment carries no identity on a plain request', (await (await import('../lib/identity/oidc.js')).identify(new Request(HOST + '/'), oidcEnv)).status === 401);
+  ok('an Access deployment has no OIDC callback', (await handleAuth(new Request(HOST + '/auth/oidc/callback?code=x&state=y'), { ...oidcEnv, IDENTITY_PROVIDER: 'access' })).status === 404);
+
+  // the full flow: /auth/email sends the browser to the provider; the callback exchanges the code and starts a session
+  const begin = async (next = '/engagements/1?tab=2') => {
+    const res = await handleAuth(new Request(HOST + '/auth/email?next=' + encodeURIComponent(next)), oidcEnv);
+    const to = new URL(res.headers.get('Location'));
+    return { res, to, state: to.searchParams.get('state'), nonce: to.searchParams.get('nonce'), challenge: to.searchParams.get('code_challenge') };
+  };
+  const finish = (state, code = 'code-1') => handleAuth(new Request(`${HOST}/auth/oidc/callback?code=${code}&state=${state}`), oidcEnv);
+  let b = await begin();
+  ok('/auth/email sends the browser to the provider’s authorization endpoint', b.res.status === 303 && b.to.origin + b.to.pathname === ISSUER + '/authorize', String(b.to));
+  ok('with the code flow, PKCE (S256), state, nonce, the client id and this site’s callback', b.to.searchParams.get('response_type') === 'code' && b.to.searchParams.get('code_challenge_method') === 'S256' && b.challenge && b.state && b.nonce
+    && b.to.searchParams.get('client_id') === CLIENT && b.to.searchParams.get('redirect_uri') === HOST + '/auth/oidc/callback' && /\bopenid\b/.test(b.to.searchParams.get('scope')));
+  ok('state and nonce are fresh each time', (await begin()).state !== b.state);
+  nextToken = async form => mint({ nonce: b.nonce });
+  let res = await finish(b.state);
+  const setc = (res.headers.getSetCookie ? res.headers.getSetCookie() : [res.headers.get('Set-Cookie')]).join(' | ');
+  ok('the callback exchanges the code with the PKCE verifier and no client secret', lastTokenRequest.get('grant_type') === 'authorization_code' && lastTokenRequest.get('code') === 'code-1' && lastTokenRequest.get('code_verifier') && !lastTokenRequest.has('client_secret')
+    && lastTokenRequest.get('redirect_uri') === HOST + '/auth/oidc/callback');
+  ok('the verifier sent is the one the challenge was made from', Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(lastTokenRequest.get('code_verifier')))).toString('base64url') === b.challenge);
+  ok('a valid identity token starts a suite session and lands on the page asked for (control)', res.status === 303 && res.headers.get('Location') === '/engagements/1?tab=2' && /tri_suite=[^;]+; Path=\/; HttpOnly/.test(setc) && /Domain=acme\.example/.test(setc), `${res.status} ${res.headers.get('Location')} ${setc}`);
+  const tok = (setc.match(/tri_suite=([^;]+)/) || [])[1];
+  ok('the session is the person the provider named', (await sessionEmail(new Request(HOST + '/', { headers: { Cookie: 'tri_suite=' + tok } }), oidcEnv)) === 'cro@acme.test');
+  ok('a state is used once: the same callback again is refused', (await finish(b.state)).headers.get('Location') === '/login?email=0');
+  ok('a state this app never issued is refused', (await finish('not-ours')).headers.get('Location') === '/login?email=0');
+  const withSecret = { ...oidcEnv, OIDC_CLIENT_SECRET: 's3cret' };
+  b = await begin(); nextToken = async () => mint({ nonce: b.nonce });
+  res = await handleAuth(new Request(`${HOST}/auth/oidc/callback?code=c&state=${b.state}`), withSecret);
+  ok('with OIDC_CLIENT_SECRET set it is sent to the token endpoint (confidential client)', res.status === 303 && lastTokenRequest.get('client_secret') === 's3cret');
+  // the way back after sign-in goes through the same check as every other sign-in (PT-03)
+  b = await begin('/\\attacker.example/landing'); nextToken = async () => mint({ nonce: b.nonce });
+  res = await finish(b.state);
+  ok('next=/\\attacker.example/landing through the provider still lands on /', res.status === 303 && res.headers.get('Location') === '/', res.headers.get('Location'));
+
+  // what the callback refuses, each against a sign-in it did start
+  const refused = async (label, claims, kid, key) => {
+    const bb = await begin(); nextToken = async () => mint({ nonce: bb.nonce, ...claims }, kid, key);
+    const r = await finish(bb.state);
+    ok(label, r.status === 303 && r.headers.get('Location') === '/login?email=0', `${r.status} ${r.headers.get('Location')}`);
+  };
+  await refused('a token from another issuer is refused', { iss: 'https://login.other-idp.example' });
+  await refused('a token for another application is refused', { aud: 'someone-else' });
+  await refused('a token for several applications must name this one as the authorised party', { aud: [CLIENT, 'other'], azp: 'other' });
+  await refused('an expired token is refused', { exp: now() - 10 });
+  await refused('a token with nbf in the future is refused', { nbf: now() + 3600 });
+  await refused('a token issued in the future is refused', { iat: now() + 3600 });
+  await refused('a token answering a different sign-in (nonce) is refused', { nonce: 'another-nonce' });
+  await refused('a token with no email is refused', { email: undefined });
+  await refused('a token whose email the provider has not verified is refused', { email_verified: false });
+  const other = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+  await refused('a token signed with a key the provider does not publish is refused', {}, 'k-unknown', other.privateKey);
+  await refused('a token signed with another key under the published kid is refused', {}, 'k-oidc', other.privateKey);
+  {
+    const bb = await begin(); nextToken = async () => mint({ nonce: bb.nonce, aud: [CLIENT, 'other'], azp: CLIENT });
+    const r = await finish(bb.state);
+    ok('a token for several applications that names this one as the authorised party is accepted', r.status === 303 && r.headers.get('Location') === '/engagements/1?tab=2');
+  }
+  {
+    const bb = await begin(); nextToken = async () => mint({ nonce: bb.nonce, nbf: now() + 30 });
+    ok('a token with nbf a few seconds ahead is accepted (clock tolerance)', (await finish(bb.state)).headers.get('Location') === '/engagements/1?tab=2');
+  }
+  // roles never come from the provider
+  {
+    const bb = await begin(); nextToken = async () => mint({ nonce: bb.nonce, groups: ['admins'], roles: ['administrator'], email: 'newcomer@acme.test' });
+    const r = await finish(bb.state);
+    const t = ((r.headers.getSetCookie ? r.headers.getSetCookie() : [r.headers.get('Set-Cookie')]).join(' ').match(/tri_suite=([^;]+)/) || [])[1];
+    ok('a provider’s groups or roles claims change nothing: the session carries the email only', r.status === 303 && (await sessionEmail(new Request(HOST + '/', { headers: { Cookie: 'tri_suite=' + t } }), oidcEnv)) === 'newcomer@acme.test'
+      && oidcDb.prepare("SELECT count(*) AS n FROM sessions").get().n >= 1 && !oidcDb.prepare("SELECT sql FROM sqlite_master WHERE name='sessions'").get().sql.includes('role'));
+  }
+  ok('a direct check of verifyIdToken with the wrong nonce is refused', (await verifyIdToken(await mint({ nonce: 'a' }), oidcConfig(oidcEnv), doc, 'b')).status === 401);
+  ok('a provider whose discovery document names another issuer is not used', (await (async () => { const envX = { ...oidcEnv, OIDC_ISSUER: 'https://login.acme-idp.example/other' };
+    globalThis.fetch = async (u, o) => String(u).endsWith('/openid-configuration') ? new Response(JSON.stringify(doc)) : realFetch(u, o);
+    const r = await handleAuth(new Request(HOST + '/auth/email'), envX); return r.status; })()) === 502);
+  globalThis.fetch = realFetch;
+}
+
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);

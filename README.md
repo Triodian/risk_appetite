@@ -52,7 +52,7 @@ See `docs/architecture.md` for the layers and the path to AWS or Azure.
   - `/profile/` – your name, organisation and email address
 - `src/worker.js` – Cloudflare entry point
 - `lib/core/` – cloud-neutral API (`api.js`), role rules (`roles.js`) and the server-side save check (`rbac.js`)
-- `lib/identity/cloudflare-access.js` – verifies the Cloudflare Access sign-in
+- `lib/identity/` – sign-in: `provider.js` picks the adapter for the deployment (`IDENTITY_PROVIDER`: `access`, the default, or `oidc`), `cloudflare-access.js` verifies the Cloudflare Access sign-in, `oidc.js` is the OpenID Connect relying party for a deployment not behind Access (Entra ID, Google Workspace, Okta), `session.js` the sessions and `people.js` the shared identity database. The provider supplies the email only; roles stay in the app
 - `lib/store/d1.js` – database access (Cloudflare D1)
 - `lib/config.js` – Access team domain and AUD tag, first administrator
 - `wrangler.jsonc` – Worker configuration (name, custom domain, database binding)
