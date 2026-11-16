@@ -71,6 +71,10 @@
     // D1 database and put its id below, create the client's Access application for /auth/email and set its tag as
     // the ACCESS_AUD secret (the team domain is in lib/config.js), then run `npx wrangler deploy --env client`.
     // Email stays held (NOTIFY_SENDING off) until the client's sender is set up.
+    // Sign-in on a host Access does not cover (another cloud, or no Access): set "IDENTITY_PROVIDER": "oidc" with
+    // OIDC_ISSUER and OIDC_CLIENT_ID in vars and OIDC_CLIENT_SECRET as a secret (omit it for a PKCE-only public client),
+    // and register https://<this host>/auth/oidc/callback with the provider (lib/identity/oidc.js). Behind Access, leave
+    // it unset: Access, federated to the client's own provider if they have one, proves the email.
     "client": {
       "name": "risk-appetite-client",
       "workers_dev": false,
