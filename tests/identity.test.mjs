@@ -3,7 +3,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { copyLegacyUsers, identityUsers, withIdentity, SUITE_APPS } from '../lib/identity/people.js';
-import { sessionEmail, handleAuth } from '../lib/identity/session.js';
+import { sessionEmail, handleAuth, safeNext } from '../lib/identity/session.js';
 
 let fails = 0; const ok = (label, cond, extra) => { if (!cond) fails++; console.log((cond ? 'PASS' : 'FAIL') + ' · ' + label + (extra ? ' → ' + extra : '')); };
 function d1(sql) {
@@ -105,5 +105,24 @@ const out = await handleAuth(req('board.acme.example', 'tri_suite=tok1', '/auth/
 const set = out.headers.getSetCookie ? out.headers.getSetCookie() : [out.headers.get('Set-Cookie')];
 ok('signing out ends the suite session', (await sessionEmail(req('appetite.acme.example', 'tri_suite=tok1'), envSuite)) === null);
 ok('and clears the shared cookie on the parent domain', set.some(c => /^tri_suite=;/.test(c) && /Domain=acme\.example/.test(c)), set.join(' | '));
+
+// PT-03 (penetration test 16 Nov 2026): the way back after sign-in can only be a page on this site. The old check
+// accepted "/\attacker.example/landing", which browsers resolve to https://attacker.example/landing.
+const ORIGIN = 'https://board.acme.example';
+for (const bad of ['/\\attacker.example/landing', '//attacker.example', '/\\/attacker.example', '/%5Cattacker.example', '/%5cattacker.example/x', '/%2F%2Fattacker.example',
+  'https://attacker.example/', 'http://board.acme.example/x', 'javascript:alert(1)', '/x\u0000y', '/x\ny', '/login', '/login?next=/', '/auth/email', '/auth/logout', '', null, undefined, 42]) {
+  ok(`next=${JSON.stringify(bad)} is refused and lands on /`, safeNext(bad, ORIGIN) === '/', safeNext(bad, ORIGIN));
+}
+for (const [good, want] of [['/engagements/1?tab=2#x', '/engagements/1?tab=2#x'], ['/admin/', '/admin/'], ['/', '/'], ['/a b', '/a%20b'], ['/x?next=//attacker.example', '/x?next=//attacker.example']]) {
+  ok(`next=${JSON.stringify(good)} still lands on ${want}`, safeNext(good, ORIGIN) === want, safeNext(good, ORIGIN));
+}
+ok('what comes back is always a path on this origin', ['/\\\\attacker.example', '/a/../../b', '/./x'].every(v => new URL(safeNext(v, ORIGIN), ORIGIN).origin === ORIGIN));
+// through the real email sign-in: Access proves the email, the session is started, and the redirect stays on this site
+const accessEnv = { ...envSuite, ACCESS_TEAM_DOMAIN: '', LOCAL_DEV_NO_SIGNIN_EMAIL: 'cro@acme.test' };
+for (const [next, want] of [['/\\attacker.example/landing', '/'], ['//attacker.example', '/'], ['/engagements/1?tab=2', '/engagements/1?tab=2']]) {
+  const res = await handleAuth(new Request(`http://localhost:8788/auth/email?next=${encodeURIComponent(next)}`), accessEnv);
+  const loc = res.headers.get('Location') || '';
+  ok(`/auth/email?next=${next} → ${want}`, res.status === 303 && loc === want && new URL(loc, 'http://localhost:8788').origin === 'http://localhost:8788', `${res.status} ${loc}`);
+}
 
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);
