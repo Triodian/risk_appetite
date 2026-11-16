@@ -3,7 +3,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { copyLegacyUsers, identityUsers, withIdentity, SUITE_APPS } from '../lib/identity/people.js';
-import { sessionEmail, handleAuth } from '../lib/identity/session.js';
+import { sessionEmail, handleAuth, safeNext } from '../lib/identity/session.js';
 
 let fails = 0; const ok = (label, cond, extra) => { if (!cond) fails++; console.log((cond ? 'PASS' : 'FAIL') + ' · ' + label + (extra ? ' → ' + extra : '')); };
 function d1(sql) {
@@ -105,5 +105,48 @@ const out = await handleAuth(req('board.acme.example', 'tri_suite=tok1', '/auth/
 const set = out.headers.getSetCookie ? out.headers.getSetCookie() : [out.headers.get('Set-Cookie')];
 ok('signing out ends the suite session', (await sessionEmail(req('appetite.acme.example', 'tri_suite=tok1'), envSuite)) === null);
 ok('and clears the shared cookie on the parent domain', set.some(c => /^tri_suite=;/.test(c) && /Domain=acme\.example/.test(c)), set.join(' | '));
+
+// PT-03 (penetration test 16 Nov 2026): the way back after sign-in can only be a page on this site. The old check
+// accepted "/\attacker.example/landing", which browsers resolve to https://attacker.example/landing.
+const ORIGIN = 'https://board.acme.example';
+for (const bad of ['/\\attacker.example/landing', '//attacker.example', '/\\/attacker.example', '/%5Cattacker.example', '/%5cattacker.example/x', '/%2F%2Fattacker.example',
+  'https://attacker.example/', 'http://board.acme.example/x', 'javascript:alert(1)', '/x\u0000y', '/x\ny', '/login', '/login?next=/', '/auth/email', '/auth/logout', '', null, undefined, 42]) {
+  ok(`next=${JSON.stringify(bad)} is refused and lands on /`, safeNext(bad, ORIGIN) === '/', safeNext(bad, ORIGIN));
+}
+for (const [good, want] of [['/engagements/1?tab=2#x', '/engagements/1?tab=2#x'], ['/admin/', '/admin/'], ['/', '/'], ['/a b', '/a%20b'], ['/x?next=//attacker.example', '/x?next=//attacker.example']]) {
+  ok(`next=${JSON.stringify(good)} still lands on ${want}`, safeNext(good, ORIGIN) === want, safeNext(good, ORIGIN));
+}
+ok('what comes back is always a path on this origin', ['/\\\\attacker.example', '/a/../../b', '/./x'].every(v => new URL(safeNext(v, ORIGIN), ORIGIN).origin === ORIGIN));
+// through the real email sign-in: Access proves the email, the session is started, and the redirect stays on this site
+const accessEnv = { ...envSuite, ACCESS_TEAM_DOMAIN: '', LOCAL_DEV_NO_SIGNIN_EMAIL: 'cro@acme.test' };
+for (const [next, want] of [['/\\attacker.example/landing', '/'], ['//attacker.example', '/'], ['/engagements/1?tab=2', '/engagements/1?tab=2']]) {
+  const res = await handleAuth(new Request(`http://localhost:8788/auth/email?next=${encodeURIComponent(next)}`), accessEnv);
+  const loc = res.headers.get('Location') || '';
+  ok(`/auth/email?next=${next} → ${want}`, res.status === 303 && loc === want && new URL(loc, 'http://localhost:8788').origin === 'http://localhost:8788', `${res.status} ${loc}`);
+}
+
+// Time claims on an Access token (penetration test 16 Nov 2026, hardening item): a correctly signed token with a future
+// nbf was accepted. Signs tokens with a local key and stubs the Access certificate endpoint.
+{
+  const { identify } = await import('../lib/identity/cloudflare-access.js');
+  const TEAM = 'acme.cloudflareaccess.com', AUD = 'aud-test';
+  const kp = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+  const jwk = { ...(await crypto.subtle.exportKey('jwk', kp.publicKey)), kid: 'k-nbf' };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => String(u).includes('/cdn-cgi/access/certs') ? new Response(JSON.stringify({ keys: [jwk] })) : realFetch(u, o);
+  const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const token = async claims => { const h = b64({ alg: 'RS256', kid: 'k-nbf' }), p = b64({ aud: [AUD], iss: 'https://' + TEAM, exp: now + 600, email: 'cro@acme.test', ...claims });
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', kp.privateKey, new TextEncoder().encode(h + '.' + p)); return h + '.' + p + '.' + Buffer.from(sig).toString('base64url'); };
+  const who = async claims => identify(new Request('https://appetite.acme.example/auth/email', { headers: { 'Cf-Access-Jwt-Assertion': await token(claims) } }), { ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD });
+  ok('a valid signed token is accepted (control)', (await who({})).email === 'cro@acme.test');
+  ok('a token with nbf in the past is accepted', (await who({ nbf: now - 30 })).email === 'cro@acme.test');
+  ok('a token with nbf a few seconds ahead is accepted (clock tolerance)', (await who({ nbf: now + 30 })).email === 'cro@acme.test');
+  ok('a correctly signed token with nbf in the future is refused', (await who({ nbf: now + 3600 })).status === 401);
+  ok('a token issued in the future is refused', (await who({ iat: now + 3600 })).status === 401);
+  ok('a token with a non-numeric nbf is refused', (await who({ nbf: 'soon' })).status === 401);
+  ok('an expired token is still refused', (await who({ exp: now - 10 })).status === 401);
+  globalThis.fetch = realFetch;
+}
 
 console.log(fails ? `\n${fails} failed` : '\nAll passed'); process.exit(fails ? 1 : 0);
