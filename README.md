@@ -1,6 +1,6 @@
 # AI Risk Appetite
 
-[![Tests](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml/badge.svg)](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml) [![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue.svg)](LICENSE)
+[![Tests](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml/badge.svg)](https://github.com/Triodian/risk_appetite/actions/workflows/tests.yml) [![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue.svg)](LICENSE) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Triodian/risk_appetite/badge)](https://scorecard.dev/viewer/?uri=github.com/Triodian/risk_appetite)
 
 AI Risk Appetite helps a regulated entity, starting with general insurers, settle its appetite for AI risk: how much
 authority AI may have in each function, what consequence it will accept, what it may not know about AI in its supply
